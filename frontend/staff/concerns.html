@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — Concerns/Suggestions</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__logo" aria-hidden="true"></span>
+        <div class="admin-sidebar__brand-text">
+          <strong>O.R.M.S.</strong>
+          <small>Barangay Platero</small>
+          <small>Barangay Staff Portal</small>
+        </div>
+      </div>
+      <ul class="admin-sidebar__nav">
+        <li><a href="reports-dashboard.html">&#128202; Reports Dashboard</a></li>
+        <li><a href="reports.html">&#128203; Reports</a></li>
+        <li><a href="concerns-dashboard.html">&#128172; Concerns/Suggestions Dashboard</a></li>
+        <li><a href="concerns.html" class="active">&#128221; Concerns/Suggestions</a></li>
+        <li><a href="ordinances.html">&#128220; Ordinance</a></li>
+      </ul>
+      <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
+        <div class="admin-topbar__profile">
+          <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+            &#128276;<span class="navbar__badge"></span>
+            <div class="notif-dropdown" id="notifDropdown" hidden>
+              <h3 class="notif-dropdown__title">Notifications</h3>
+              <ul class="notif-dropdown__list">
+                <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">20 minutes ago</span></li>
+                <li class="notif-dropdown__item"><span>A suggestion was filed into a folder</span><span class="notif-dropdown__time">2 hours ago</span></li>
+                <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">5 hours ago</span></li>
+              </ul>
+            </div>
+          </span>
+          <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+            <span class="admin-topbar__avatar" aria-hidden="true"></span>
+            <span class="admin-topbar__name">
+              <strong>Eliseo Aurelio Jr.</strong>
+              <small>Barangay Chairman</small>
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <form class="reports-search-row" id="concernSearchForm">
+          <input type="text" id="concernSearchInput" class="reports-search-input" placeholder="Search..." />
+          <button type="submit" class="btn reports-search-btn">Search</button>
+        </form>
+
+        <div class="concerns-page-layout">
+          <div class="concerns-page-main">
+            <div class="concerns-card" id="concernsList"></div>
+            <div class="pagination-bar dash-pagination reports-pagination-bar">
+              <div class="pagination-controls" id="concernsPagination"></div>
+            </div>
+          </div>
+
+          <div class="dash-card folders-card">
+            <h2 class="folders-card__title">Folders</h2>
+            <button type="button" class="folder-chip folder-chip--all active" id="allFoldersBtn">All Concerns/Suggestions</button>
+            <div id="foldersList"></div>
+            <button type="button" class="folder-add-btn" id="addFolderBtn" aria-label="Create folder">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/concerns-data.js"></script>
+  <script src="js/concerns-list.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Create/rename folder -->
+  <div class="modal-overlay" id="folderNameModal" hidden>
+    <div class="modal-card">
+      <h2 id="folderNameModalTitle">Create Folder</h2>
+      <div class="field">
+        <label for="folderNameInput">Folder Name</label>
+        <input type="text" id="folderNameInput" placeholder="e.g. No Loud Videoke After 10PM" />
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="folderNameConfirm">Create</button>
+        <button type="button" class="btn btn-danger" id="folderNameCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete folder confirmation -->
+  <div class="modal-overlay" id="folderDeleteModal" hidden>
+    <div class="modal-card">
+      <h2>Delete this folder?</h2>
+      <p class="auth-card__subtitle">Concerns/suggestions inside <strong id="folderDeleteName"></strong> will be moved back to unfoldered.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-danger" id="folderDeleteConfirm">Delete</button>
+        <button type="button" class="btn" id="folderDeleteCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile popup -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar">EA</span>
+        <div>
+          <p class="profile-card__name">Eliseo Aurelio Jr.</p>
+          <p class="profile-card__role">Barangay Chairman</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

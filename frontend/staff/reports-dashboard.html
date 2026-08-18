@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — Reports Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__logo" aria-hidden="true"></span>
+        <div class="admin-sidebar__brand-text">
+          <strong>O.R.M.S.</strong>
+          <small>Barangay Platero</small>
+          <small>Barangay Staff Portal</small>
+        </div>
+      </div>
+      <ul class="admin-sidebar__nav">
+        <li><a href="reports-dashboard.html" class="active">&#128202; Reports Dashboard</a></li>
+        <li><a href="reports.html">&#128203; Reports</a></li>
+        <li><a href="concerns-dashboard.html">&#128172; Concerns/Suggestions Dashboard</a></li>
+        <li><a href="concerns.html">&#128221; Concerns/Suggestions</a></li>
+        <li><a href="ordinances.html">&#128220; Ordinance</a></li>
+      </ul>
+      <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
+        <div class="admin-topbar__profile">
+          <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+            &#128276;<span class="navbar__badge"></span>
+            <div class="notif-dropdown" id="notifDropdown" hidden>
+              <h3 class="notif-dropdown__title">Notifications</h3>
+              <ul class="notif-dropdown__list">
+                <li class="notif-dropdown__item"><span>3 new reports submitted</span><span class="notif-dropdown__time">10 minutes ago</span></li>
+                <li class="notif-dropdown__item"><span>Curfew Violation report resolved</span><span class="notif-dropdown__time">1 hour ago</span></li>
+                <li class="notif-dropdown__item"><span>New remarks added to a report</span><span class="notif-dropdown__time">3 hours ago</span></li>
+              </ul>
+            </div>
+          </span>
+          <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+            <span class="admin-topbar__avatar" aria-hidden="true"></span>
+            <span class="admin-topbar__name">
+              <strong>Eliseo Aurelio Jr.</strong>
+              <small>Barangay Chairman</small>
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="dash-header">
+          <h1 class="dash-header__title">Welcome back, Eliseo Aurelio Jr.</h1>
+          <div class="dash-dropdown" id="dateRangeDropdown">
+            <button type="button" class="dash-dropdown__btn" id="dateRangeBtn">
+              &#128197; <span id="dateRangeLabel"></span> <span class="dash-dropdown__chevron">&#9662;</span>
+            </button>
+            <ul class="dash-dropdown-menu" id="dateRangeMenu" hidden></ul>
+          </div>
+        </div>
+
+        <div class="dash-row-top">
+          <div class="dash-card recent-reports-card">
+            <div class="dash-card__header">
+              <h2>Recent Reports</h2>
+              <div class="dash-dropdown" id="viewAllDropdown">
+                <button type="button" class="dash-dropdown__btn" id="viewAllBtn">
+                  <span id="viewAllLabel">View All Reports</span> <span class="dash-dropdown__chevron">&#9662;</span>
+                </button>
+                <ul class="dash-dropdown-menu" id="viewAllMenu" hidden>
+                  <li data-status="all" class="active">All Reports</li>
+                  <li data-status="New Submission">New Submission Reports</li>
+                  <li data-status="In Process">In Process Reports</li>
+                  <li data-status="Resolved">Resolved Reports</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="ordinances-table-wrap">
+              <table class="ordinances-table recent-reports-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Incident Type</th>
+                    <th>Location</th>
+                    <th>Reporter</th>
+                    <th>Status</th>
+                    <th>Date Submitted</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recentReportsBody"></tbody>
+              </table>
+            </div>
+
+            <div class="pagination-bar dash-pagination">
+              <div class="pagination-controls" id="recentReportsPagination"></div>
+            </div>
+          </div>
+
+          <div class="dash-stats">
+            <div class="stat-card">
+              <span class="stat-card__icon stat-card__icon--total">&#128203;</span>
+              <div class="stat-card__body">
+                <div class="stat-card__label">Total Reports</div>
+                <div class="stat-card__value" id="statTotal">0</div>
+                <div class="stat-card__delta" id="statTotalDelta"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__icon stat-card__icon--new">&#128196;</span>
+              <div class="stat-card__body">
+                <div class="stat-card__label">New Reports</div>
+                <div class="stat-card__value" id="statNew">0</div>
+                <div class="stat-card__delta" id="statNewDelta"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__icon stat-card__icon--process">&#128337;</span>
+              <div class="stat-card__body">
+                <div class="stat-card__label">In Process Reports</div>
+                <div class="stat-card__value" id="statProcess">0</div>
+                <div class="stat-card__delta" id="statProcessDelta"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__icon stat-card__icon--resolved">&#9989;</span>
+              <div class="stat-card__body">
+                <div class="stat-card__label">Resolved Reports</div>
+                <div class="stat-card__value" id="statResolved">0</div>
+                <div class="stat-card__delta" id="statResolvedDelta"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card__icon stat-card__icon--remarks">&#8505;&#65039;</span>
+              <div class="stat-card__body">
+                <div class="stat-card__label">With Remarks Reports</div>
+                <div class="stat-card__value" id="statRemarks">0</div>
+                <div class="stat-card__delta" id="statRemarksDelta"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-row-bottom">
+          <div class="dash-card heatmap-card">
+            <div class="dash-card__header">
+              <h2>Incident Heatmap</h2>
+              <div class="dash-dropdown" id="heatmapPeriodDropdown">
+                <button type="button" class="dash-dropdown__btn" id="heatmapPeriodBtn">
+                  <span id="heatmapPeriodLabel">This Week</span> <span class="dash-dropdown__chevron">&#9662;</span>
+                </button>
+                <ul class="dash-dropdown-menu" id="heatmapPeriodMenu" hidden></ul>
+              </div>
+            </div>
+            <div class="heatmap-canvas" id="heatmapCanvas" role="button" tabindex="0" aria-label="Enlarge incident heatmap">
+              <span class="heatmap-canvas__label">Barangay Platero</span>
+              <span class="heatmap-canvas__expand" aria-hidden="true">&#10530;</span>
+            </div>
+            <div class="heatmap-legend">
+              <span><i class="legend-dot legend-dot--low"></i>Low</span>
+              <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
+              <span><i class="legend-dot legend-dot--high"></i>High</span>
+              <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
+            </div>
+          </div>
+
+          <div class="dash-card category-card">
+            <div class="dash-card__header">
+              <h2>Reports by Category</h2>
+              <div class="dash-dropdown" id="categoryPeriodDropdown">
+                <button type="button" class="dash-dropdown__btn" id="categoryPeriodBtn">
+                  <span id="categoryPeriodLabel">This Week</span> <span class="dash-dropdown__chevron">&#9662;</span>
+                </button>
+                <ul class="dash-dropdown-menu" id="categoryPeriodMenu" hidden></ul>
+              </div>
+            </div>
+            <div class="category-card__body">
+              <div class="pie-chart" id="categoryPie"></div>
+              <ul class="pie-legend" id="categoryLegend"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/reports-data.js"></script>
+  <script src="js/reports-dashboard.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Enlarged incident heatmap -->
+  <div class="modal-overlay" id="heatmapModal" hidden>
+    <div class="modal-card heatmap-modal-card">
+      <div class="dash-card__header">
+        <h2>Incident Heatmap</h2>
+        <div class="dash-dropdown" id="heatmapModalPeriodDropdown">
+          <button type="button" class="dash-dropdown__btn" id="heatmapModalPeriodBtn">
+            <span id="heatmapModalPeriodLabel">This Week</span> <span class="dash-dropdown__chevron">&#9662;</span>
+          </button>
+          <ul class="dash-dropdown-menu" id="heatmapModalPeriodMenu" hidden></ul>
+        </div>
+      </div>
+      <div class="heatmap-canvas heatmap-canvas--large" id="heatmapCanvasModal">
+        <span class="heatmap-canvas__label">Barangay Platero</span>
+      </div>
+      <div class="heatmap-legend">
+        <span><i class="legend-dot legend-dot--low"></i>Low</span>
+        <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
+        <span><i class="legend-dot legend-dot--high"></i>High</span>
+        <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
+      </div>
+      <button type="button" class="btn heatmap-modal-back" data-close-modal>Go Back</button>
+    </div>
+  </div>
+
+  <!-- Profile popup -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar">EA</span>
+        <div>
+          <p class="profile-card__name">Eliseo Aurelio Jr.</p>
+          <p class="profile-card__role">Barangay Chairman</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

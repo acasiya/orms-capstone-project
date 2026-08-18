@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — Reports Management</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__logo" aria-hidden="true"></span>
+        <div class="admin-sidebar__brand-text">
+          <strong>O.R.M.S.</strong>
+          <small>Barangay Platero</small>
+          <small>Barangay Staff Portal</small>
+        </div>
+      </div>
+      <ul class="admin-sidebar__nav">
+        <li><a href="reports-dashboard.html">&#128202; Reports Dashboard</a></li>
+        <li><a href="reports.html" class="active">&#128203; Reports</a></li>
+        <li><a href="concerns-dashboard.html">&#128172; Concerns/Suggestions Dashboard</a></li>
+        <li><a href="concerns.html">&#128221; Concerns/Suggestions</a></li>
+        <li><a href="ordinances.html">&#128220; Ordinance</a></li>
+      </ul>
+      <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
+        <div class="admin-topbar__profile">
+          <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+            &#128276;<span class="navbar__badge"></span>
+            <div class="notif-dropdown" id="notifDropdown" hidden>
+              <h3 class="notif-dropdown__title">Notifications</h3>
+              <ul class="notif-dropdown__list">
+                <li class="notif-dropdown__item"><span>3 new reports submitted</span><span class="notif-dropdown__time">10 minutes ago</span></li>
+                <li class="notif-dropdown__item"><span>Curfew Violation report resolved</span><span class="notif-dropdown__time">1 hour ago</span></li>
+                <li class="notif-dropdown__item"><span>New remarks added to a report</span><span class="notif-dropdown__time">3 hours ago</span></li>
+              </ul>
+            </div>
+          </span>
+          <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+            <span class="admin-topbar__avatar" aria-hidden="true"></span>
+            <span class="admin-topbar__name">
+              <strong>Eliseo Aurelio Jr.</strong>
+              <small>Barangay Chairman</small>
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <form class="reports-search-row" id="reportSearchForm">
+          <input type="text" id="reportSearchInput" class="reports-search-input" placeholder="Search..." />
+          <button type="submit" class="btn reports-search-btn">Search</button>
+        </form>
+
+        <div class="reports-filters-row">
+          <select id="typeFilter" class="reports-filter">
+            <option value="all">Type</option>
+          </select>
+          <select id="dateFilter" class="reports-filter">
+            <option value="all">Date</option>
+            <option value="week0">This Week</option>
+            <option value="week1">Last Week</option>
+            <option value="month0">This Month</option>
+            <option value="month1">Last Month</option>
+          </select>
+          <select id="statusFilter" class="reports-filter">
+            <option value="all">Status</option>
+            <option value="New Submission">New Submission</option>
+            <option value="In Process">In Process</option>
+            <option value="Resolved">Resolved</option>
+            <option value="With Remarks">With Remarks</option>
+          </select>
+        </div>
+
+        <div class="concerns-card" id="reportsList"></div>
+
+        <div class="pagination-bar dash-pagination reports-pagination-bar">
+          <div class="pagination-controls" id="reportsPagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/reports-data.js"></script>
+  <script src="js/reports-list.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Profile popup -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar">EA</span>
+        <div>
+          <p class="profile-card__name">Eliseo Aurelio Jr.</p>
+          <p class="profile-card__role">Barangay Chairman</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

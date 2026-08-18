@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — View/Edit Concern/Suggestion</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="admin-topbar">
+    <div class="admin-topbar__profile">
+      <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+        &#128276;<span class="navbar__badge"></span>
+        <div class="notif-dropdown" id="notifDropdown" hidden>
+          <h3 class="notif-dropdown__title">Notifications</h3>
+          <ul class="notif-dropdown__list">
+            <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">20 minutes ago</span></li>
+            <li class="notif-dropdown__item"><span>A suggestion was filed into a folder</span><span class="notif-dropdown__time">2 hours ago</span></li>
+            <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">5 hours ago</span></li>
+          </ul>
+        </div>
+      </span>
+      <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+        <span class="admin-topbar__avatar" aria-hidden="true"></span>
+        <span class="admin-topbar__name">
+          <strong>Eliseo Aurelio Jr.</strong>
+          <small>Barangay Chairman</small>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <div class="report-detail-page">
+    <div class="report-detail-layout">
+      <div class="report-detail-main">
+        <h1 class="report-detail-title">View/Edit Concern/Suggestion</h1>
+
+        <div class="field">
+          <label for="concernName">Name</label>
+          <input type="text" id="concernName" disabled />
+        </div>
+
+        <div class="field">
+          <label for="concernContact">Contact Number</label>
+          <input type="text" id="concernContact" disabled />
+        </div>
+
+        <div class="field">
+          <label for="concernLocation">Add a Location</label>
+          <input type="text" id="concernLocation" disabled />
+        </div>
+
+        <div class="field">
+          <label for="concernText">Suggestions / Concern</label>
+          <textarea id="concernText" disabled></textarea>
+        </div>
+
+        <div class="evidence-photo" aria-hidden="true">&#128247;</div>
+      </div>
+
+      <div class="report-detail-side">
+        <div class="dash-card">
+          <h2 class="status-timeline__title">Status Timeline</h2>
+          <div id="timelineItems"></div>
+        </div>
+
+        <div class="dash-card status-edit-card">
+          <div class="status-edit-row">
+            <span class="status-edit-label">Folder:</span>
+          </div>
+          <div id="folderAssigned" hidden>
+            <div class="folder-row">
+              <span class="folder-chip" id="folderChip"></span>
+              <button type="button" class="folder-icon-btn folder-icon-btn--delete" id="folderUnassignBtn" aria-label="Remove from folder">&#10005;</button>
+            </div>
+          </div>
+          <button type="button" class="folder-add-btn" id="assignFolderBtn" aria-label="Assign to a folder">+</button>
+
+          <label for="remarksInput" class="status-edit-remarks-label">Remarks:</label>
+          <textarea id="remarksInput" class="status-edit-remarks" placeholder="Enter remarks to be shown to reportee." disabled></textarea>
+
+          <button type="button" class="btn" id="saveChangesBtn">Save Changes</button>
+        </div>
+
+        <button type="button" class="btn back-to-reports-btn" id="backToConcernsBtn">Back to Concerns/Suggestions</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/concerns-data.js"></script>
+  <script src="js/concern-detail.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Profile popup -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar">EA</span>
+        <div>
+          <p class="profile-card__name">Eliseo Aurelio Jr.</p>
+          <p class="profile-card__role">Barangay Chairman</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign to folder -->
+  <div class="modal-overlay" id="assignFolderModal" hidden>
+    <div class="modal-card">
+      <h2>Assign to Folder</h2>
+      <div class="field">
+        <label for="assignFolderSelect">Choose an existing folder</label>
+        <select id="assignFolderSelect">
+          <option value="">&mdash; Select a folder &mdash;</option>
+        </select>
+      </div>
+      <div class="divider">OR</div>
+      <div class="field">
+        <label for="assignFolderNewInput">Create a new folder</label>
+        <input type="text" id="assignFolderNewInput" placeholder="e.g. No Loud Karaoke After 10PM" />
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="assignFolderConfirm">Assign</button>
+        <button type="button" class="btn btn-danger" id="assignFolderCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save confirmation -->
+  <div class="modal-overlay" id="saveConfirmModal" hidden>
+    <div class="modal-card">
+      <div class="success-icon" aria-hidden="true">&#10003;</div>
+      <h2>Changes Saved</h2>
+      <p class="auth-card__subtitle">The concern/suggestion has been updated.</p>
+      <button type="button" class="btn" id="saveConfirmOk">OK</button>
+    </div>
+  </div>
+
+  <!-- Unsaved changes prompt -->
+  <div class="modal-overlay" id="unsavedChangesModal" hidden>
+    <div class="modal-card">
+      <h2>Save Changes?</h2>
+      <p class="auth-card__subtitle">You have unsaved changes to this concern/suggestion.</p>
+      <div class="stacked-buttons">
+        <button type="button" class="btn" id="unsavedSaveBtn">Save Changes</button>
+        <button type="button" class="btn btn-muted" id="unsavedDiscardBtn">Discard Changes</button>
+        <button type="button" class="btn btn-danger" id="unsavedCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

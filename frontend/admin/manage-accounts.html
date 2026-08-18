@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — Manage Accounts</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__logo" aria-hidden="true"></span>
+        <div class="admin-sidebar__brand-text">
+          <strong>O.R.M.S.</strong>
+          <small>Barangay Platero</small>
+          <small>Admin Portal</small>
+        </div>
+      </div>
+      <ul class="admin-sidebar__nav">
+        <li><a href="manage-accounts.html" class="active">&#128101; Manage Accounts</a></li>
+        <li><a href="audit-logs.html">&#128220; View Audit Logs</a></li>
+      </ul>
+      <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
+        <div class="admin-topbar__profile">
+          <span class="admin-topbar__avatar" aria-hidden="true"></span>
+          <span class="admin-topbar__name">
+            <strong>Admin Michael</strong>
+            <small>Administrator</small>
+          </span>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="admin-toolbar">
+          <select id="sortSelect" class="admin-select">
+            <option value="id">Account ID</option>
+            <option value="owner">Owner Name</option>
+            <option value="recent">Most Recently Active</option>
+          </select>
+          <select id="typeFilter" class="admin-select">
+            <option value="all">All</option>
+            <option value="citizen">Barangay Citizens</option>
+            <option value="admin">Administrators</option>
+            <option value="staff">Barangay Staff</option>
+          </select>
+        </div>
+
+        <div class="admin-table-card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Account ID:</th>
+                <th>Account Owner:</th>
+                <th>Email:</th>
+                <th>Account Type:</th>
+                <th>Active:</th>
+              </tr>
+            </thead>
+            <tbody id="accountsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/accounts-data.js"></script>
+  <script src="js/manage-accounts.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Account popup: opened by clicking an account owner's name -->
+  <div class="modal-overlay" id="editAccountModal" hidden>
+    <div class="edit-account-card">
+      <div class="edit-account-card__header">Edit Account Pop-up</div>
+      <div class="edit-account-card__body">
+        <button type="button" class="edit-account-card__back" data-close-modal aria-label="Close">&#8592;</button>
+        <div class="edit-account-card__avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#5b6270" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="12" cy="8.5" r="4"></circle>
+            <path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"></path>
+          </svg>
+        </div>
+        <h2 class="edit-account-card__name" id="editAccountName"></h2>
+        <p class="edit-account-card__email" id="editAccountEmail"></p>
+
+        <dl class="edit-account-card__details">
+          <div class="edit-account-card__row">
+            <dt>Account ID</dt>
+            <dd id="editAccountId"></dd>
+          </div>
+          <div class="edit-account-card__row">
+            <dt>Active Status</dt>
+            <dd id="editAccountStatus"></dd>
+          </div>
+          <div class="edit-account-card__row">
+            <dt>Account Type</dt>
+            <dd id="editAccountType"></dd>
+          </div>
+          <div class="edit-account-card__row">
+            <dt>Created</dt>
+            <dd id="editAccountCreated"></dd>
+          </div>
+          <div class="edit-account-card__row">
+            <dt>Updated</dt>
+            <dd id="editAccountUpdated"></dd>
+          </div>
+        </dl>
+
+        <div class="edit-account-card__actions">
+          <button type="button" class="edit-account-btn edit-account-btn--disable">&#128683; Disable User</button>
+          <button type="button" class="edit-account-btn edit-account-btn--type">&#9881; Update User Type</button>
+          <button type="button" class="edit-account-btn edit-account-btn--reset">&#128274; Reset Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

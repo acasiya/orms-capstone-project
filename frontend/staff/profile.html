@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — My Profile</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="admin-topbar">
+    <div class="admin-topbar__profile">
+      <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+        &#128276;<span class="navbar__badge"></span>
+        <div class="notif-dropdown" id="notifDropdown" hidden>
+          <h3 class="notif-dropdown__title">Notifications</h3>
+          <ul class="notif-dropdown__list">
+            <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">20 minutes ago</span></li>
+            <li class="notif-dropdown__item"><span>3 new reports submitted</span><span class="notif-dropdown__time">10 minutes ago</span></li>
+          </ul>
+        </div>
+      </span>
+      <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+        <span class="admin-topbar__avatar" aria-hidden="true"></span>
+        <span class="admin-topbar__name">
+          <strong>Eliseo Aurelio Jr.</strong>
+          <small>Barangay Chairman</small>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <div class="plain-page">
+    <div class="plain-page__inner plain-page__inner--wide">
+      <div class="profile-layout">
+        <aside class="profile-sidebar">
+          <h1 class="profile-sidebar__title">My Profile</h1>
+          <button type="button" class="profile-tab active" data-tab="edit">Edit Information</button>
+          <button type="button" class="profile-tab" data-tab="password">Change Password</button>
+          <a class="btn btn-danger profile-sidebar__cancel" href="reports-dashboard.html">Cancel</a>
+        </aside>
+
+        <div class="profile-panel">
+          <div class="profile-panel__view" id="editView">
+            <label class="profile-page__avatar profile-page__avatar--editable" for="avatarUpload">
+              <span id="editAvatarInitials"></span>
+              <img class="profile-page__avatar-img" id="editAvatarImg" alt="Profile photo" hidden />
+              <span class="profile-page__avatar-badge" aria-hidden="true">&#128247;</span>
+            </label>
+            <input type="file" id="avatarUpload" accept="image/*" hidden />
+            <form id="editProfileForm">
+              <div class="field">
+                <label for="profileName">Name</label>
+                <input type="text" id="profileName" required />
+              </div>
+              <div class="field">
+                <label for="profileEmail">Email address</label>
+                <input type="email" id="profileEmail" required />
+              </div>
+              <div class="field">
+                <label for="profileMobile">Mobile Number</label>
+                <input type="tel" id="profileMobile" required />
+              </div>
+              <div class="field">
+                <label for="profileAddress">Address</label>
+                <input type="text" id="profileAddress" required />
+              </div>
+              <button type="submit" class="btn btn-success">Apply Changes</button>
+            </form>
+          </div>
+
+          <div class="profile-panel__view" id="passwordView" hidden>
+            <div class="profile-page__avatar" id="passwordAvatar"></div>
+            <form id="changePasswordForm">
+              <div class="field">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" required />
+              </div>
+              <div class="field">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" required />
+              </div>
+              <div class="field">
+                <label for="confirmNewPassword">Confirm Password</label>
+                <input type="password" id="confirmNewPassword" required />
+              </div>
+              <button type="submit" class="btn btn-muted">Change Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profileUpdatedModal" hidden>
+    <div class="modal-card">
+      <h2 id="profileUpdatedTitle">Information Changed!</h2>
+      <button type="button" class="btn" id="profileUpdatedConfirm">Confirm</button>
+    </div>
+  </div>
+
+  <!-- Profile popup -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar">EA</span>
+        <div>
+          <p class="profile-card__name">Eliseo Aurelio Jr.</p>
+          <p class="profile-card__role">Barangay Chairman</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/staff-profile.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

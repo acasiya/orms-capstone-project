@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — Audit Logs</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__logo" aria-hidden="true"></span>
+        <div class="admin-sidebar__brand-text">
+          <strong>O.R.M.S.</strong>
+          <small>Barangay Platero</small>
+          <small>Admin Portal</small>
+        </div>
+      </div>
+      <ul class="admin-sidebar__nav">
+        <li><a href="manage-accounts.html">&#128101; Manage Accounts</a></li>
+        <li><a href="audit-logs.html" class="active">&#128220; View Audit Logs</a></li>
+      </ul>
+      <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
+        <div class="admin-topbar__profile">
+          <span class="admin-topbar__avatar" aria-hidden="true"></span>
+          <span class="admin-topbar__name">
+            <strong>Admin Michael</strong>
+            <small>Administrator</small>
+          </span>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="admin-toolbar">
+          <select id="sortSelect" class="admin-select">
+            <option value="id">Account ID</option>
+            <option value="owner">Owner Name</option>
+            <option value="loggedOn">Most Recent Logged On</option>
+            <option value="loggedOff">Most Recent Logged Off</option>
+          </select>
+          <select id="typeFilter" class="admin-select">
+            <option value="all">All</option>
+            <option value="citizen">Barangay Citizens</option>
+            <option value="admin">Administrators</option>
+            <option value="staff">Barangay Staff</option>
+          </select>
+        </div>
+
+        <div class="admin-table-card">
+          <table class="admin-table admin-table--audit">
+            <thead>
+              <tr>
+                <th>Account ID:</th>
+                <th>Account Owner:</th>
+                <th>Account Type:</th>
+                <th>Logged On:</th>
+                <th>Logged Off:</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/audit-log-data.js"></script>
+  <script src="js/audit-logs.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
