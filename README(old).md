@@ -110,3 +110,4 @@ curl -X POST http://127.0.0.1:8000/api/auth/login/ \
 - Only login + registration are wired to the frontend so far. Reports,
   ordinances, concerns, and notifications still need models + endpoints
   (see the ERD from earlier in this conversation).
+
