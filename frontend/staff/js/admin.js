@@ -1,6 +1,27 @@
 // O.R.M.S. — shared behavior for admin pages (sidebar toggle + logout).
 
 const ADMIN_AUTH_STORAGE_KEY = "orms_auth_user";
+const ADMIN_ACCESS_TOKEN_KEY = "orms_access_token";
+const ADMIN_REFRESH_TOKEN_KEY = "orms_refresh_token";
+
+// This script is only ever loaded by pages inside /staff/, so the portal is
+// fixed. Every page that loads admin.js is a logged-in-only page (the
+// login/forgot-password/reset pages load main.js instead), so bounce back
+// to the login page unless there's a valid token AND the cached user is
+// actually a Barangay Official — otherwise an Administrator's (or a stale/
+// leftover) session could land straight on the Staff Portal unchecked.
+(function enforceStaffPortalAccess() {
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem(ADMIN_AUTH_STORAGE_KEY));
+  } catch {
+    user = null;
+  }
+  const hasToken = !!localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  if (!hasToken || !user || user.role !== "staff") {
+    window.location.href = "index.html";
+  }
+})();
 
 function accountTypeGroup(type) {
   if (type === "Administrator") return "admin";
@@ -33,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logoutYes) {
     logoutYes.addEventListener("click", () => {
       localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
+      localStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
+      localStorage.removeItem(ADMIN_REFRESH_TOKEN_KEY);
       window.location.href = "index.html";
     });
   }

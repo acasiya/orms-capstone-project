@@ -1918,3 +1918,30 @@ button {
 .edit-account-btn--reset {
   background: #4caf6b;
 }
+
+.edit-account-btn--approve {
+  background: #4caf6b;
+}
+
+.edit-account-btn--reject {
+  background: #e2726b;
+}
+
+/* ---------- ID Photo preview popup ---------- */
+
+.id-photo-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  background: #e4e6ea;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.id-photo-preview__filename {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

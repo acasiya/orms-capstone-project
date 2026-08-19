@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>O.R.M.S. — Manage Accounts</title>
+  <title>O.R.M.S. — Approve Accounts</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -19,9 +19,9 @@
         </div>
       </div>
       <ul class="admin-sidebar__nav">
-        <li><a href="manage-accounts.html" class="active">&#128101; Manage Accounts</a></li>
+        <li><a href="manage-accounts.html">&#128101; Manage Accounts</a></li>
         <li><a href="audit-logs.html">&#128220; View Audit Logs</a></li>
-        <li><a href="approve-accounts.html">&#9989; Approve Accounts</a></li>
+        <li><a href="approve-accounts.html" class="active">&#9989; Approve Accounts</a></li>
       </ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
@@ -40,13 +40,8 @@
 
       <div class="admin-content">
         <div class="admin-toolbar">
-          <select id="sortSelect" class="admin-select">
-            <option value="id">Account ID</option>
-            <option value="owner">Owner Name</option>
-            <option value="recent">Most Recently Active</option>
-          </select>
           <select id="typeFilter" class="admin-select">
-            <option value="all">All</option>
+            <option value="all">- All -</option>
             <option value="citizen">Barangay Citizens</option>
             <option value="admin">Administrators</option>
             <option value="staff">Barangay Staff</option>
@@ -60,19 +55,19 @@
                 <th>Account ID:</th>
                 <th>Account Owner:</th>
                 <th>Email:</th>
-                <th>Account Type:</th>
-                <th>Active:</th>
+                <th>ID Photo</th>
+                <th>Created:</th>
               </tr>
             </thead>
-            <tbody id="accountsTableBody"></tbody>
+            <tbody id="pendingTableBody"></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="js/accounts-data.js"></script>
-  <script src="js/manage-accounts.js"></script>
+  <script src="js/pending-accounts-data.js"></script>
+  <script src="js/approve-accounts.js"></script>
   <script src="js/admin.js"></script>
 
   <!-- Logout confirmation -->
@@ -86,10 +81,10 @@
     </div>
   </div>
 
-  <!-- Edit Account popup: opened by clicking an account owner's name -->
-  <div class="modal-overlay" id="editAccountModal" hidden>
+  <!-- Approve Account popup: opened by clicking a pending account's owner name -->
+  <div class="modal-overlay" id="approveAccountModal" hidden>
     <div class="edit-account-card">
-      <div class="edit-account-card__header">Edit Account Pop-up</div>
+      <div class="edit-account-card__header">Approve Account Pop-up</div>
       <div class="edit-account-card__body">
         <button type="button" class="edit-account-card__back" data-close-modal aria-label="Close">&#8592;</button>
         <div class="edit-account-card__avatar" aria-hidden="true">
@@ -98,38 +93,48 @@
             <path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"></path>
           </svg>
         </div>
-        <h2 class="edit-account-card__name" id="editAccountName"></h2>
-        <p class="edit-account-card__email" id="editAccountEmail"></p>
+        <h2 class="edit-account-card__name" id="approveAccountName"></h2>
+        <p class="edit-account-card__email" id="approveAccountEmail"></p>
 
         <dl class="edit-account-card__details">
           <div class="edit-account-card__row">
             <dt>Account ID</dt>
-            <dd id="editAccountId"></dd>
-          </div>
-          <div class="edit-account-card__row">
-            <dt>Active Status</dt>
-            <dd id="editAccountStatus"></dd>
+            <dd id="approveAccountId"></dd>
           </div>
           <div class="edit-account-card__row">
             <dt>Account Type</dt>
-            <dd id="editAccountType"></dd>
+            <dd id="approveAccountType"></dd>
           </div>
           <div class="edit-account-card__row">
             <dt>Created</dt>
-            <dd id="editAccountCreated"></dd>
-          </div>
-          <div class="edit-account-card__row">
-            <dt>Updated</dt>
-            <dd id="editAccountUpdated"></dd>
+            <dd id="approveAccountCreated"></dd>
           </div>
         </dl>
 
-        <div class="edit-account-card__actions">
-          <button type="button" class="edit-account-btn edit-account-btn--disable">&#128683; Disable User</button>
-          <button type="button" class="edit-account-btn edit-account-btn--type">&#9881; Update User Type</button>
-          <button type="button" class="edit-account-btn edit-account-btn--reset">&#128274; Reset Password</button>
+        <a href="#" class="admin-table__owner-link" id="approveAccountPhotoLink">&#128247; View ID Photo</a>
+
+        <div class="edit-account-card__actions" style="margin-top: 18px;">
+          <button type="button" class="edit-account-btn edit-account-btn--approve" id="approveAccountYes">&#9989; Approve Account</button>
+          <button type="button" class="edit-account-btn edit-account-btn--reject" id="approveAccountNo">&#10060; Reject Account</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ID Photo preview popup: opened by clicking "View Photo" -->
+  <div class="modal-overlay" id="idPhotoModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Voter's ID Photo</h2>
+      <div class="id-photo-preview" id="idPhotoPreview" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#5b6270" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+          <circle cx="9" cy="11" r="2.2"></circle>
+          <path d="M15 9.5h3M15 13h3"></path>
+          <path d="M4.5 18l4-4.2 2.5 2.4 3-3.4 5 5.2"></path>
+        </svg>
+      </div>
+      <p class="id-photo-preview__filename" id="idPhotoFilename"></p>
     </div>
   </div>
 </body>
