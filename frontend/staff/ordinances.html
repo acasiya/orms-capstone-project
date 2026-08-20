@@ -67,6 +67,7 @@
               <input type="text" id="ordinanceSearch" placeholder="Search..." />
               <button type="submit">Search</button>
             </form>
+            <button type="button" class="btn btn--inline" id="uploadOrdinanceBtn">&#8593; Upload Ordinance</button>
           </div>
 
           <div class="ordinances-table-wrap">
@@ -96,6 +97,7 @@
   </div>
 
   <script src="js/ordinances-data.js"></script>
+  <script src="js/ordinances-store.js"></script>
   <script src="js/ordinances-list.js"></script>
   <script src="js/admin.js"></script>
 
@@ -123,6 +125,59 @@
         <button type="button" class="btn" id="logoutYes">Yes</button>
         <button type="button" class="btn btn-danger" id="logoutNo">No</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Upload Ordinance popup -->
+  <div class="modal-overlay" id="uploadOrdinanceModal" hidden>
+    <div class="modal-card modal-card--wide">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Upload Ordinance</h2>
+      <form id="uploadOrdinanceForm" novalidate>
+        <div class="field">
+          <label for="ordNumber">Ordinance No.</label>
+          <input type="text" id="ordNumber" placeholder="No. 31-(2025)" required />
+        </div>
+        <div class="field">
+          <label for="ordTitle">Title</label>
+          <input type="text" id="ordTitle" placeholder="Ordinance title" required />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="ordAuthor">Author</label>
+            <input type="text" id="ordAuthor" placeholder="Hon. Juan Dela Cruz" required />
+          </div>
+          <div class="field">
+            <label for="ordCategory">Category</label>
+            <input type="text" id="ordCategory" placeholder="e.g. Public Safety" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="ordDate">Date Approved</label>
+          <input type="date" id="ordDate" required />
+        </div>
+        <div class="field">
+          <label for="ordDescription">Description</label>
+          <textarea id="ordDescription" rows="4" required></textarea>
+        </div>
+        <div class="field field--upload">
+          <label for="ordPdf">Ordinance Document (PDF)</label>
+          <label class="upload-drop" for="ordPdf">
+            <span class="upload-drop__icon">&#8593;</span>
+            <span class="upload-drop__text" id="ordPdfFileName">Click to upload or drag and drop the ordinance PDF</span>
+          </label>
+          <input type="file" id="ordPdf" accept="application/pdf" hidden />
+        </div>
+        <button type="submit" class="btn">Upload Ordinance</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ordinance uploaded confirmation -->
+  <div class="modal-overlay" id="ordinanceUploadedModal" hidden>
+    <div class="modal-card">
+      <h2>Ordinance Uploaded!</h2>
+      <button type="button" class="btn" id="ordinanceUploadedConfirm">Confirm</button>
     </div>
   </div>
 </body>

@@ -387,6 +387,12 @@ button {
   transition: background 0.15s ease, transform 0.05s ease;
 }
 
+.btn--inline {
+  display: inline-block;
+  width: auto;
+  padding: 11px 22px;
+}
+
 .btn:hover {
   background: var(--navy-dark);
 }
@@ -934,6 +940,17 @@ button {
   text-align: center;
   max-width: 360px;
   width: 100%;
+}
+
+.modal-card--wide {
+  max-width: 480px;
+  text-align: left;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-card--wide h2 {
+  text-align: center;
 }
 
 .modal-card h2 {

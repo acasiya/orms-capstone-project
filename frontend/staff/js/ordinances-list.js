@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function getFiltered() {
     const query = searchInput.value.trim().toLowerCase();
 
-    return ORDINANCES.filter((o) => {
+    return getOrdinances().filter((o) => {
       return (
         !query ||
         o.title.toLowerCase().includes(query) ||
@@ -112,4 +112,49 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   render();
+
+  // Upload Ordinance popup
+  const uploadBtn = document.getElementById("uploadOrdinanceBtn");
+  const uploadModal = document.getElementById("uploadOrdinanceModal");
+  const uploadForm = document.getElementById("uploadOrdinanceForm");
+  const uploadedModal = document.getElementById("ordinanceUploadedModal");
+  const uploadedConfirm = document.getElementById("ordinanceUploadedConfirm");
+
+  const pdfInput = document.getElementById("ordPdf");
+  const pdfFileName = document.getElementById("ordPdfFileName");
+  const defaultPdfText = pdfFileName.textContent;
+  pdfInput.addEventListener("change", () => {
+    const file = pdfInput.files[0];
+    pdfFileName.textContent = file ? file.name : defaultPdfText;
+  });
+
+  uploadBtn.addEventListener("click", () => {
+    uploadForm.reset();
+    pdfFileName.textContent = defaultPdfText;
+    uploadModal.hidden = false;
+  });
+
+  uploadForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!uploadForm.reportValidity()) return;
+
+    addOrdinance({
+      number: document.getElementById("ordNumber").value.trim(),
+      title: document.getElementById("ordTitle").value.trim(),
+      author: document.getElementById("ordAuthor").value.trim(),
+      category: document.getElementById("ordCategory").value.trim(),
+      dateApproved: document.getElementById("ordDate").value,
+      description: document.getElementById("ordDescription").value.trim(),
+      pdf: pdfInput.files[0] ? pdfInput.files[0].name : "#",
+    });
+
+    uploadModal.hidden = true;
+    uploadedModal.hidden = false;
+  });
+
+  uploadedConfirm.addEventListener("click", () => {
+    uploadedModal.hidden = true;
+    currentPage = 1;
+    render();
+  });
 });
