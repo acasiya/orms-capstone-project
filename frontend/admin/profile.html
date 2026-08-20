@@ -8,32 +8,24 @@
 </head>
 <body>
 
-  <nav class="navbar">
-    <div class="navbar__brand">
-      <span class="navbar__logo" aria-hidden="true"></span>
-      O.R.M.S
+  <header class="admin-topbar">
+    <div class="admin-topbar__profile">
+      <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+        &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
+        <div class="notif-dropdown" id="notifDropdown" hidden>
+          <h3 class="notif-dropdown__title">Notifications</h3>
+          <ul class="notif-dropdown__list" id="notifList"></ul>
+        </div>
+      </span>
+      <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+        <span class="admin-topbar__avatar" aria-hidden="true"></span>
+        <span class="admin-topbar__name">
+          <strong>Admin Michael</strong>
+          <small>Administrator</small>
+        </span>
+      </button>
     </div>
-    <ul class="navbar__links">
-      <li><a href="ordinances.html">Ordinances</a></li>
-      <li><a href="file-report.html" data-auth-gate="report">File Report</a></li>
-      <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit Suggestion</a></li>
-      <li data-auth-only><a href="my-reports.html">My Reports</a></li>
-      <li data-auth-only><a href="my-concerns.html">My Concerns/Suggestions</a></li>
-    </ul>
-    <span class="navbar__bell" data-auth-only role="button" tabindex="0" id="notifBell">
-      &#128276;<span class="navbar__badge"></span>
-      <div class="notif-dropdown" id="notifDropdown" hidden>
-        <h3 class="notif-dropdown__title">Notifications</h3>
-        <ul class="notif-dropdown__list">
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">5 minutes ago</span></li>
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">15 minutes ago</span></li>
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">20 minutes ago</span></li>
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">25 minutes ago</span></li>
-        </ul>
-      </div>
-    </span>
-    <div class="navbar__profile" role="button" tabindex="0">&#128100;</div>
-  </nav>
+  </header>
 
   <div class="plain-page">
     <div class="plain-page__inner plain-page__inner--wide">
@@ -42,7 +34,7 @@
           <h1 class="profile-sidebar__title">My Profile</h1>
           <button type="button" class="profile-tab active" data-tab="edit">Edit Information</button>
           <button type="button" class="profile-tab" data-tab="password">Change Password</button>
-          <a class="btn btn-danger profile-sidebar__cancel" href="ordinances.html">Cancel</a>
+          <a class="btn btn-danger profile-sidebar__cancel" href="manage-accounts.html">Cancel</a>
         </aside>
 
         <div class="profile-panel">
@@ -89,11 +81,11 @@
               </div>
               <div class="field">
                 <label for="newPassword">New Password</label>
-                <input type="password" id="newPassword" name="password" required />
+                <input type="password" id="newPassword" required />
               </div>
               <div class="field">
                 <label for="confirmNewPassword">Confirm Password</label>
-                <input type="password" id="confirmNewPassword" name="confirmPassword" required />
+                <input type="password" id="confirmNewPassword" required />
               </div>
               <button type="submit" class="btn btn-muted">Change Password</button>
             </form>
@@ -110,41 +102,19 @@
     </div>
   </div>
 
-  <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->
-  <div class="modal-overlay" id="authGateModal" hidden>
-    <div class="modal-card">
-      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
-      <h2 id="authGateTitle">Want to Submit a Report?</h2>
-      <div class="auth-gate__row">
-        <p class="auth-gate__label">Don't Have An Account?</p>
-        <a class="btn" href="signup.html">Sign Up now</a>
-      </div>
-      <div class="auth-gate__row">
-        <p class="auth-gate__label">Already Have An Account?</p>
-        <a class="btn" href="index.html">Login now</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile popup: Guest Account, or the logged-in account card -->
+  <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>
     <div class="modal-card profile-card">
       <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
-      <div id="profileGuestView">
-        <div class="profile-card__row">
-          <span class="profile-avatar profile-avatar--guest">&#128100;</span>
-          <p class="profile-card__name">Guest Account</p>
+      <div class="profile-card__row">
+        <span class="profile-avatar" id="profileCardInitials"></span>
+        <div>
+          <p class="profile-card__name" id="profileCardName"></p>
+          <p class="profile-card__role">Administrator</p>
         </div>
-        <a class="btn btn-muted" href="index.html">Login</a>
       </div>
-      <div id="profileUserView" hidden>
-        <div class="profile-card__row">
-          <span class="profile-avatar" id="profileUserInitials"></span>
-          <p class="profile-card__name" id="profileUserName"></p>
-        </div>
-        <a class="btn btn-muted" href="profile.html">Edit Information</a>
-        <button type="button" class="btn btn-muted" id="logoutBtn">Log Out</button>
-      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
     </div>
   </div>
 
@@ -159,7 +129,7 @@
     </div>
   </div>
 
-  <script src="js/main.js"></script>
-  <script src="js/profile.js"></script>
+  <script src="js/admin-profile.js"></script>
+  <script src="js/admin.js"></script>
 </body>
 </html>

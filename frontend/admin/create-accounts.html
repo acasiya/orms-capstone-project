@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O.R.M.S. — Create Account</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__brand">
+        <span class="admin-sidebar__logo" aria-hidden="true"></span>
+        <div class="admin-sidebar__brand-text">
+          <strong>O.R.M.S.</strong>
+          <small>Barangay Platero</small>
+          <small>Admin Portal</small>
+        </div>
+      </div>
+      <ul class="admin-sidebar__nav">
+        <li><a href="manage-accounts.html">&#128101; Manage Accounts</a></li>
+        <li><a href="create-accounts.html" class="active">&#128100; Create Accounts</a></li>
+        <li><a href="approve-accounts.html">&#9989; Approve Accounts</a></li>
+        <li><a href="audit-logs.html">&#128220; View Audit Logs</a></li>
+      </ul>
+      <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
+        <div class="admin-topbar__profile">
+          <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+            &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
+            <div class="notif-dropdown" id="notifDropdown" hidden>
+              <h3 class="notif-dropdown__title">Notifications</h3>
+              <ul class="notif-dropdown__list" id="notifList"></ul>
+            </div>
+          </span>
+          <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+            <span class="admin-topbar__avatar" aria-hidden="true"></span>
+            <span class="admin-topbar__name">
+              <strong>Admin Michael</strong>
+              <small>Administrator</small>
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <h1 class="admin-page-title">Create Account</h1>
+
+        <form id="createAccountForm" class="create-account-grid" novalidate>
+          <div class="create-account-card">
+            <div class="form-row">
+              <div class="field">
+                <label for="caAccountType">Account Type</label>
+                <select id="caAccountType" class="admin-select admin-select--block">
+                  <option value="admin">- Admin -</option>
+                  <option value="staff">- Barangay Official -</option>
+                  <option value="citizen">- Citizen -</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="caRole">Role</label>
+                <input type="text" id="caRole" name="role" placeholder="e.g. Secretary" disabled />
+              </div>
+            </div>
+            <div class="field">
+              <label for="caLastName">Last Name</label>
+              <input type="text" id="caLastName" name="last_name" placeholder="lastname" required />
+            </div>
+            <div class="field">
+              <label for="caFirstName">First name</label>
+              <input type="text" id="caFirstName" name="first_name" placeholder="firstname" required />
+            </div>
+            <div class="field">
+              <label for="caPhone">Phone</label>
+              <input type="tel" id="caPhone" name="phone" placeholder="09XXXXXXXXX" required />
+            </div>
+            <div class="field">
+              <label for="caEmail">Email</label>
+              <input type="email" id="caEmail" name="email" placeholder="balamia@gmail.com" required />
+            </div>
+            <div class="field">
+              <label for="caAddress">Address</label>
+              <input type="text" id="caAddress" name="address" placeholder="block, lot, village" required />
+            </div>
+          </div>
+
+          <div class="create-account-card">
+            <div class="field field--upload">
+              <label for="caIdPhoto">Identification</label>
+              <label class="upload-drop" for="caIdPhoto">
+                <span class="upload-drop__icon">&#8593;</span>
+                <span class="upload-drop__text" id="caUploadFileName">Upload Barangay ID for Verification</span>
+              </label>
+              <input type="file" id="caIdPhoto" name="idPhoto" accept="image/*" required hidden />
+            </div>
+            <div class="field">
+              <label for="caPassword">Password</label>
+              <input type="password" id="caPassword" name="password" placeholder="Enter your password" required />
+            </div>
+            <div class="field">
+              <label for="caConfirmPassword">Confirm Password</label>
+              <input type="password" id="caConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
+            </div>
+            <button type="submit" class="btn">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/create-accounts.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account created confirmation -->
+  <div class="modal-overlay" id="accountCreatedModal" hidden>
+    <div class="modal-card">
+      <h2>Account Created!</h2>
+      <button type="button" class="btn" id="accountCreatedConfirm">Confirm</button>
+    </div>
+  </div>
+
+  <!-- Profile popup: opened by clicking the admin's own photo/name in the topbar -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar" id="profileCardInitials"></span>
+        <div>
+          <p class="profile-card__name" id="profileCardName"></p>
+          <p class="profile-card__role">Administrator</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -5,7 +5,8 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const STAFF_USER = {
-    name: "Eliseo Aurelio Jr.",
+    firstName: "Eliseo",
+    lastName: "Aurelio Jr.",
     initials: "EA",
     email: "eliseo.aurelio@binan.gov.ph",
     mobile: "09171234567",
@@ -31,7 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file);
   });
 
-  document.getElementById("profileName").setAttribute("value", STAFF_USER.name);
+  document.getElementById("profileFirstName").setAttribute("value", STAFF_USER.firstName);
+  document.getElementById("profileLastName").setAttribute("value", STAFF_USER.lastName);
   document.getElementById("profileEmail").setAttribute("value", STAFF_USER.email);
   document.getElementById("profileMobile").setAttribute("value", STAFF_USER.mobile);
   document.getElementById("profileAddress").setAttribute("value", STAFF_USER.address);

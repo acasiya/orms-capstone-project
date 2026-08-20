@@ -71,6 +71,8 @@ async function apiLogin(email, password) {
     AUTH_STORAGE_KEY,
     JSON.stringify({
       name: data.user.name,
+      firstName: data.user.first_name,
+      lastName: data.user.last_name,
       initials: data.user.name
         .split(" ")
         .map((part) => part[0])
@@ -120,14 +122,26 @@ function clearFormError(form) {
 // without an account, per the scope doc), so it's excluded here — the
 // existing data-auth-only / data-auth-gate logic further down already
 // handles hiding citizen-only actions from guests.
+// Pages reachable without an active session: the login page itself, plus
+// the whole "forgot password" flow (a user hitting these is by definition
+// not logged in yet).
+const PUBLIC_PORTAL_PAGES = [
+  "index.html",
+  "forgot-password.html",
+  "verify-code.html",
+  "reset-password.html",
+  "reset-success.html",
+];
+
 function enforcePortalAccess() {
   const path = window.location.pathname;
   const isStaffOrAdmin = path.startsWith("/staff/") || path.startsWith("/admin/");
   if (!isStaffOrAdmin) return;
 
   const portal = path.startsWith("/staff/") ? "staff" : "admin";
-  const isLoginPage = path.endsWith("/index.html") || path === `/${portal}/`;
-  if (isLoginPage) return;
+  const page = path.split("/").pop();
+  const isPublicPage = PUBLIC_PORTAL_PAGES.includes(page) || path === `/${portal}/`;
+  if (isPublicPage) return;
 
   const user = getCurrentUser();
   if (!isLoggedIn() || !user || user.role !== portal) {

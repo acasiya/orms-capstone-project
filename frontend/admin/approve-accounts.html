@@ -20,8 +20,9 @@
       </div>
       <ul class="admin-sidebar__nav">
         <li><a href="manage-accounts.html">&#128101; Manage Accounts</a></li>
-        <li><a href="audit-logs.html">&#128220; View Audit Logs</a></li>
+        <li><a href="create-accounts.html">&#128100; Create Accounts</a></li>
         <li><a href="approve-accounts.html" class="active">&#9989; Approve Accounts</a></li>
+        <li><a href="audit-logs.html">&#128220; View Audit Logs</a></li>
       </ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
@@ -30,11 +31,20 @@
       <header class="admin-topbar">
         <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
         <div class="admin-topbar__profile">
-          <span class="admin-topbar__avatar" aria-hidden="true"></span>
-          <span class="admin-topbar__name">
-            <strong>Admin Michael</strong>
-            <small>Administrator</small>
+          <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
+            &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
+            <div class="notif-dropdown" id="notifDropdown" hidden>
+              <h3 class="notif-dropdown__title">Notifications</h3>
+              <ul class="notif-dropdown__list" id="notifList"></ul>
+            </div>
           </span>
+          <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
+            <span class="admin-topbar__avatar" aria-hidden="true"></span>
+            <span class="admin-topbar__name">
+              <strong>Admin Michael</strong>
+              <small>Administrator</small>
+            </span>
+          </button>
         </div>
       </header>
 
@@ -135,6 +145,22 @@
         </svg>
       </div>
       <p class="id-photo-preview__filename" id="idPhotoFilename"></p>
+    </div>
+  </div>
+
+  <!-- Profile popup: opened by clicking the admin's own photo/name in the topbar -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="profile-card__row">
+        <span class="profile-avatar" id="profileCardInitials"></span>
+        <div>
+          <p class="profile-card__name" id="profileCardName"></p>
+          <p class="profile-card__role">Administrator</p>
+        </div>
+      </div>
+      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
     </div>
   </div>
 </body>

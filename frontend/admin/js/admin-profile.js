@@ -1,7 +1,19 @@
-// O.R.M.S. — Citizen Profile: tab switching, field population, Apply Changes/Change Password confirmation.
+// O.R.M.S. — Admin "My Profile": tab switching, field population from the
+// real logged-in session, and Apply Changes/Change Password confirmation.
+// Unlike the Citizen/Staff versions, the Admin portal has a real login
+// (see js/main.js's apiLogin), so this reads/writes the actual cached
+// session instead of a hardcoded mock user.
 
 document.addEventListener("DOMContentLoaded", () => {
-  const user = getCurrentUser() || DEMO_USER;
+  const user = getAdminUser() || {
+    name: "Admin",
+    firstName: "",
+    lastName: "",
+    initials: "A",
+    email: "",
+    mobile: "",
+    address: "",
+  };
 
   document.getElementById("editAvatarInitials").textContent = user.initials;
   document.getElementById("passwordAvatar").textContent = user.initials;
@@ -22,13 +34,17 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file);
   });
 
-  // Set via the attribute (not just the property) so the field's default
-  // value is the citizen's real data.
-  document.getElementById("profileFirstName").setAttribute("value", user.firstName);
-  document.getElementById("profileLastName").setAttribute("value", user.lastName);
-  document.getElementById("profileEmail").setAttribute("value", user.email);
-  document.getElementById("profileMobile").setAttribute("value", user.mobile);
-  document.getElementById("profileAddress").setAttribute("value", user.address);
+  const firstNameInput = document.getElementById("profileFirstName");
+  const lastNameInput = document.getElementById("profileLastName");
+  const emailInput = document.getElementById("profileEmail");
+  const mobileInput = document.getElementById("profileMobile");
+  const addressInput = document.getElementById("profileAddress");
+
+  firstNameInput.setAttribute("value", user.firstName || "");
+  lastNameInput.setAttribute("value", user.lastName || "");
+  emailInput.setAttribute("value", user.email || "");
+  mobileInput.setAttribute("value", user.mobile || "");
+  addressInput.setAttribute("value", user.address || "");
 
   const tabs = document.querySelectorAll(".profile-tab");
   const views = {
@@ -60,9 +76,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const editForm = document.getElementById("editProfileForm");
   editForm.addEventListener("submit", (e) => {
     e.preventDefault();
+
+    // Persist the edit into the cached session so the topbar and the
+    // profile popup reflect it right away — there's no backend endpoint
+    // yet to save this for real.
+    const firstName = firstNameInput.value.trim();
+    const lastName = lastNameInput.value.trim();
+    const updatedUser = {
+      ...user,
+      firstName,
+      lastName,
+      name: `${firstName} ${lastName}`.trim(),
+      email: emailInput.value.trim(),
+      mobile: mobileInput.value.trim(),
+      address: addressInput.value.trim(),
+      initials: [firstName, lastName]
+        .filter(Boolean)
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase(),
+    };
+    localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
+
     updatedTitle.textContent = "Information Changed!";
     onUpdatedConfirm = () => {
-      window.location.href = "ordinances.html";
+      window.location.href = "manage-accounts.html";
     };
     updatedModal.hidden = false;
   });

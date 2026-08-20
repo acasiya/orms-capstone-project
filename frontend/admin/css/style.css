@@ -1693,6 +1693,19 @@ button {
   background: var(--cream-dark);
 }
 
+.admin-topbar__profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
 .admin-topbar__name {
   display: flex;
   flex-direction: column;
@@ -1944,4 +1957,42 @@ button {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+
+/* ---------- Create Account page ---------- */
+
+.admin-page-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 18px;
+  color: var(--text);
+}
+
+.create-account-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.create-account-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 26px 28px;
+}
+
+.create-account-card .btn {
+  margin-top: 4px;
+}
+
+.admin-select--block {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .create-account-grid {
+    grid-template-columns: 1fr;
+  }
 }

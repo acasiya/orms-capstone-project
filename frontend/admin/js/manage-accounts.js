@@ -48,6 +48,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const editType = document.getElementById("editAccountType");
   const editCreated = document.getElementById("editAccountCreated");
   const editUpdated = document.getElementById("editAccountUpdated");
+  const editDisableBtn = document.getElementById("editDisableBtn");
+  const editTypeBtn = document.getElementById("editTypeBtn");
+  const editResetBtn = document.getElementById("editResetBtn");
+
+  let activeAccount = null;
+
+  function populateEditModal(account) {
+    editName.textContent = account.owner;
+    editEmail.textContent = account.email;
+    editId.textContent = account.id;
+    editStatus.textContent = account.active ? "Active" : account.lastActiveLabel;
+    editStatus.className = account.active ? "status-active" : "status-inactive";
+    editType.textContent = account.type;
+    editCreated.textContent = account.created;
+    editUpdated.textContent = account.updated;
+    editDisableBtn.innerHTML = account.active ? "&#128683; Disable User" : "&#9989; Enable User";
+  }
 
   tbody.addEventListener("click", (e) => {
     const link = e.target.closest(".admin-table__owner-link");
@@ -57,14 +74,65 @@ document.addEventListener("DOMContentLoaded", () => {
     const account = ACCOUNTS.find((a) => a.id === link.dataset.id);
     if (!account || !editModal) return;
 
-    editName.textContent = account.owner;
-    editEmail.textContent = account.email;
-    editId.textContent = account.id;
-    editStatus.textContent = account.active ? "Active" : account.lastActiveLabel;
-    editStatus.className = account.active ? "status-active" : "status-inactive";
-    editType.textContent = account.type;
-    editCreated.textContent = account.created;
-    editUpdated.textContent = account.updated;
+    activeAccount = account;
+    populateEditModal(account);
     editModal.hidden = false;
+  });
+
+  // Disable/Enable User: toggles the account's active status right in the mock list.
+  editDisableBtn.addEventListener("click", () => {
+    if (!activeAccount) return;
+    activeAccount.active = !activeAccount.active;
+    if (!activeAccount.active) activeAccount.lastActiveLabel = "Just Now";
+    activeAccount.updated = "Just Now";
+    populateEditModal(activeAccount);
+    render();
+  });
+
+  // Update User Type popup
+  const updateTypeModal = document.getElementById("updateTypeModal");
+  const updateTypeSelect = document.getElementById("updateTypeSelect");
+  const updateTypeSave = document.getElementById("updateTypeSave");
+
+  editTypeBtn.addEventListener("click", () => {
+    if (!activeAccount) return;
+    updateTypeSelect.value = activeAccount.type;
+    editModal.hidden = true;
+    updateTypeModal.hidden = false;
+  });
+
+  updateTypeSave.addEventListener("click", () => {
+    if (!activeAccount) return;
+    activeAccount.type = updateTypeSelect.value;
+    activeAccount.updated = "Just Now";
+    updateTypeModal.hidden = true;
+    populateEditModal(activeAccount);
+    editModal.hidden = false;
+    render();
+  });
+
+  // Cancelling (X or Cancel button, or clicking the backdrop) returns to the
+  // Edit Account popup instead of leaving nothing open.
+  updateTypeModal.addEventListener("click", (e) => {
+    if (e.target === updateTypeModal || e.target.closest("[data-close-modal]")) {
+      editModal.hidden = false;
+    }
+  });
+
+  // Reset Password confirmation (mock — no backend to send a real email yet)
+  const resetPasswordModal = document.getElementById("resetPasswordModal");
+  const resetPasswordText = document.getElementById("resetPasswordText");
+
+  editResetBtn.addEventListener("click", () => {
+    if (!activeAccount) return;
+    resetPasswordText.textContent = `Password reset link sent to ${activeAccount.email}`;
+    editModal.hidden = true;
+    resetPasswordModal.hidden = false;
+  });
+
+  resetPasswordModal.addEventListener("click", (e) => {
+    if (e.target === resetPasswordModal || e.target.closest("[data-close-modal]")) {
+      editModal.hidden = false;
+    }
   });
 });
