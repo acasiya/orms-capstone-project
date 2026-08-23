@@ -2,6 +2,7 @@
 Django settings for orms_backend project.
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -35,6 +36,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    "cloudinary_storage",
+    "cloudinary",
     "accounts",
 ]
 
@@ -106,11 +109,33 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_ROOT = BASE_DIR / "frontend"
 WHITENOISE_INDEX_FILE = "index.html"
 
-# User-uploaded files (voter's ID images, evidence photos/videos). On Render
-# this directory does NOT persist across deploys — swap to Cloudinary/S3
-# via django-storages before relying on this for real evidence uploads.
+# User-uploaded files (voter's ID images, evidence photos/videos).
+#
+# Render's disk does NOT persist uploads across deploys/restarts, so in
+# production these go to Cloudinary instead of the local filesystem. Set
+# CLOUDINARY_URL (from the Cloudinary dashboard, format:
+# cloudinary://<api_key>:<api_secret>@<cloud_name>) as an env var to enable
+# this. Left unset, uploads fall back to local disk under MEDIA_ROOT — fine
+# for local dev, not for production.
+CLOUDINARY_URL = config("CLOUDINARY_URL", default="")
+if CLOUDINARY_URL:
+    os.environ.setdefault("CLOUDINARY_URL", CLOUDINARY_URL)
+
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "cloudinary_storage.storage.MediaCloudinaryStorage"
+            if CLOUDINARY_URL
+            else "django.core.files.storage.FileSystemStorage"
+        ),
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
