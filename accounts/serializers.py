@@ -72,19 +72,45 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Read-only profile info — used by the /api/auth/me/ endpoint."""
+    """
+    Read-only profile info — used by GET /api/auth/me/, and embedded in the
+    login response so the navbar/topbar avatar has it immediately without a
+    second request.
+    """
 
     name = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id", "email", "name", "first_name", "last_name",
-            "role", "contact_number", "address", "is_verified",
+            "role", "position", "contact_number", "address", "is_verified",
+            "profile_picture",
         ]
 
     def get_name(self, obj):
         return obj.get_full_name() or obj.username
+
+    def get_profile_picture(self, obj):
+        if not obj.profile_picture:
+            return None
+        request = self.context.get("request")
+        url = obj.profile_picture.url
+        return request.build_absolute_uri(url) if request else url
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    Self-service editing for PATCH /api/auth/me/ (My Profile → Edit
+    Information, all three portals). Deliberately excludes role/is_verified/
+    position — those are admin-controlled elsewhere (Manage Accounts) — so a
+    user can't escalate their own privileges through their own profile form.
+    """
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email", "contact_number", "address", "profile_picture"]
 
 
 class AdminAccountSerializer(serializers.ModelSerializer):
@@ -187,7 +213,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # per login, closed out by LogoutView when they explicitly log out.
         LoginSession.objects.create(user=self.user)
 
-        data["user"] = UserSerializer(self.user).data
+        data["user"] = UserSerializer(self.user, context=self.context).data
         return data
 
 

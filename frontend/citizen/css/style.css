@@ -173,6 +173,15 @@ button {
   font-weight: 700;
   flex-shrink: 0;
   cursor: pointer;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ---------- Hero ---------- */
@@ -1006,6 +1015,7 @@ button {
   font-size: 1.2rem;
   font-weight: 700;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .profile-avatar--guest {

@@ -13,6 +13,7 @@ from .serializers import (
     AuditLogSerializer,
     CustomTokenObtainPairSerializer,
     PendingVerificationSerializer,
+    ProfileUpdateSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -54,11 +55,22 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    """GET /api/auth/me/ — the logged-in user's own profile (requires Bearer token)."""
+    """
+    GET /api/auth/me/ — the logged-in user's own profile (requires Bearer token).
+    PATCH /api/auth/me/ — edits it (My Profile → Edit Information, all three
+    portals) — name/email/contact/address/profile picture only, see
+    ProfileUpdateSerializer for why role/position/is_verified aren't here.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        return Response(UserSerializer(request.user, context={"request": request}).data)
+
+    def patch(self, request):
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserSerializer(request.user, context={"request": request}).data)
 
 
 class IsAdmin(permissions.BasePermission):

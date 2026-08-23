@@ -35,6 +35,19 @@ function getCurrentUser() {
   }
 }
 
+// Renders a real uploaded profile picture into an avatar container (the
+// navbar icon, the profile popup avatar, etc.) when one exists, falling
+// back to initials — used everywhere a placeholder profile picture
+// appears, so uploading a photo on My Profile shows up everywhere at once.
+function renderAvatar(container, user) {
+  if (!container) return;
+  if (user && user.profilePicture) {
+    container.innerHTML = `<img class="avatar-img" src="${user.profilePicture}" alt="" />`;
+  } else if (user && user.initials) {
+    container.textContent = user.initials;
+  }
+}
+
 function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
@@ -93,6 +106,8 @@ async function apiLogin(email, password) {
       mobile: data.user.contact_number,
       address: data.user.address,
       role: data.user.role,
+      position: data.user.position,
+      profilePicture: data.user.profile_picture,
     })
   );
   return data.user.role;
@@ -496,12 +511,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const profileGuestView = document.getElementById("profileGuestView");
   const profileUserView = document.getElementById("profileUserView");
   if (profileBtn && profileModal) {
+    if (loggedIn && user) renderAvatar(profileBtn, user);
+
     const openProfileModal = () => {
       if (loggedIn && user) {
         profileGuestView.hidden = true;
         profileUserView.hidden = false;
         document.getElementById("profileUserName").textContent = user.name;
-        document.getElementById("profileUserInitials").textContent = user.initials;
+        renderAvatar(document.getElementById("profileUserInitials"), user);
       } else {
         profileGuestView.hidden = false;
         profileUserView.hidden = true;

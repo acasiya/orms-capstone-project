@@ -28,6 +28,8 @@ class User(AbstractUser):
     # accounts list; left blank for citizen/admin accounts.
     position = models.CharField(max_length=50, blank=True)
 
+    profile_picture = models.ImageField(upload_to="avatars/%Y/%m/", null=True, blank=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     # Residents start unverified until an admin approves their voter's ID.

@@ -10,18 +10,63 @@ const ADMIN_REFRESH_TOKEN_KEY = "orms_refresh_token";
 // to the login page unless there's a valid token AND the cached user is
 // actually a Barangay Official — otherwise an Administrator's (or a stale/
 // leftover) session could land straight on the Staff Portal unchecked.
-(function enforceStaffPortalAccess() {
-  let user = null;
+function getAdminUser() {
   try {
-    user = JSON.parse(localStorage.getItem(ADMIN_AUTH_STORAGE_KEY));
+    return JSON.parse(localStorage.getItem(ADMIN_AUTH_STORAGE_KEY));
   } catch {
-    user = null;
+    return null;
   }
+}
+
+(function enforceStaffPortalAccess() {
+  const user = getAdminUser();
   const hasToken = !!localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
   if (!hasToken || !user || user.role !== "staff") {
     window.location.href = "index.html";
   }
 })();
+
+// Attaches the stored JWT to a fetch call. Same helper as main.js's
+// authFetch (duplicated here rather than shared, since admin.js and
+// main.js are never loaded on the same page). Every authenticated staff
+// API call should go through this.
+async function authFetch(path, options = {}) {
+  const token = localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+  return fetch(path, { ...options, headers });
+}
+
+// Shows/clears an inline error message below a form. Same pattern as main.js.
+function showFormError(form, message) {
+  let errEl = form.querySelector(".form-error");
+  if (!errEl) {
+    errEl = document.createElement("p");
+    errEl.className = "form-error";
+    errEl.style.color = "#c0392b";
+    errEl.style.marginTop = "0.5rem";
+    errEl.style.fontSize = "0.9rem";
+    form.appendChild(errEl);
+  }
+  errEl.textContent = message;
+}
+
+function clearFormError(form) {
+  const errEl = form.querySelector(".form-error");
+  if (errEl) errEl.remove();
+}
+
+// Renders a real uploaded profile picture into an avatar container (the
+// topbar avatar, the profile popup avatar, etc.) when one exists, falling
+// back to initials — used everywhere a placeholder profile picture
+// appears, so uploading a photo on My Profile shows up everywhere at once.
+function renderAvatar(container, user) {
+  if (!container) return;
+  if (user && user.profilePicture) {
+    container.innerHTML = `<img class="avatar-img" src="${user.profilePicture}" alt="" />`;
+  } else if (user && user.initials) {
+    container.textContent = user.initials;
+  }
+}
 
 function accountTypeGroup(type) {
   if (type === "Administrator") return "admin";
@@ -100,6 +145,24 @@ document.addEventListener("DOMContentLoaded", () => {
     logoutNo.addEventListener("click", () => {
       logoutConfirmModal.hidden = true;
     });
+  }
+
+  // Topbar name/role/avatar + the profile popup both reflect whoever is
+  // actually logged in (rather than the hardcoded "Eliseo Aurelio Jr." /
+  // "Barangay Chairman" placeholder this used to ship with), so an edit
+  // made on My Profile shows up everywhere right away.
+  const user = getAdminUser();
+  if (user) {
+    document.querySelectorAll(".admin-topbar__name strong").forEach((el) => {
+      el.textContent = user.name;
+    });
+    document.querySelectorAll(".admin-topbar__name small").forEach((el) => {
+      el.textContent = user.position || "Barangay Official";
+    });
+    document.querySelectorAll(".admin-topbar__avatar").forEach((el) => renderAvatar(el, user));
+    document.getElementById("profileCardName") && (document.getElementById("profileCardName").textContent = user.name);
+    document.getElementById("profileCardRole") && (document.getElementById("profileCardRole").textContent = user.position || "Barangay Official");
+    renderAvatar(document.getElementById("profileCardInitials"), user);
   }
 
   const profileBtn = document.getElementById("profileBtn");

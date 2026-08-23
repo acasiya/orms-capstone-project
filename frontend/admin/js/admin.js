@@ -18,6 +18,21 @@ function getAdminUser() {
   }
 }
 
+// Renders a real uploaded profile picture into an avatar container (the
+// topbar avatar, the profile popup avatar, etc.) when one exists, falling
+// back to initials — used everywhere a placeholder profile picture
+// appears, so uploading a photo on My Profile shows up everywhere at once.
+// Same helper as main.js's (duplicated here rather than shared, since
+// admin.js and main.js are never loaded on the same page).
+function renderAvatar(container, user) {
+  if (!container) return;
+  if (user && user.profilePicture) {
+    container.innerHTML = `<img class="avatar-img" src="${user.profilePicture}" alt="" />`;
+  } else if (user && user.initials) {
+    container.textContent = user.initials;
+  }
+}
+
 (function enforceAdminPortalAccess() {
   const user = getAdminUser();
   const hasToken = !!localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
@@ -268,8 +283,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".admin-topbar__name strong").forEach((el) => {
       el.textContent = user.name;
     });
+    document.querySelectorAll(".admin-topbar__avatar").forEach((el) => renderAvatar(el, user));
     document.getElementById("profileCardName") && (document.getElementById("profileCardName").textContent = user.name);
-    document.getElementById("profileCardInitials") && (document.getElementById("profileCardInitials").textContent = user.initials);
+    renderAvatar(document.getElementById("profileCardInitials"), user);
   }
 
   const profileBtn = document.getElementById("profileBtn");
