@@ -1054,7 +1054,8 @@ button {
   position: absolute;
   top: 140%;
   right: -10px;
-  width: 300px;
+  width: 320px;
+  max-width: calc(100vw - 24px);
   background: var(--white);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -1101,28 +1102,57 @@ button {
   list-style: none;
   margin: 0;
   padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .notif-dropdown__item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 8px;
   padding: 12px 0;
   border-top: 1px solid var(--border);
   font-size: 0.85rem;
   color: var(--text);
-  white-space: nowrap;
 }
 
 .notif-dropdown__item:first-child {
   border-top: none;
 }
 
+.notif-dropdown__content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.notif-dropdown__message {
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
 .notif-dropdown__time {
   color: var(--text-muted);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.notif-dropdown__dismiss {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0 2px;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.notif-dropdown__dismiss:hover {
+  color: var(--text);
 }
 
 /* ---------- My Concerns/Suggestions list ---------- */

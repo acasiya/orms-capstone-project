@@ -69,22 +69,43 @@ function accountTypeGroup(type) {
 const ADMIN_NOTIFICATIONS_KEY = "orms_admin_notifications";
 const ADMIN_NOTIFICATIONS_MAX = 20;
 
+function makeNotifId() {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 function getAdminNotifications() {
+  let notifications;
   try {
-    return JSON.parse(localStorage.getItem(ADMIN_NOTIFICATIONS_KEY)) || [];
+    notifications = JSON.parse(localStorage.getItem(ADMIN_NOTIFICATIONS_KEY)) || [];
   } catch {
-    return [];
+    notifications = [];
   }
+  // Backfills an id onto any notification stored before dismiss buttons
+  // existed, so it can still be dismissed individually.
+  let backfilled = false;
+  notifications = notifications.map((n) => {
+    if (n.id) return n;
+    backfilled = true;
+    return { ...n, id: makeNotifId() };
+  });
+  if (backfilled) localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  return notifications;
 }
 
 // Called from other admin pages (e.g. Create Account) to raise a notification.
 function addAdminNotification(message) {
   const notifications = getAdminNotifications();
-  notifications.unshift({ message, time: Date.now() });
+  notifications.unshift({ id: makeNotifId(), message, time: Date.now() });
   localStorage.setItem(
     ADMIN_NOTIFICATIONS_KEY,
     JSON.stringify(notifications.slice(0, ADMIN_NOTIFICATIONS_MAX))
   );
+}
+
+// Called by the dismiss (×) button on each notification.
+function removeAdminNotification(id) {
+  const notifications = getAdminNotifications().filter((n) => n.id !== id);
+  localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
 }
 
 function timeAgo(timestamp) {
@@ -319,14 +340,28 @@ document.addEventListener("DOMContentLoaded", () => {
             .map(
               (n) => `
               <li class="notif-dropdown__item">
-                <span>${n.message}</span>
-                <span class="notif-dropdown__time">${timeAgo(n.time)}</span>
+                <div class="notif-dropdown__content">
+                  <span class="notif-dropdown__message">${n.message}</span>
+                  <span class="notif-dropdown__time">${timeAgo(n.time)}</span>
+                </div>
+                <button type="button" class="notif-dropdown__dismiss" data-dismiss="${n.id}" aria-label="Dismiss notification">&times;</button>
               </li>`
             )
             .join("")
         : `<li class="notif-dropdown__item">No notifications yet</li>`;
     };
     renderNotifications();
+
+    // Dismiss (×) button on each notification — removes just that one.
+    notifList.addEventListener("click", (e) => {
+      const dismissBtn = e.target.closest("[data-dismiss]");
+      if (!dismissBtn) return;
+      // Otherwise this bubbles to notifBell's click handler and toggles the
+      // whole dropdown closed instead of just removing the one notification.
+      e.stopPropagation();
+      removeAdminNotification(dismissBtn.dataset.dismiss);
+      renderNotifications();
+    });
 
     // Lets the admin choose which real backend events raise a notification
     // (both off by default — see getNotifPrefs). Injected here via JS
