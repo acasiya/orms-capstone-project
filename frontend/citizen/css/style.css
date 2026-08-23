@@ -333,7 +333,8 @@ button {
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.upload-drop:hover {
+.upload-drop:hover,
+.upload-drop--dragover {
   border-color: var(--navy);
   background: rgba(20, 33, 61, 0.03);
 }
@@ -497,7 +498,7 @@ button {
   padding: 11px 40px 11px 18px;
   border: none;
   border-radius: 10px;
-  background-color: #8a7d91;
+  background-color: var(--navy);
   background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
   background-repeat: no-repeat;
   background-position: right 14px center;
@@ -510,7 +511,7 @@ button {
 
 .sort-select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(119, 107, 130, 0.35);
+  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.35);
 }
 
 .ordinances-search {

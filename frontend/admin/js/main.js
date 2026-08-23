@@ -357,12 +357,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Generic dropzone label text: shows the selected filename(s), restores
-  // the placeholder copy on form reset. Covers Barangay ID, report, and
-  // suggestion uploads.
-  document.querySelectorAll('.upload-drop input[type="file"]').forEach((input) => {
-    const label = document.querySelector(`label[for="${input.id}"]`);
-    const textEl = label ? label.querySelector(".upload-drop__text") : null;
+  // Generic dropzone label text + drag-and-drop: shows the selected
+  // filename(s), restores the placeholder copy on form reset, and actually
+  // implements the "drag & drop" the dropzone copy invites (browsers don't
+  // populate a hidden file input from a drop event on their own). Covers
+  // Barangay ID, report, and suggestion uploads.
+  //
+  // Selects the LABEL first, then resolves its input via `.control` —
+  // these labels reference their input through for="…"/id="…" as siblings,
+  // not by wrapping it, so a selector like `.upload-drop input` (requiring
+  // the input to be a descendant) would never match anything here.
+  document.querySelectorAll("label.upload-drop").forEach((label) => {
+    const input = label.control;
+    if (!input || input.type !== "file") return;
+    const textEl = label.querySelector(".upload-drop__text");
     if (!textEl) return;
     const defaultText = textEl.textContent;
     input.addEventListener("change", () => {
@@ -378,6 +386,24 @@ document.addEventListener("DOMContentLoaded", () => {
         textEl.textContent = defaultText;
       });
     }
+
+    ["dragenter", "dragover"].forEach((evt) => {
+      label.addEventListener(evt, (e) => {
+        e.preventDefault();
+        label.classList.add("upload-drop--dragover");
+      });
+    });
+    ["dragleave", "dragend", "drop"].forEach((evt) => {
+      label.addEventListener(evt, (e) => {
+        e.preventDefault();
+        label.classList.remove("upload-drop--dragover");
+      });
+    });
+    label.addEventListener("drop", (e) => {
+      if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
   });
 
   // Forms that submit into a confirmation modal instead of a full page nav,
