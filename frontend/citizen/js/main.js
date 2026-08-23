@@ -462,7 +462,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutYes = document.getElementById("logoutYes");
   const logoutNo = document.getElementById("logoutNo");
   if (logoutYes) {
-    logoutYes.addEventListener("click", () => {
+    logoutYes.addEventListener("click", async () => {
+      // Closes out the LoginSession for View Audit Logs — best-effort, since
+      // the local session should clear either way. Must happen before
+      // logOut() removes the token authFetch needs to authenticate this.
+      try {
+        await authFetch("/api/auth/logout/", { method: "POST" });
+      } catch {
+        // ignore — logging out locally still proceeds below
+      }
       logOut();
       window.location.href = "index.html";
     });

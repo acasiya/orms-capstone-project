@@ -6,10 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import User, VoterVerification
+from .models import LoginSession, User, VoterVerification
 from .serializers import (
     AdminAccountSerializer,
     AdminCreateUserSerializer,
+    AuditLogSerializer,
     CustomTokenObtainPairSerializer,
     PendingVerificationSerializer,
     RegisterSerializer,
@@ -27,6 +28,29 @@ class RegisterView(generics.CreateAPIView):
 class LoginView(TokenObtainPairView):
     """POST /api/auth/login/ — returns access + refresh JWT tokens plus user info."""
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class LogoutView(APIView):
+    """
+    POST /api/auth/logout/ — closes out the caller's most recent open
+    LoginSession (see CustomTokenObtainPairSerializer), so View Audit Logs
+    shows when they actually logged out instead of leaving it blank.
+    Doesn't invalidate the JWT itself (no token blacklist app installed) —
+    the frontend still just discards the tokens client-side.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        session = (
+            LoginSession.objects.filter(user=request.user, logged_out_at__isnull=True)
+            .order_by("-logged_in_at")
+            .first()
+        )
+        if session:
+            from django.utils import timezone
+            session.logged_out_at = timezone.now()
+            session.save(update_fields=["logged_out_at"])
+        return Response({"detail": "Logged out."})
 
 
 class MeView(APIView):
@@ -79,11 +103,12 @@ class AdminListUsersView(generics.ListAPIView):
     permission_classes = [IsAdmin]
 
 
-class AdminAccountDetailView(generics.RetrieveUpdateAPIView):
+class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
-    GET/PATCH /api/auth/admin/users/<id>/ — backs the Manage Accounts "Edit
-    Account" modal: viewing details, toggling active/disabled, and changing
-    account type (role/position) all go through PATCH here.
+    GET/PATCH/DELETE /api/auth/admin/users/<id>/ — backs the Manage Accounts
+    "Edit Account" modal: viewing details, toggling active/disabled,
+    changing account type (role/position), and deleting the account all go
+    through here.
     """
     queryset = User.objects.all()
     serializer_class = AdminAccountSerializer
@@ -105,6 +130,13 @@ class AdminAccountDetailView(generics.RetrieveUpdateAPIView):
                     status=400,
                 )
             user.is_active = new_active
+
+        # Update User Type only ever offers Citizen/Administrator/Barangay
+        # Staff (see manage-accounts.html's updateTypeSelect), so any other
+        # value reaching here is either a bug or a bypassed frontend — reject
+        # it rather than writing an unrecognized role to the database.
+        if "role" in request.data and request.data["role"] not in User.Role.values:
+            return Response({"detail": "Invalid account type."}, status=400)
 
         # Prevent removing Admin permissions from the last remaining admin
         # account, or from yourself — either would leave the system with no
@@ -129,6 +161,18 @@ class AdminAccountDetailView(generics.RetrieveUpdateAPIView):
 
         user.save()
         return Response(AdminAccountSerializer(user).data)
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+
+        if user.id == request.user.id:
+            return Response({"detail": "You can't delete your own account."}, status=400)
+
+        if user.role == User.Role.ADMIN and User.objects.filter(role=User.Role.ADMIN).count() <= 1:
+            return Response({"detail": "Can't remove the last remaining Administrator."}, status=400)
+
+        user.delete()
+        return Response(status=204)
 
 
 class AdminListPendingVerificationsView(generics.ListAPIView):
@@ -187,6 +231,13 @@ class AdminRejectVerificationView(APIView):
         )
         verification.user.delete()
         return Response({"detail": "Account rejected."})
+
+
+class AdminListAuditLogsView(generics.ListAPIView):
+    """GET /api/auth/admin/audit-logs/ — Administrator Module: View Audit Logs."""
+    queryset = LoginSession.objects.select_related("user").order_by("-logged_in_at")
+    serializer_class = AuditLogSerializer
+    permission_classes = [IsAdmin]
 
 
 class AdminResetPasswordView(APIView):

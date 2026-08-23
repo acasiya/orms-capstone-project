@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
           <td>${a.type}</td>
-          <td>${a.active ? '<span class="status-active">Active</span>' : `<span class="status-inactive">${a.lastActiveLabel}</span>`}</td>
+          <td>${a.active ? '<span class="status-active">Active</span>' : '<span class="status-inactive">Disabled</span>'}</td>
         </tr>`
       )
       .join("");
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const editUpdated = document.getElementById("editAccountUpdated");
   const editDisableBtn = document.getElementById("editDisableBtn");
   const editTypeBtn = document.getElementById("editTypeBtn");
-  const editResetBtn = document.getElementById("editResetBtn");
+  const editDeleteBtn = document.getElementById("editDeleteBtn");
 
   let activeAccount = null;
 
@@ -74,21 +74,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     editName.textContent = account.owner;
     editEmail.textContent = account.email;
     editId.textContent = account.id;
-    editStatus.textContent = account.active ? "Active" : account.lastActiveLabel;
+    editStatus.textContent = account.active ? "Active" : "Disabled";
     editStatus.className = account.active ? "status-active" : "status-inactive";
     editType.textContent = account.type;
     editCreated.textContent = account.created;
     editUpdated.textContent = account.updated;
     editDisableBtn.innerHTML = account.active ? "&#128683; Disable User" : "&#9989; Enable User";
 
-    // Admins can't disable or change the type of their own account — see
-    // the matching safeguard in AdminAccountDetailView.patch. Shown as a
-    // disabled button here so it's clear upfront, not just after a failed click.
+    // Admins can't disable, retype, or delete their own account — see the
+    // matching safeguards in AdminAccountDetailView.patch/delete. Shown as
+    // disabled buttons here so it's clear upfront, not just after a failed click.
     const isSelf = account.id === (getAdminUser() || {}).id;
     editDisableBtn.disabled = isSelf && account.active;
     editDisableBtn.title = isSelf && account.active ? "You can't disable your own account." : "";
     editTypeBtn.disabled = isSelf;
     editTypeBtn.title = isSelf ? "You can't change your own account type." : "";
+    editDeleteBtn.disabled = isSelf;
+    editDeleteBtn.title = isSelf ? "You can't delete your own account." : "";
   }
 
   tbody.addEventListener("click", (e) => {
@@ -130,13 +132,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const updateTypeSelect = document.getElementById("updateTypeSelect");
   const updateTypeSave = document.getElementById("updateTypeSave");
 
-  // Maps the dropdown's display labels to the backend's role/position pair.
-  // "Administrator" and "Barangay Citizen" set role only; anything else is
-  // treated as a Staff position (role="staff", position=<the label>).
+  // Maps the dropdown's display labels (exactly the 3 account types this
+  // popup allows — see updateTypeSelect's options) to the backend's role.
+  // Always clears position: a specific job title (e.g. "Secretary") is only
+  // ever set via Create Accounts, so switching type here shouldn't leave a
+  // stale one behind making the type display as something other than one
+  // of these 3 labels.
   function labelToRoleAndPosition(label) {
     if (label === "Administrator") return { role: "admin", position: "" };
     if (label === "Barangay Citizen") return { role: "citizen", position: "" };
-    return { role: "staff", position: label };
+    return { role: "staff", position: "" };
   }
 
   editTypeBtn.addEventListener("click", () => {
@@ -171,30 +176,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Reset Password confirmation — generates a real reset token server-side.
-  // NOTE: no email service is wired up yet, so nothing is actually sent to
-  // the user's inbox — see AdminResetPasswordView's docstring.
-  const resetPasswordModal = document.getElementById("resetPasswordModal");
-  const resetPasswordText = document.getElementById("resetPasswordText");
+  // Reset Password is disabled for now (see editResetBtn's `disabled`
+  // attribute in manage-accounts.html) — no email service is wired up yet
+  // to actually deliver a reset link, so there's nothing useful for it to do.
 
-  editResetBtn.addEventListener("click", async () => {
+  // Delete Account: permanently removes the account. Guarded the same way
+  // as disabling/retyping (can't target yourself), plus the last-remaining-
+  // Administrator check — see AdminAccountDetailView.delete.
+  editDeleteBtn.addEventListener("click", async () => {
     if (!activeAccount) return;
-    editResetBtn.disabled = true;
+    if (!window.confirm(`Permanently delete ${activeAccount.owner}'s account? This can't be undone.`)) return;
+
+    editDeleteBtn.disabled = true;
     try {
-      await resetAccountPassword(activeAccount.id);
-      resetPasswordText.textContent = `Password reset link sent to ${activeAccount.email}`;
+      await deleteAccount(activeAccount.id);
+      accounts = accounts.filter((a) => a.id !== activeAccount.id);
       editModal.hidden = true;
-      resetPasswordModal.hidden = false;
+      activeAccount = null;
+      render();
     } catch (err) {
       alert(err.message);
     } finally {
-      editResetBtn.disabled = false;
-    }
-  });
-
-  resetPasswordModal.addEventListener("click", (e) => {
-    if (e.target === resetPasswordModal || e.target.closest("[data-close-modal]")) {
-      editModal.hidden = false;
+      editDeleteBtn.disabled = false;
     }
   });
 });

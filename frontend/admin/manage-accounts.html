@@ -137,7 +137,8 @@
         <div class="edit-account-card__actions">
           <button type="button" class="edit-account-btn edit-account-btn--disable" id="editDisableBtn">&#128683; Disable User</button>
           <button type="button" class="edit-account-btn edit-account-btn--type" id="editTypeBtn">&#9881; Update User Type</button>
-          <button type="button" class="edit-account-btn edit-account-btn--reset" id="editResetBtn">&#128274; Reset Password</button>
+          <button type="button" class="edit-account-btn edit-account-btn--reset" id="editResetBtn" disabled title="Not available yet">&#128274; Reset Password</button>
+          <button type="button" class="edit-account-btn edit-account-btn--delete" id="editDeleteBtn">&#128465; Delete Account</button>
         </div>
       </div>
     </div>
@@ -151,11 +152,9 @@
       <div class="field">
         <label for="updateTypeSelect">Account Type</label>
         <select id="updateTypeSelect">
-          <option>Administrator</option>
-          <option>Barangay Captain</option>
-          <option>Secretary</option>
-          <option>Investigator</option>
           <option>Barangay Citizen</option>
+          <option>Administrator</option>
+          <option>Barangay Staff</option>
         </select>
       </div>
       <div class="btn-row">

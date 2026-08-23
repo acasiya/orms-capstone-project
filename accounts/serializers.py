@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import VoterVerification
+from .models import LoginSession, VoterVerification
 
 User = get_user_model()
 
@@ -101,7 +101,13 @@ class AdminAccountSerializer(serializers.ModelSerializer):
 
     owner = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
-    active = serializers.SerializerMethodField()
+    # Whether the account can log in at all — what the Manage Accounts
+    # Disable/Enable button actually controls. (Previously this field was
+    # computed from last_login recency instead, which meant Disable never
+    # visibly did anything: it flipped is_active correctly on the backend,
+    # but the UI kept showing "Active" as long as the account had logged in
+    # recently, regardless of is_active.)
+    active = serializers.BooleanField(source="is_active", read_only=True)
     lastActiveLabel = serializers.SerializerMethodField()
     activityMinutes = serializers.SerializerMethodField()
     created = serializers.SerializerMethodField()
@@ -123,7 +129,7 @@ class AdminAccountSerializer(serializers.ModelSerializer):
             return "Administrator"
         if obj.role == User.Role.CITIZEN:
             return "Barangay Citizen"
-        return obj.position or "Barangay Official"
+        return obj.position or "Barangay Staff"
 
     def _minutes_since(self, moment):
         from django.utils import timezone
@@ -137,10 +143,6 @@ class AdminAccountSerializer(serializers.ModelSerializer):
         # Never-logged-in accounts sort to the end of "Most Recently Active"
         # rather than floating to the top as if they were just active.
         return minutes if minutes is not None else 10**9
-
-    def get_active(self, obj):
-        minutes = self._minutes_since(obj.last_login)
-        return minutes is not None and minutes < 5
 
     def get_lastActiveLabel(self, obj):
         from django.utils.timesince import timesince
@@ -184,6 +186,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 code="account_unverified",
             )
 
+        # Backs the Administrator Module's View Audit Logs page — one row
+        # per login, closed out by LogoutView when they explicitly log out.
+        LoginSession.objects.create(user=self.user)
+
         data["user"] = UserSerializer(self.user).data
         return data
 
@@ -214,7 +220,7 @@ class PendingVerificationSerializer(serializers.ModelSerializer):
             return "Administrator"
         if obj.user.role == User.Role.CITIZEN:
             return "Barangay Citizen"
-        return obj.user.position or "Barangay Official"
+        return obj.user.position or "Barangay Staff"
 
     def get_photoUrl(self, obj):
         request = self.context.get("request")
@@ -224,3 +230,38 @@ class PendingVerificationSerializer(serializers.ModelSerializer):
     def get_created(self, obj):
         from django.utils.timesince import timesince
         return f"{timesince(obj.created_at)} ago"
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    """Shapes a LoginSession for the admin View Audit Logs page."""
+
+    owner = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
+    loggedOnAt = serializers.DateTimeField(source="logged_in_at", read_only=True)
+    loggedOnLabel = serializers.SerializerMethodField()
+    loggedOffAt = serializers.DateTimeField(source="logged_out_at", read_only=True)
+    loggedOffLabel = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LoginSession
+        fields = ["id", "owner", "type", "loggedOnAt", "loggedOnLabel", "loggedOffAt", "loggedOffLabel"]
+
+    def get_owner(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_type(self, obj):
+        if obj.user.role == User.Role.ADMIN:
+            return "Administrator"
+        if obj.user.role == User.Role.CITIZEN:
+            return "Barangay Citizen"
+        return obj.user.position or "Barangay Staff"
+
+    def _format(self, moment):
+        from django.utils import timezone
+        return timezone.localtime(moment).strftime("%H:%M:%S %m/%d/%Y")
+
+    def get_loggedOnLabel(self, obj):
+        return self._format(obj.logged_in_at)
+
+    def get_loggedOffLabel(self, obj):
+        return self._format(obj.logged_out_at) if obj.logged_out_at else "Still logged in"

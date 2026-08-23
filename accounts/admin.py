@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, VoterVerification
+from .models import LoginSession, User, VoterVerification
 
 
 class CustomUserAdmin(UserAdmin):
@@ -14,3 +14,4 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(VoterVerification)
+admin.site.register(LoginSession)

@@ -1932,6 +1932,15 @@ button {
   background: #4caf6b;
 }
 
+.edit-account-btn--delete {
+  background: #b3261e;
+}
+
+.edit-account-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .edit-account-btn--approve {
   background: #4caf6b;
 }

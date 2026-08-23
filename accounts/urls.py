@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     path("register/", views.RegisterView.as_view(), name="register"),
     path("login/", views.LoginView.as_view(), name="login"),
+    path("logout/", views.LogoutView.as_view(), name="logout"),
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("me/", views.MeView.as_view(), name="me"),
     path("admin/create-user/", views.AdminCreateUserView.as_view(), name="admin_create_user"),
@@ -15,4 +16,5 @@ urlpatterns = [
     path("admin/verifications/", views.AdminListPendingVerificationsView.as_view(), name="admin_list_verifications"),
     path("admin/verifications/<uuid:pk>/approve/", views.AdminApproveVerificationView.as_view(), name="admin_approve_verification"),
     path("admin/verifications/<uuid:pk>/reject/", views.AdminRejectVerificationView.as_view(), name="admin_reject_verification"),
+    path("admin/audit-logs/", views.AdminListAuditLogsView.as_view(), name="admin_list_audit_logs"),
 ]

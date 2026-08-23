@@ -62,3 +62,23 @@ class VoterVerification(models.Model):
 
     def __str__(self):
         return f"Verification for {self.user} — {self.status}"
+
+
+class LoginSession(models.Model):
+    """
+    One row per login, backing the Administrator Module's View Audit Logs
+    page. Created on successful login (CustomTokenObtainPairSerializer);
+    logged_out_at is filled in by LogoutView when the user explicitly logs
+    out, and stays null if they never did (session just expired/closed).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_sessions")
+    logged_in_at = models.DateTimeField(auto_now_add=True)
+    logged_out_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-logged_in_at"]
+
+    def __str__(self):
+        return f"{self.user} @ {self.logged_in_at}"

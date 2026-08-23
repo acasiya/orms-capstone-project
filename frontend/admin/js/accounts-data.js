@@ -35,7 +35,9 @@ async function updateAccount(id, changes) {
   return response.json();
 }
 
-// Used by the "Reset Password" button.
+// Backs the (currently disabled — no email service to actually deliver a
+// reset link yet) "Reset Password" button. Left here, unused, for when
+// that's wired up.
 async function resetAccountPassword(id) {
   const response = await authFetch(`${ADMIN_API_BASE}/users/${id}/reset-password/`, {
     method: "POST",
@@ -44,6 +46,17 @@ async function resetAccountPassword(id) {
     throw new Error("Could not reset this account's password.");
   }
   return response.json();
+}
+
+// Used by the "Delete Account" button.
+async function deleteAccount(id) {
+  const response = await authFetch(`${ADMIN_API_BASE}/users/${id}/`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not delete this account.");
+  }
 }
 
 // Used by the Create Account form — creates a Staff or Admin account.
