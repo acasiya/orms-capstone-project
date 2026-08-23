@@ -33,6 +33,14 @@
   box-sizing: border-box;
 }
 
+/* Belt-and-suspenders: several elements below set their own `display`
+   unconditionally (e.g. `img { display: block }`), which otherwise
+   silently overrides the browser's default hide-on-[hidden] behavior since
+   author styles beat the UA stylesheet regardless of specificity. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -1557,6 +1565,11 @@ button {
 
   .form-row {
     grid-template-columns: 1fr;
+    /* Each stacked .field already carries its own margin-bottom; without
+       this, the grid's row-gap (meant for the desktop 2-column layout)
+       stacks on top of it too, doubling the space between fields that
+       shared a row versus fields between separate rows. */
+    gap: 0;
   }
 
   .auth-card {

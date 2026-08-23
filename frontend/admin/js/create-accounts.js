@@ -1,7 +1,9 @@
-// O.R.M.S. — Create Account: creates a real Staff or Admin account via the
-// API. Citizens intentionally can't be created here — see
-// AdminCreateUserSerializer.validate_role in the backend — they self-
-// register through the Citizen portal's Sign Up flow instead.
+// O.R.M.S. — Create Account: creates a real account (Citizen, Staff, or
+// Admin) via the API. Accounts made here are pre-verified immediately —
+// no voter's ID review — since an admin is creating/vetting it directly.
+// This is separate from the Citizen portal's own Sign Up flow, which is
+// still how residents self-register (and still goes through Approve
+// Accounts for ID verification).
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("createAccountForm");

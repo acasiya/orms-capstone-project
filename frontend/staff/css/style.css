@@ -1523,6 +1523,11 @@ button {
 
   .form-row {
     grid-template-columns: 1fr;
+    /* Each stacked .field already carries its own margin-bottom; without
+       this, the grid's row-gap (meant for the desktop 2-column layout)
+       stacks on top of it too, doubling the space between fields that
+       shared a row versus fields between separate rows. */
+    gap: 0;
   }
 
   .auth-card {

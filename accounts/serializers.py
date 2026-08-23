@@ -45,7 +45,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
-    """Used by Administrators to create Staff or Admin accounts directly (pre-verified)."""
+    """
+    Used by Administrators to create any account directly — Citizen, Staff,
+    or Admin — pre-verified (no voter's ID review needed, since an admin is
+    vetting/entering it directly rather than the person self-registering).
+    """
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
 
@@ -56,13 +60,6 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
             "contact_number", "address", "role", "position",
         ]
         read_only_fields = ["id"]
-
-    def validate_role(self, value):
-        if value == User.Role.CITIZEN:
-            raise serializers.ValidationError(
-                "Citizens self-register through /api/auth/register/, not this endpoint."
-            )
-        return value
 
     def create(self, validated_data):
         password = validated_data.pop("password")

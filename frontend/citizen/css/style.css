@@ -33,6 +33,14 @@
   box-sizing: border-box;
 }
 
+/* Belt-and-suspenders: several elements below set their own `display`
+   unconditionally (e.g. `img { display: block }`), which otherwise
+   silently overrides the browser's default hide-on-[hidden] behavior since
+   author styles beat the UA stylesheet regardless of specificity. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -102,6 +110,20 @@ button {
   flex-wrap: wrap;
   font-family: "Mate SC", var(--serif);
   font-size: 0.85rem;
+}
+
+/* Mobile menu toggle — hidden on desktop, where .navbar__links shows
+   inline as normal (see the media query below for its mobile behavior). */
+.navbar__hamburger {
+  display: none;
+  margin-left: auto;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .navbar__links a {
@@ -466,15 +488,6 @@ button {
   display: flex;
   gap: 14px;
   margin-bottom: 20px;
-}
-
-.ordinances-toolbar select {
-  padding: 11px 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.88rem;
-  background: var(--white);
-  color: var(--text);
 }
 
 .sort-select {
@@ -1479,15 +1492,35 @@ button {
 @media (max-width: 860px) {
   .navbar {
     flex-wrap: wrap;
-    row-gap: 10px;
+    row-gap: 0;
   }
 
+  .navbar__hamburger {
+    display: block;
+  }
+
+  /* Collapsed into a dropdown panel under the top row (brand/hamburger/
+     bell/profile), opened by .navbar__hamburger toggling .is-open — see
+     the mobile nav block in main.js. */
   .navbar__links {
-    order: 3;
+    display: none;
+    order: 4;
     width: 100%;
-    justify-content: flex-start;
-    gap: 16px;
-    overflow-x: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    margin: 10px 0 4px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .navbar__links.is-open {
+    display: flex;
+  }
+
+  .navbar__links a {
+    display: block;
+    padding: 10px 4px;
   }
 
   .info-grid {
@@ -1496,6 +1529,11 @@ button {
 
   .form-row {
     grid-template-columns: 1fr;
+    /* Each stacked .field already carries its own margin-bottom; without
+       this, the grid's row-gap (meant for the desktop 2-column layout)
+       stacks on top of it too, doubling the space between fields that
+       shared a row versus fields between separate rows. */
+    gap: 0;
   }
 
   .auth-card {

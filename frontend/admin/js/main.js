@@ -396,6 +396,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // ---- Mobile nav (hamburger) ----
+  // Injected via JS rather than duplicated into every page's navbar markup
+  // (same approach as the admin sidebar's mobile backdrop). Below ~860px,
+  // style.css hides .navbar__links by default and only shows it with
+  // .is-open — this button is what toggles that.
+  const navLinks = document.querySelector(".navbar__links");
+  const navBrand = document.querySelector(".navbar__brand");
+  if (navLinks && navBrand) {
+    const navHamburger = document.createElement("button");
+    navHamburger.type = "button";
+    navHamburger.className = "navbar__hamburger";
+    navHamburger.setAttribute("aria-label", "Toggle menu");
+    navHamburger.setAttribute("aria-expanded", "false");
+    navHamburger.innerHTML = "&#9776;";
+    navBrand.insertAdjacentElement("afterend", navHamburger);
+
+    const closeNavMenu = () => {
+      navLinks.classList.remove("is-open");
+      navHamburger.setAttribute("aria-expanded", "false");
+    };
+
+    navHamburger.addEventListener("click", () => {
+      const isOpen = navLinks.classList.toggle("is-open");
+      navHamburger.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    // A tapped link (or an auth-gate link that opens a modal instead of
+    // navigating) should close the menu rather than leave it open over
+    // whatever comes next.
+    navLinks.addEventListener("click", (e) => {
+      if (e.target.closest("a")) closeNavMenu();
+    });
+
+    // Rotating a tablet/resizing past the mobile breakpoint while the menu
+    // is open would otherwise leave it stuck open once desktop styles
+    // (where .navbar__links is always visible) no longer apply .is-open.
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 860) closeNavMenu();
+    });
+  }
+
   // ---- Auth-aware nav + account popups ----
   const loggedIn = isLoggedIn();
   const user = getCurrentUser();

@@ -84,7 +84,8 @@ class IsStaffOrAdmin(permissions.BasePermission):
 class AdminCreateUserView(generics.CreateAPIView):
     """
     POST /api/auth/admin/create-user/ — Administrator-only endpoint for
-    creating Staff or Admin accounts (Administrator Module: account creation).
+    creating any account type directly, pre-verified (Administrator Module:
+    account creation).
     """
     queryset = User.objects.all()
     serializer_class = AdminCreateUserSerializer
