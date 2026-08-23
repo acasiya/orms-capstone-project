@@ -1,15 +1,17 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import User
+from .models import User, VoterVerification
 from .serializers import (
     AdminAccountSerializer,
     AdminCreateUserSerializer,
     CustomTokenObtainPairSerializer,
+    PendingVerificationSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -127,6 +129,64 @@ class AdminAccountDetailView(generics.RetrieveUpdateAPIView):
 
         user.save()
         return Response(AdminAccountSerializer(user).data)
+
+
+class AdminListPendingVerificationsView(generics.ListAPIView):
+    """
+    GET /api/auth/admin/verifications/ — Administrator Module: Approve
+    Accounts list. Only accounts still awaiting review show up here;
+    approved/rejected ones drop off (rejection deletes the account, see
+    AdminRejectVerificationView).
+    """
+    queryset = (
+        VoterVerification.objects.filter(status=VoterVerification.Status.PENDING)
+        .select_related("user")
+        .order_by("created_at")
+    )
+    serializer_class = PendingVerificationSerializer
+    permission_classes = [IsAdmin]
+
+    def get_serializer_context(self):
+        # photoUrl needs the request to build an absolute URL for local
+        # (non-Cloudinary) dev, where FileField.url is just "/media/...".
+        return {"request": self.request}
+
+
+class AdminApproveVerificationView(APIView):
+    """POST /api/auth/admin/verifications/<id>/approve/ — marks the account verified."""
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        verification = get_object_or_404(
+            VoterVerification, pk=pk, status=VoterVerification.Status.PENDING
+        )
+        verification.status = VoterVerification.Status.APPROVED
+        verification.reviewed_by = request.user
+        verification.reviewed_at = timezone.now()
+        verification.save()
+        verification.user.is_verified = True
+        verification.user.save(update_fields=["is_verified"])
+        return Response({"detail": "Account approved."})
+
+
+class AdminRejectVerificationView(APIView):
+    """
+    POST /api/auth/admin/verifications/<id>/reject/ — deletes the pending
+    account outright. There's no email service wired up yet to notify a
+    rejected applicant (e.g. to explain what was wrong with their ID and
+    let them resubmit under the same account), so leaving a permanently
+    unverified account around would just be a dead end that always shows
+    "under verification" at login with no way forward. Deleting frees up
+    their email/username so they can sign up again instead.
+    """
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        verification = get_object_or_404(
+            VoterVerification, pk=pk, status=VoterVerification.Status.PENDING
+        )
+        verification.user.delete()
+        return Response({"detail": "Account rejected."})
 
 
 class AdminResetPasswordView(APIView):

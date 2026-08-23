@@ -1,14 +1,40 @@
-// O.R.M.S. — placeholder records for the admin "Approve Accounts" page.
-// These are newly registered accounts awaiting voter's ID verification.
+// O.R.M.S. — Approve Accounts data, backed by the real API.
+// Used to return a hardcoded PENDING_ACCOUNTS array; now fetches from
+// GET /api/auth/admin/verifications/ (see PendingVerificationSerializer),
+// shaped to match what approve-accounts.js already expects (id/owner/
+// email/type/photoUrl/created).
 
-const PENDING_ACCOUNTS = [
-  { id: "000001", owner: "Liza Almoreno", email: "jdelacruz@gmail.com", type: "Administrator", idPhoto: "voters-id-000001.jpg", created: "4 Hours Ago" },
-  { id: "000002", owner: "Joseph Michael", email: "jdelacruz@gmail.com", type: "Administrator", idPhoto: "voters-id-000002.jpg", created: "5 Hours Ago" },
-  { id: "2024001", owner: "Eliseo Aurelio Jr.", email: "jdelacruz@gmail.com", type: "Barangay Captain", idPhoto: "voters-id-2024001.jpg", created: "6 Hours Ago" },
-  { id: "2024002", owner: "Dan Paul Tarzona", email: "jdelacruz@gmail.com", type: "Secretary", idPhoto: "voters-id-2024002.jpg", created: "7 Hours Ago" },
-  { id: "2024015", owner: "Detective Conan", email: "jdelacruz@gmail.com", type: "Investigator", idPhoto: "voters-id-2024015.jpg", created: "8 Hours Ago" },
-  { id: "2024016", owner: "Dexter Morgan", email: "jdelacruz@gmail.com", type: "Investigator", idPhoto: "voters-id-2024016.jpg", created: "9 Hours Ago" },
-  { id: "2024017", owner: "Bruce Wayne", email: "jdelacruz@gmail.com", type: "Investigator", idPhoto: "voters-id-2024017.jpg", created: "10 Hours Ago" },
-  { id: "0000034", owner: "Risa Hontiveros", email: "jdelacruz@gmail.com", type: "Barangay Citizen", idPhoto: "voters-id-0000034.jpg", created: "11 Hours Ago" },
-  { id: "0000033", owner: "Bam Aquino", email: "jdelacruz@gmail.com", type: "Barangay Citizen", idPhoto: "voters-id-0000033.jpg", created: "1 Day Ago" },
-];
+const ADMIN_API_BASE = "/api/auth/admin";
+
+async function getPendingVerifications() {
+  const response = await authFetch(`${ADMIN_API_BASE}/verifications/`);
+  if (!response.ok) {
+    throw new Error("Could not load pending accounts. Try refreshing the page.");
+  }
+  return response.json();
+}
+
+// Marks the account verified — it can log in immediately after this.
+async function approveVerification(id) {
+  const response = await authFetch(`${ADMIN_API_BASE}/verifications/${id}/approve/`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not approve this account.");
+  }
+  return response.json();
+}
+
+// Deletes the pending account outright — see AdminRejectVerificationView's
+// docstring for why (no email service to notify/let them resubmit yet).
+async function rejectVerification(id) {
+  const response = await authFetch(`${ADMIN_API_BASE}/verifications/${id}/reject/`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not reject this account.");
+  }
+  return response.json();
+}

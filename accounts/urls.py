@@ -12,4 +12,7 @@ urlpatterns = [
     path("admin/users/", views.AdminListUsersView.as_view(), name="admin_list_users"),
     path("admin/users/<uuid:pk>/", views.AdminAccountDetailView.as_view(), name="admin_account_detail"),
     path("admin/users/<uuid:pk>/reset-password/", views.AdminResetPasswordView.as_view(), name="admin_reset_password"),
+    path("admin/verifications/", views.AdminListPendingVerificationsView.as_view(), name="admin_list_verifications"),
+    path("admin/verifications/<uuid:pk>/approve/", views.AdminApproveVerificationView.as_view(), name="admin_approve_verification"),
+    path("admin/verifications/<uuid:pk>/reject/", views.AdminRejectVerificationView.as_view(), name="admin_reject_verification"),
 ]

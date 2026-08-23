@@ -1,7 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from .models import VoterVerification
 
 User = get_user_model()
 
@@ -10,20 +13,25 @@ class RegisterSerializer(serializers.ModelSerializer):
     """
     Public self-registration. Always creates a `citizen` role account —
     Staff and Admin accounts are created separately by an Administrator
-    (see AdminCreateUserSerializer), never through open signup.
+    (see AdminCreateUserSerializer), never through open signup. Also
+    requires a voter's ID photo, which creates a pending VoterVerification
+    row for an Administrator to review (see AdminApproveVerificationView) —
+    the account can't log in until then, see CustomTokenObtainPairSerializer.
     """
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
+    voter_id_image = serializers.ImageField(write_only=True)
 
     class Meta:
         model = User
         fields = [
             "id", "email", "password", "first_name", "last_name",
-            "contact_number", "address",
+            "contact_number", "address", "voter_id_image",
         ]
         read_only_fields = ["id"]
 
     def create(self, validated_data):
+        voter_id_image = validated_data.pop("voter_id_image")
         password = validated_data.pop("password")
         # username isn't used for login, but Django's User model requires one;
         # derive it from email so it stays unique without asking the resident for it.
@@ -32,6 +40,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+        VoterVerification.objects.create(user=user, voter_id_image=voter_id_image)
         return user
 
 
@@ -165,5 +174,53 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
+
+        # Citizens start unverified until an Administrator approves their
+        # voter's ID (see AdminApproveVerificationView). Staff/Admin accounts
+        # are created pre-verified, so this only ever blocks citizens.
+        if not self.user.is_verified:
+            raise AuthenticationFailed(
+                "Your account is still under verification. Please try again later.",
+                code="account_unverified",
+            )
+
         data["user"] = UserSerializer(self.user).data
         return data
+
+
+class PendingVerificationSerializer(serializers.ModelSerializer):
+    """
+    Shapes a VoterVerification into what the admin Approve Accounts page
+    (frontend/admin/js/approve-accounts.js) expects — owner/email/type/
+    photoUrl/created — mirroring how AdminAccountSerializer shapes accounts
+    for the Manage Accounts page.
+    """
+
+    owner = serializers.SerializerMethodField()
+    email = serializers.EmailField(source="user.email", read_only=True)
+    type = serializers.SerializerMethodField()
+    photoUrl = serializers.SerializerMethodField()
+    created = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VoterVerification
+        fields = ["id", "owner", "email", "type", "photoUrl", "created"]
+
+    def get_owner(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_type(self, obj):
+        if obj.user.role == User.Role.ADMIN:
+            return "Administrator"
+        if obj.user.role == User.Role.CITIZEN:
+            return "Barangay Citizen"
+        return obj.user.position or "Barangay Official"
+
+    def get_photoUrl(self, obj):
+        request = self.context.get("request")
+        url = obj.voter_id_image.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_created(self, obj):
+        from django.utils.timesince import timesince
+        return f"{timesince(obj.created_at)} ago"

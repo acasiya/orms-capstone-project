@@ -13,6 +13,11 @@ const AUTH_STORAGE_KEY = "orms_auth_user";
 const ACCESS_TOKEN_KEY = "orms_access_token";
 const REFRESH_TOKEN_KEY = "orms_refresh_token";
 
+// Holds signup.html's fields in sessionStorage while the resident is on
+// verify-signup.html choosing their ID photo, so the whole signup (text
+// fields + photo) can be submitted as one multipart request from there.
+const SIGNUP_DRAFT_KEY = "orms_signup_draft";
+
 // Maps each backend role to the page it should land on after login, and to
 // which portal folder that role is allowed into. Keeps the redirect logic
 // in one place instead of duplicated per login form.
@@ -61,7 +66,11 @@ async function apiLogin(email, password) {
   }
 
   if (!response.ok) {
-    throw new Error("Incorrect email or password.");
+    // Surfaces the backend's actual reason (e.g. "still under verification")
+    // instead of a generic message, so an unverified/pending account gets a
+    // meaningfully different prompt than a wrong password.
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Incorrect email or password.");
   }
 
   const data = await response.json();
@@ -87,6 +96,30 @@ async function apiLogin(email, password) {
     })
   );
   return data.user.role;
+}
+
+// Public citizen self-registration. Takes a FormData (text fields + the
+// voter_id_image file) since it's a multipart request, not JSON. Doesn't
+// log the resident in — the account stays unverified until an admin
+// approves it, see apiLogin's "still under verification" handling above.
+async function apiRegister(formData) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/register/`, {
+      method: "POST",
+      body: formData,
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not create your account.");
+  }
+
+  return response.json();
 }
 
 // Attaches the stored JWT to a fetch call. Every authenticated API request
@@ -171,6 +204,73 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
         first.setCustomValidity("");
+      }
+
+      // Sign Up step 1 (signup.html): stash the fields in sessionStorage —
+      // the actual account isn't created until step 2 submits, since the
+      // API needs the ID photo and the account together in one request.
+      if (form.dataset.signupStep1 !== undefined) {
+        const password = form.querySelector('[name="password"]');
+        const confirmPassword = form.querySelector('[name="confirmPassword"]');
+        clearFormError(form);
+        if (password.value !== confirmPassword.value) {
+          showFormError(form, "Passwords do not match.");
+          return;
+        }
+
+        sessionStorage.setItem(
+          SIGNUP_DRAFT_KEY,
+          JSON.stringify({
+            email: form.querySelector('[name="email"]').value.trim(),
+            password: password.value,
+            first_name: form.querySelector('[name="first_name"]').value.trim(),
+            last_name: form.querySelector('[name="last_name"]').value.trim(),
+            contact_number: form.querySelector('[name="phone"]').value.trim(),
+            address: form.querySelector('[name="address"]').value.trim(),
+          })
+        );
+        window.location.href = form.dataset.goto;
+        return;
+      }
+
+      // Sign Up step 2 (verify-signup.html): combines step 1's stashed
+      // fields with the ID photo and actually creates the account.
+      if (form.dataset.signupStep2 !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const fileInput = form.querySelector('[name="idPhoto"]');
+        clearFormError(form);
+
+        let draft = null;
+        try {
+          draft = JSON.parse(sessionStorage.getItem(SIGNUP_DRAFT_KEY));
+        } catch {
+          draft = null;
+        }
+        if (!draft) {
+          window.location.href = "signup.html";
+          return;
+        }
+        if (!fileInput.files.length) {
+          showFormError(form, "Please upload a photo of your Barangay ID.");
+          return;
+        }
+
+        const formData = new FormData();
+        Object.entries(draft).forEach(([key, value]) => formData.append(key, value));
+        formData.append("voter_id_image", fileInput.files[0]);
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+        try {
+          await apiRegister(formData);
+          sessionStorage.removeItem(SIGNUP_DRAFT_KEY);
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit";
+        }
+        return;
       }
 
       // The login form hits the real API instead of just navigating.
