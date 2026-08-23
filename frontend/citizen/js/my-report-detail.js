@@ -26,6 +26,28 @@ function formatDateTime(iso) {
   });
 }
 
+const VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"];
+
+// Renders the real uploaded files (photos/videos) into `container`, or
+// falls back to the plain camera-icon placeholder when nothing was
+// attached — same box either way, just with or without real content.
+function renderEvidence(container, urls) {
+  if (!urls || !urls.length) {
+    container.innerHTML = `<div class="evidence-photo" aria-hidden="true">&#128247;</div>`;
+    return;
+  }
+  container.className = "evidence-photo-grid";
+  container.innerHTML = urls
+    .map((url) => {
+      const isVideo = VIDEO_EXTENSIONS.some((ext) => url.toLowerCase().endsWith(ext));
+      const media = isVideo
+        ? `<video src="${url}" muted></video>`
+        : `<img src="${url}" alt="Uploaded evidence" />`;
+      return `<a class="evidence-photo-grid__item" href="${url}" target="_blank" rel="noopener">${media}</a>`;
+    })
+    .join("");
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const id = new URLSearchParams(window.location.search).get("id");
   let report = null;
@@ -48,6 +70,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const timeLabel = formatTime12h(report.incident_time);
   document.getElementById("reportTime").append(new Option(timeLabel, timeLabel, true, true));
   document.getElementById("reportNature").value = report.nature_of_violation;
+  renderEvidence(document.getElementById("evidencePhoto"), report.attachments);
 
   const completedSteps = REPORT_COMPLETED_STEPS[report.status] || 1;
   const timelineItems = document.getElementById("timelineItems");

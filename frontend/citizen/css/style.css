@@ -1233,6 +1233,32 @@ button {
   margin-top: 6px;
 }
 
+/* Holds one or more real uploaded files (Nature of Violation / Suggestion
+   evidence). Falls back to the plain camera-icon .evidence-photo box above
+   when nothing was attached. */
+.evidence-photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.evidence-photo-grid__item {
+  display: block;
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e3e1da;
+}
+
+.evidence-photo-grid__item img,
+.evidence-photo-grid__item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .status-timeline__notice {
   display: flex;
   align-items: flex-start;

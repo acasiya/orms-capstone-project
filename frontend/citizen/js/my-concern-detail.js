@@ -1,5 +1,28 @@
 // O.R.M.S. — My Concern/Suggestion detail: fetch the real concern by the ?id= query param.
 
+const CONCERN_VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"];
+
+// Renders the real uploaded files (photos/videos) into `container`, or
+// falls back to the plain camera-icon placeholder when nothing was
+// attached. Same idea as my-report-detail.js's renderEvidence — kept as
+// its own small copy here since these two pages don't load each other's JS.
+function renderConcernEvidence(container, urls) {
+  if (!urls || !urls.length) {
+    container.innerHTML = `<div class="evidence-photo" aria-hidden="true">&#128247;</div>`;
+    return;
+  }
+  container.className = "evidence-photo-grid";
+  container.innerHTML = urls
+    .map((url) => {
+      const isVideo = CONCERN_VIDEO_EXTENSIONS.some((ext) => url.toLowerCase().endsWith(ext));
+      const media = isVideo
+        ? `<video src="${url}" muted></video>`
+        : `<img src="${url}" alt="Uploaded evidence" />`;
+      return `<a class="evidence-photo-grid__item" href="${url}" target="_blank" rel="noopener">${media}</a>`;
+    })
+    .join("");
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const id = new URLSearchParams(window.location.search).get("id");
   let concern = null;
@@ -18,6 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.title = "Concern/Suggestion — O.R.M.S.";
   document.getElementById("concernLocation").value = concern.location;
   document.getElementById("concernDescription").value = concern.description;
+  renderConcernEvidence(document.getElementById("concernEvidence"), concern.attachments);
   document.getElementById("timelineDateTime").textContent = new Date(concern.created_at).toLocaleString("en-US", {
     month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
   });
