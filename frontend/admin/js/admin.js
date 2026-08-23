@@ -97,6 +97,104 @@ function timeAgo(timestamp) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
+// ---- Notification preferences (opt-in per category) ----
+// Which categories of real backend events raise a bell notification. Off
+// by default — an admin has to explicitly turn each one on, via the
+// checkboxes injected into the notification dropdown below.
+const ADMIN_NOTIF_PREFS_KEY = "orms_admin_notif_prefs";
+
+function getNotifPrefs() {
+  try {
+    return { verifications: false, auditLogs: false, ...JSON.parse(localStorage.getItem(ADMIN_NOTIF_PREFS_KEY)) };
+  } catch {
+    return { verifications: false, auditLogs: false };
+  }
+}
+
+function setNotifPrefs(prefs) {
+  localStorage.setItem(ADMIN_NOTIF_PREFS_KEY, JSON.stringify(prefs));
+}
+
+// "Seen" IDs per category, so polling only raises a notification for items
+// that showed up *after* the admin opted in — not a flood of one
+// notification per already-existing pending account/login the moment they
+// flip the checkbox on. `null` (vs. an empty array) means "never seeded
+// yet," which is how a freshly-enabled category is told to seed silently
+// instead of notifying about everything currently there.
+function getSeenIds(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw === null ? null : JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function setSeenIds(key, ids) {
+  localStorage.setItem(key, JSON.stringify(ids.slice(0, 200)));
+}
+
+const NOTIF_SEEN_VERIFICATIONS_KEY = "orms_admin_seen_verification_ids";
+const NOTIF_SEEN_LOGINS_KEY = "orms_admin_seen_login_ids";
+
+// Polls GET /api/auth/admin/verifications/ (the same endpoint Approve
+// Accounts uses) and raises a notification for any pending account that
+// wasn't there last time this ran.
+async function checkForNewVerifications() {
+  if (!getNotifPrefs().verifications) return;
+
+  let list;
+  try {
+    const res = await authFetch("/api/auth/admin/verifications/");
+    if (!res.ok) return;
+    list = await res.json();
+  } catch {
+    return;
+  }
+
+  const currentIds = list.map((v) => v.id);
+  const seen = getSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY);
+  if (seen === null) {
+    setSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY, currentIds);
+    return;
+  }
+
+  list
+    .filter((v) => !seen.includes(v.id))
+    .forEach((v) => addAdminNotification(`New account verification request from ${v.owner}`));
+  setSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY, currentIds);
+}
+
+// Polls GET /api/auth/admin/audit-logs/ (View Audit Logs' own endpoint) and
+// raises a notification for any login session that wasn't there last time.
+async function checkForNewAuditLogs() {
+  if (!getNotifPrefs().auditLogs) return;
+
+  let list;
+  try {
+    const res = await authFetch("/api/auth/admin/audit-logs/");
+    if (!res.ok) return;
+    list = await res.json();
+  } catch {
+    return;
+  }
+
+  // Bounded window — only the most recent logins are relevant for "new"
+  // detection, and the full log can grow indefinitely.
+  const recent = list.slice(0, 50);
+  const currentIds = recent.map((l) => l.id);
+  const seen = getSeenIds(NOTIF_SEEN_LOGINS_KEY);
+  if (seen === null) {
+    setSeenIds(NOTIF_SEEN_LOGINS_KEY, currentIds);
+    return;
+  }
+
+  recent
+    .filter((l) => !seen.includes(l.id))
+    .forEach((l) => addAdminNotification(`${l.owner} (${l.type}) logged in at ${l.loggedOnLabel}`));
+  setSeenIds(NOTIF_SEEN_LOGINS_KEY, Array.from(new Set(currentIds.concat(seen))));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const sidebarToggle = document.getElementById("sidebarToggle");
   const sidebar = document.querySelector(".admin-sidebar");
@@ -229,6 +327,51 @@ document.addEventListener("DOMContentLoaded", () => {
         : `<li class="notif-dropdown__item">No notifications yet</li>`;
     };
     renderNotifications();
+
+    // Lets the admin choose which real backend events raise a notification
+    // (both off by default — see getNotifPrefs). Injected here via JS
+    // rather than duplicated into every admin page's dropdown markup.
+    const notifTitle = notifDropdown.querySelector(".notif-dropdown__title");
+    const prefsRow = document.createElement("div");
+    prefsRow.className = "notif-dropdown__prefs";
+    prefsRow.innerHTML = `
+      <label class="notif-dropdown__pref-label">
+        <input type="checkbox" id="notifPrefVerifications" />
+        New account verifications
+      </label>
+      <label class="notif-dropdown__pref-label">
+        <input type="checkbox" id="notifPrefAuditLogs" />
+        New action logs
+      </label>
+    `;
+    // Clicking inside the prefs row (including the checkboxes) bubbles up
+    // to notifBell's own click handler otherwise, which would toggle the
+    // dropdown closed the instant a checkbox is clicked.
+    prefsRow.addEventListener("click", (e) => e.stopPropagation());
+    notifTitle.insertAdjacentElement("afterend", prefsRow);
+
+    const prefVerifications = prefsRow.querySelector("#notifPrefVerifications");
+    const prefAuditLogs = prefsRow.querySelector("#notifPrefAuditLogs");
+    const prefs = getNotifPrefs();
+    prefVerifications.checked = prefs.verifications;
+    prefAuditLogs.checked = prefs.auditLogs;
+
+    prefVerifications.addEventListener("change", () => {
+      setNotifPrefs({ ...getNotifPrefs(), verifications: prefVerifications.checked });
+      checkForNewVerifications().then(renderNotifications);
+    });
+    prefAuditLogs.addEventListener("change", () => {
+      setNotifPrefs({ ...getNotifPrefs(), auditLogs: prefAuditLogs.checked });
+      checkForNewAuditLogs().then(renderNotifications);
+    });
+
+    // Check immediately on page load, then keep polling — there's no
+    // real-time push here, so this is what makes new pending accounts /
+    // logins show up as notifications without a full page reload.
+    Promise.all([checkForNewVerifications(), checkForNewAuditLogs()]).then(renderNotifications);
+    setInterval(() => {
+      Promise.all([checkForNewVerifications(), checkForNewAuditLogs()]).then(renderNotifications);
+    }, 30000);
 
     const toggleNotifDropdown = () => {
       notifDropdown.hidden = !notifDropdown.hidden;
