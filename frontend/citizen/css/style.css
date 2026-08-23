@@ -1544,3 +1544,40 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Small phones: tighten spacing, keep touch targets usable ---------- */
+@media (max-width: 480px) {
+  .navbar {
+    padding: 10px 14px;
+  }
+
+  .navbar__brand span {
+    display: none;
+  }
+
+  .auth-card {
+    padding: 20px 16px 18px;
+  }
+
+  .modal-card {
+    max-width: calc(100vw - 32px);
+  }
+
+  .btn,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  .ordinances-table {
+    font-size: 0.82rem;
+  }
+}
+
+/* Ordinances table already scrolls horizontally via .ordinances-table-wrap
+   on narrow screens; this just guarantees that wrapper exists/behaves the
+   same way tables do on the Admin/Staff portals. */
+.ordinances-table-wrap {
+  overflow-x: auto;
+}

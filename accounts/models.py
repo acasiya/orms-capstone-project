@@ -22,6 +22,14 @@ class User(AbstractUser):
     contact_number = models.CharField(max_length=20, blank=True)
     address = models.CharField(max_length=255, blank=True)
 
+    # Free-text job title for Staff accounts only (e.g. "Secretary",
+    # "Investigator", "Barangay Captain") — separate from `role`, which is
+    # what actually controls permissions. Purely for display on the admin
+    # accounts list; left blank for citizen/admin accounts.
+    position = models.CharField(max_length=50, blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
     # Residents start unverified until an admin approves their voter's ID.
     # Staff/Admin accounts are created directly by an admin, so default True.
     is_verified = models.BooleanField(default=False)

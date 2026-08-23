@@ -129,6 +129,10 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
+    # Without this, Django's last_login field never updates on JWT login,
+    # which would make the admin Manage Accounts "Active"/last-active status
+    # meaningless (every account would permanently show "Never logged in").
+    "UPDATE_LAST_LOGIN": True,
 }
 
 # --- CORS ----------------------------------------------------------------

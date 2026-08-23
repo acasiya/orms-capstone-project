@@ -10,4 +10,6 @@ urlpatterns = [
     path("me/", views.MeView.as_view(), name="me"),
     path("admin/create-user/", views.AdminCreateUserView.as_view(), name="admin_create_user"),
     path("admin/users/", views.AdminListUsersView.as_view(), name="admin_list_users"),
+    path("admin/users/<uuid:pk>/", views.AdminAccountDetailView.as_view(), name="admin_account_detail"),
+    path("admin/users/<uuid:pk>/reset-password/", views.AdminResetPasswordView.as_view(), name="admin_reset_password"),
 ]

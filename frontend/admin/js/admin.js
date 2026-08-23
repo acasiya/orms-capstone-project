@@ -26,6 +26,36 @@ function getAdminUser() {
   }
 })();
 
+// Attaches the stored JWT to a fetch call. Same helper as main.js's
+// authFetch (duplicated here rather than shared, since admin.js and
+// main.js are never loaded on the same page — see the loading comment
+// above). Every authenticated admin API call should go through this.
+async function authFetch(path, options = {}) {
+  const token = localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+  return fetch(path, { ...options, headers });
+}
+
+// Shows/clears an inline error message below a form (e.g. Create Account
+// failing because the email's already taken). Same pattern as main.js.
+function showFormError(form, message) {
+  let errEl = form.querySelector(".form-error");
+  if (!errEl) {
+    errEl = document.createElement("p");
+    errEl.className = "form-error";
+    errEl.style.color = "#c0392b";
+    errEl.style.marginTop = "0.5rem";
+    errEl.style.fontSize = "0.9rem";
+    form.appendChild(errEl);
+  }
+  errEl.textContent = message;
+}
+
+function clearFormError(form) {
+  const errEl = form.querySelector(".form-error");
+  if (errEl) errEl.remove();
+}
+
 function accountTypeGroup(type) {
   if (type === "Administrator") return "admin";
   if (type === "Barangay Citizen") return "citizen";
@@ -70,9 +100,44 @@ function timeAgo(timestamp) {
 document.addEventListener("DOMContentLoaded", () => {
   const sidebarToggle = document.getElementById("sidebarToggle");
   const sidebar = document.querySelector(".admin-sidebar");
-  if (sidebarToggle && sidebar) {
+  const shell = document.querySelector(".admin-shell");
+
+  if (sidebarToggle && sidebar && shell) {
+    // A dimmed backdrop behind the mobile drawer — created here rather than
+    // added to every HTML page, since it's only relevant below 900px (see
+    // .admin-sidebar-backdrop in style.css) and every admin/staff page
+    // shares this same sidebar markup.
+    const backdrop = document.createElement("div");
+    backdrop.className = "admin-sidebar-backdrop";
+    shell.appendChild(backdrop);
+
+    const closeSidebar = () => {
+      sidebar.classList.remove("is-collapsed");
+      backdrop.classList.remove("is-visible");
+    };
+
     sidebarToggle.addEventListener("click", () => {
+      const isOpening = !sidebar.classList.contains("is-collapsed");
       sidebar.classList.toggle("is-collapsed");
+      // Only show the dimming backdrop on mobile widths — on desktop,
+      // .is-collapsed instead means "hide the sidebar for more room", where
+      // a backdrop wouldn't make sense.
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        backdrop.classList.toggle("is-visible", isOpening);
+      }
+    });
+
+    backdrop.addEventListener("click", closeSidebar);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSidebar();
+    });
+
+    // A nav link tap should close the drawer too, not leave it open over
+    // the page that just loaded.
+    sidebar.querySelectorAll(".admin-sidebar__nav a").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.matchMedia("(max-width: 900px)").matches) closeSidebar();
+      });
     });
   }
 

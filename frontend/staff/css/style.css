@@ -2705,3 +2705,98 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Mobile navigation (sidebar becomes an off-canvas drawer) ----------
+   Same approach as the Admin portal — see admin/css/style.css for the full
+   explanation. Staff shares the same .admin-shell/.admin-sidebar markup. */
+@media (max-width: 900px) {
+  .admin-shell {
+    position: relative;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(230px, 80vw);
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    display: flex !important;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.25);
+  }
+
+  .admin-sidebar.is-collapsed {
+    transform: translateX(0);
+    display: flex !important;
+  }
+
+  .admin-content {
+    padding: 18px 16px 40px;
+  }
+
+  .admin-toolbar {
+    gap: 10px;
+  }
+
+  .admin-select {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+
+  .concerns-page-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 26, 0.45);
+    z-index: 55;
+  }
+
+  .admin-sidebar-backdrop.is-visible {
+    display: block;
+  }
+}
+
+/* ---------- Small phones: tighten spacing, keep touch targets usable ---------- */
+@media (max-width: 480px) {
+  .admin-topbar {
+    padding: 12px 14px;
+  }
+
+  .admin-content {
+    padding: 14px 12px 32px;
+  }
+
+  .auth-card {
+    padding: 20px 16px 18px;
+  }
+
+  .modal-card,
+  .edit-account-card,
+  .heatmap-modal-card {
+    max-width: calc(100vw - 32px);
+  }
+
+  .btn,
+  .admin-select,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  .admin-table {
+    font-size: 0.82rem;
+  }
+}

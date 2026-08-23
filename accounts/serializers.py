@@ -44,7 +44,7 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "email", "password", "first_name", "last_name",
-            "contact_number", "address", "role",
+            "contact_number", "address", "role", "position",
         ]
         read_only_fields = ["id"]
 
@@ -79,6 +79,73 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_name(self, obj):
         return obj.get_full_name() or obj.username
+
+
+class AdminAccountSerializer(serializers.ModelSerializer):
+    """
+    Shapes a User into exactly the fields the admin Manage Accounts page
+    (frontend/admin/js/manage-accounts.js) already expects — owner/type/
+    active/lastActiveLabel/etc — so that page's existing render/sort/filter
+    logic works unchanged once it fetches from the API instead of the
+    hardcoded ACCOUNTS array.
+    """
+
+    owner = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
+    active = serializers.SerializerMethodField()
+    lastActiveLabel = serializers.SerializerMethodField()
+    activityMinutes = serializers.SerializerMethodField()
+    created = serializers.SerializerMethodField()
+    createdAt = serializers.DateTimeField(source="date_joined", read_only=True)
+    updated = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id", "owner", "email", "type", "active",
+            "lastActiveLabel", "activityMinutes", "created", "createdAt", "updated",
+        ]
+
+    def get_owner(self, obj):
+        return obj.get_full_name() or obj.username
+
+    def get_type(self, obj):
+        if obj.role == User.Role.ADMIN:
+            return "Administrator"
+        if obj.role == User.Role.CITIZEN:
+            return "Barangay Citizen"
+        return obj.position or "Barangay Official"
+
+    def _minutes_since(self, moment):
+        from django.utils import timezone
+        if not moment:
+            return None
+        delta = timezone.now() - moment
+        return max(int(delta.total_seconds() // 60), 0)
+
+    def get_activityMinutes(self, obj):
+        minutes = self._minutes_since(obj.last_login)
+        # Never-logged-in accounts sort to the end of "Most Recently Active"
+        # rather than floating to the top as if they were just active.
+        return minutes if minutes is not None else 10**9
+
+    def get_active(self, obj):
+        minutes = self._minutes_since(obj.last_login)
+        return minutes is not None and minutes < 5
+
+    def get_lastActiveLabel(self, obj):
+        from django.utils.timesince import timesince
+        if not obj.last_login:
+            return "Never logged in"
+        return f"{timesince(obj.last_login)} ago"
+
+    def get_created(self, obj):
+        from django.utils.timesince import timesince
+        return f"{timesince(obj.date_joined)} ago"
+
+    def get_updated(self, obj):
+        from django.utils.timesince import timesince
+        return f"{timesince(obj.updated_at)} ago"
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

@@ -32,9 +32,38 @@ function accountTypeGroup(type) {
 document.addEventListener("DOMContentLoaded", () => {
   const sidebarToggle = document.getElementById("sidebarToggle");
   const sidebar = document.querySelector(".admin-sidebar");
-  if (sidebarToggle && sidebar) {
+  const shell = document.querySelector(".admin-shell");
+
+  if (sidebarToggle && sidebar && shell) {
+    // A dimmed backdrop behind the mobile drawer — created here rather than
+    // added to every HTML page, since it's only relevant below 900px (see
+    // .admin-sidebar-backdrop in style.css).
+    const backdrop = document.createElement("div");
+    backdrop.className = "admin-sidebar-backdrop";
+    shell.appendChild(backdrop);
+
+    const closeSidebar = () => {
+      sidebar.classList.remove("is-collapsed");
+      backdrop.classList.remove("is-visible");
+    };
+
     sidebarToggle.addEventListener("click", () => {
+      const isOpening = !sidebar.classList.contains("is-collapsed");
       sidebar.classList.toggle("is-collapsed");
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        backdrop.classList.toggle("is-visible", isOpening);
+      }
+    });
+
+    backdrop.addEventListener("click", closeSidebar);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSidebar();
+    });
+
+    sidebar.querySelectorAll(".admin-sidebar__nav a").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.matchMedia("(max-width: 900px)").matches) closeSidebar();
+      });
     });
   }
 

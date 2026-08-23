@@ -79,6 +79,7 @@ async function apiLogin(email, password) {
         .slice(0, 2)
         .join("")
         .toUpperCase(),
+      id: data.user.id,
       email: data.user.email,
       mobile: data.user.contact_number,
       address: data.user.address,
