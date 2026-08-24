@@ -19,11 +19,20 @@ const REPORT_LABEL_TO_STATUS = {
 
 let _reportsCache = null;
 
+// Reports store the exact ordinance text the citizen picked (see
+// file-report.js) — that's matched back against ORDINANCES (ordinances-data.js)
+// to get its category, since Ordinances aren't a real backend model yet.
+function categoryForOrdinance(ordinanceText) {
+  const match = ORDINANCES.find((o) => `${o.number} — ${o.title}` === ordinanceText);
+  return match ? match.category : "Other";
+}
+
 function mapReport(r) {
   return {
     id: r.id,
     incidentType: r.ordinance, // closest real analog to the old mock "category" — Ordinances aren't a separate model yet
     ordinance: r.ordinance,
+    category: categoryForOrdinance(r.ordinance),
     location: r.location,
     reporter: r.reporter,
     contactNumber: r.contact_number,

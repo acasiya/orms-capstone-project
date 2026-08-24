@@ -1,17 +1,25 @@
 // O.R.M.S. — Reports Dashboard: week filter, status filter, pagination,
-// stat cards — all real, from reports-data.js's API-backed data. The
-// category pie and heatmap are left as an honest "No data yet" placeholder
-// rather than being rebuilt against real data (out of scope for now).
+// stat cards, and the category pie — all real, from reports-data.js's
+// API-backed data (category comes from matching each report's ordinance
+// against ORDINANCES — see reports-data.js's categoryForOrdinance). The
+// heatmap stays an honest "No data yet": the old mock drove it off a
+// "severity" field real reports don't have, so there's nothing real to
+// show yet.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
   const WEEK_OPTIONS_COUNT = 8;
   const MONTHS_BACK_COUNT = 5;
+  const CATEGORY_COLOR_PALETTE = [
+    "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
+    "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
+  ];
 
   const state = {
     weekOffset: 0,
     statusFilter: "all",
     page: 1,
+    categoryPeriod: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -31,8 +39,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  // Every category ORDINANCES defines, plus "Other" only if some report's
+  // ordinance text didn't match any of them — computed once so the pie
+  // legend doesn't reshuffle as the period dropdown changes.
+  const REPORT_CATEGORIES = Array.from(
+    new Set([...ORDINANCES.map((o) => o.category), ...liveReports().map((r) => r.category)])
+  );
+
+  function categoryColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+    return CATEGORY_COLOR_PALETTE[Math.abs(hash) % CATEGORY_COLOR_PALETTE.length];
+  }
+
   function formatDate(date) {
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  }
+
+  function buildPeriodOptions() {
+    const opts = [{ value: "week", label: "This Week" }];
+    for (let m = 0; m <= MONTHS_BACK_COUNT; m++) {
+      const { start } = getMonthRange(m);
+      opts.push({
+        value: `month${m}`,
+        label: m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      });
+    }
+    return opts;
   }
 
   // ---- Dropdown open/close ----
@@ -214,15 +247,89 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ---- Category pie + heatmap: honest "No data yet" placeholders. These
-  // used to be driven by 28 weeks of randomly-generated mock data; rather
-  // than fabricate a "Reports by Category" breakdown from real data (a
-  // separate, bigger analytics piece), they just say so plainly for now. ----
+  // ---- Reports by Category pie ----
 
-  const categoryCard = document.getElementById("categoryPie")?.closest(".dash-card");
-  if (categoryCard) {
-    categoryCard.innerHTML = `<h2 class="dash-card__title">Reports by Category</h2><div class="ordinances-empty">No data yet</div>`;
+  const categoryPeriodMenu = document.getElementById("categoryPeriodMenu");
+  const categoryPeriodLabel = document.getElementById("categoryPeriodLabel");
+  const categoryPie = document.getElementById("categoryPie");
+  const categoryLegend = document.getElementById("categoryLegend");
+
+  function renderPeriodMenu(menuEl, selectedValue) {
+    menuEl.innerHTML = buildPeriodOptions()
+      .map((o) => `<li data-value="${o.value}" class="${o.value === selectedValue ? "active" : ""}">${o.label}</li>`)
+      .join("");
   }
+
+  function renderCategoryPie() {
+    categoryPie.querySelectorAll(".pie-chart__label, .pie-chart__empty").forEach((el) => el.remove());
+
+    const reports = getReportsForPeriod(state.categoryPeriod);
+    if (!reports.length) {
+      categoryPie.style.background = "var(--border)";
+      categoryPie.insertAdjacentHTML("beforeend", `<div class="pie-chart__empty">No data yet</div>`);
+      categoryLegend.innerHTML = "";
+      return;
+    }
+
+    const counts = {};
+    REPORT_CATEGORIES.forEach((c) => (counts[c] = 0));
+    reports.forEach((r) => (counts[r.category] = (counts[r.category] || 0) + 1));
+    const total = reports.length;
+
+    let cumRaw = 0;
+    const stops = [];
+    const labels = [];
+    REPORT_CATEGORIES.forEach((c) => {
+      const startB = Math.round(cumRaw * 100);
+      cumRaw += (counts[c] || 0) / total;
+      const endB = Math.round(cumRaw * 100);
+      stops.push(`${categoryColor(c)} ${startB}% ${endB}%`);
+      if (endB > startB) labels.push({ mid: (startB + endB) / 2, pct: endB - startB });
+    });
+
+    categoryPie.style.background = `conic-gradient(${stops.join(", ")})`;
+
+    const R = 30;
+    labels.forEach(({ mid, pct }) => {
+      const theta = (mid / 100) * 2 * Math.PI;
+      const x = 50 + R * Math.sin(theta);
+      const y = 50 - R * Math.cos(theta);
+      const span = document.createElement("span");
+      span.className = "pie-chart__label";
+      span.style.left = `${x}%`;
+      span.style.top = `${y}%`;
+      span.textContent = `${pct}%`;
+      categoryPie.appendChild(span);
+    });
+
+    categoryLegend.innerHTML = REPORT_CATEGORIES.map(
+      (c) => `<li><span class="pie-legend__dot" style="background:${categoryColor(c)}"></span>${c} (${counts[c] || 0})</li>`
+    ).join("");
+  }
+
+  function wirePeriodDropdown(menuEl, labelEl, getValue, setValue, onChange) {
+    renderPeriodMenu(menuEl, getValue());
+    menuEl.querySelectorAll("li").forEach((li) => {
+      li.addEventListener("click", () => {
+        setValue(li.dataset.value);
+        labelEl.textContent = li.textContent;
+        renderPeriodMenu(menuEl, getValue());
+        onChange();
+      });
+    });
+  }
+
+  wirePeriodDropdown(
+    categoryPeriodMenu,
+    categoryPeriodLabel,
+    () => state.categoryPeriod,
+    (v) => (state.categoryPeriod = v),
+    renderCategoryPie
+  );
+
+  // ---- Incident heatmap: still an honest "No data yet" — the old mock drove
+  // it off a "severity" field real reports don't have (see file header). ----
+
   const heatmapCard = document.getElementById("heatmapCanvas")?.closest(".dash-card");
   if (heatmapCard) {
     heatmapCard.innerHTML = `<h2 class="dash-card__title">Incident Heatmap</h2><div class="ordinances-empty">No data yet</div>`;
@@ -238,4 +345,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   renderAll();
+  renderCategoryPie();
 });
