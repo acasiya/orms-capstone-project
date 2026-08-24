@@ -54,6 +54,7 @@ class Concern(models.Model):
     location = models.CharField(max_length=255, blank=True)
     description = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
+    remarks = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

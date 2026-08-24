@@ -1,7 +1,7 @@
-// O.R.M.S. — Reports Management: search + filter (type/date/status) + paginate
-// across all mock reports from reports-data.js.
+// O.R.M.S. — Reports Management: search + filter (type/date/status) +
+// paginate across real reports from reports-data.js (GET /api/reports/staff/).
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 8;
 
   const searchForm = document.getElementById("reportSearchForm");
@@ -14,12 +14,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let page = 1;
 
-  INCIDENT_TYPES.forEach((t) => {
-    const opt = document.createElement("option");
-    opt.value = t.name;
-    opt.textContent = t.name;
-    typeFilter.appendChild(opt);
-  });
+  list.innerHTML = `<div class="ordinances-empty">Loading reports...</div>`;
+  try {
+    await ensureReportsLoaded();
+  } catch (err) {
+    list.innerHTML = `<div class="ordinances-empty">${err.message}</div>`;
+    return;
+  }
+
+  // No fixed category list anymore (that was mock data) — the type filter
+  // now only ever offers ordinances that actually appear in real reports.
+  Array.from(new Set(liveReports().map((r) => r.incidentType)))
+    .sort()
+    .forEach((type) => {
+      const opt = document.createElement("option");
+      opt.value = type;
+      opt.textContent = type;
+      typeFilter.appendChild(opt);
+    });
 
   const badgeClass = {
     "New Submission": "status-badge--submitted",
@@ -55,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
       rows = rows.filter(
         (r) =>
           r.incidentType.toLowerCase().includes(query) ||
-          r.id.toLowerCase().includes(query) ||
           r.location.toLowerCase().includes(query) ||
           r.reporter.toLowerCase().includes(query)
       );
@@ -83,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>`
           )
           .join("")
-      : `<div class="ordinances-empty">No reports match your search or filters.</div>`;
+      : `<div class="ordinances-empty">${liveReports().length ? "No reports match your search or filters." : "No reports submitted yet."}</div>`;
 
     const pages = buildPageList(page, totalPages);
     let html = `<button type="button" data-page="prev" ${page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;

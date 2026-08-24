@@ -48,6 +48,141 @@ function renderAvatar(container, user) {
   }
 }
 
+// ---- Notifications (bell icon in the navbar) ----
+// Status/remarks updates on the citizen's own reports/concerns raise a
+// notification automatically (no opt-in — this is exactly what the bell
+// was always supposed to be for). Stored in localStorage so a notification
+// raised on one page is still there after navigating to another.
+const CITIZEN_NOTIFICATIONS_KEY = "orms_citizen_notifications";
+const CITIZEN_NOTIFICATIONS_MAX = 20;
+
+function makeNotifId() {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getCitizenNotifications() {
+  let notifications;
+  try {
+    notifications = JSON.parse(localStorage.getItem(CITIZEN_NOTIFICATIONS_KEY)) || [];
+  } catch {
+    notifications = [];
+  }
+  let backfilled = false;
+  notifications = notifications.map((n) => {
+    if (n.id) return n;
+    backfilled = true;
+    return { ...n, id: makeNotifId() };
+  });
+  if (backfilled) localStorage.setItem(CITIZEN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  return notifications;
+}
+
+function addCitizenNotification(message) {
+  const notifications = getCitizenNotifications();
+  notifications.unshift({ id: makeNotifId(), message, time: Date.now() });
+  localStorage.setItem(
+    CITIZEN_NOTIFICATIONS_KEY,
+    JSON.stringify(notifications.slice(0, CITIZEN_NOTIFICATIONS_MAX))
+  );
+}
+
+function removeCitizenNotification(id) {
+  const notifications = getCitizenNotifications().filter((n) => n.id !== id);
+  localStorage.setItem(CITIZEN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+}
+
+function citizenTimeAgo(timestamp) {
+  const minutes = Math.floor((Date.now() - timestamp) / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+const REPORT_STATUS_LABELS_FOR_NOTIF = {
+  submitted: "Submitted",
+  in_process: "In Process",
+  resolved: "Resolved",
+  with_remarks: "With Remarks",
+};
+const CONCERN_STATUS_LABELS_FOR_NOTIF = { submitted: "Submitted", resolved: "Resolved" };
+
+// Snapshots each report/concern's status+remarks (keyed by id) so a later
+// poll can tell whether it's actually changed since last seen. A brand-new
+// item still sitting at its just-submitted default (status "submitted", no
+// remarks) is baselined silently, since that's exactly the submission the
+// citizen just made themselves. But an item seen for the first time in any
+// other state — e.g. the citizen never had the app open between filing a
+// report and staff already acting on it — is itself a change worth
+// surfacing, not a silent baseline: otherwise that update would never be
+// seen.
+function getNotifSnapshot(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function setNotifSnapshot(key, snapshot) {
+  localStorage.setItem(key, JSON.stringify(snapshot));
+}
+
+const REPORT_SNAPSHOT_KEY = "orms_citizen_report_snapshot";
+const CONCERN_SNAPSHOT_KEY = "orms_citizen_concern_snapshot";
+
+async function checkForReportUpdates() {
+  let list;
+  try {
+    const res = await authFetch("/api/reports/");
+    if (!res.ok) return;
+    list = await res.json();
+  } catch {
+    return;
+  }
+
+  const snapshot = getNotifSnapshot(REPORT_SNAPSHOT_KEY);
+  list.forEach((r) => {
+    const hash = `${r.status}|${r.remarks}`;
+    const isFirstSight = !(r.id in snapshot);
+    const isFreshSubmission = r.status === "submitted" && !r.remarks;
+    const changed = isFirstSight ? !isFreshSubmission : snapshot[r.id] !== hash;
+    if (changed) {
+      const label = REPORT_STATUS_LABELS_FOR_NOTIF[r.status] || r.status;
+      addCitizenNotification(`Your report "${r.ordinance}" is now ${label}.`);
+    }
+    snapshot[r.id] = hash;
+  });
+  setNotifSnapshot(REPORT_SNAPSHOT_KEY, snapshot);
+}
+
+async function checkForConcernUpdates() {
+  let list;
+  try {
+    const res = await authFetch("/api/concerns/");
+    if (!res.ok) return;
+    list = await res.json();
+  } catch {
+    return;
+  }
+
+  const snapshot = getNotifSnapshot(CONCERN_SNAPSHOT_KEY);
+  list.forEach((c) => {
+    const hash = `${c.status}|${c.remarks}`;
+    const isFirstSight = !(c.id in snapshot);
+    const isFreshSubmission = c.status === "submitted" && !c.remarks;
+    const changed = isFirstSight ? !isFreshSubmission : snapshot[c.id] !== hash;
+    if (changed) {
+      const label = CONCERN_STATUS_LABELS_FOR_NOTIF[c.status] || c.status;
+      addCitizenNotification(`Your concern/suggestion is now ${label}.`);
+    }
+    snapshot[c.id] = hash;
+  });
+  setNotifSnapshot(CONCERN_SNAPSHOT_KEY, snapshot);
+}
+
 function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
@@ -565,12 +700,53 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Bell icon: toggles the notifications dropdown anchored beneath it
+  // Bell icon: toggles the notifications dropdown anchored beneath it, and
+  // (while logged in) polls for real status updates on the citizen's own
+  // reports/concerns to populate it.
   const notifBell = document.getElementById("notifBell");
   const notifDropdown = document.getElementById("notifDropdown");
-  if (notifBell && notifDropdown) {
+  const notifBadge = document.getElementById("notifBadge");
+  const notifList = document.getElementById("notifList");
+
+  if (notifBell && notifDropdown && notifList) {
+    const renderNotifications = () => {
+      const notifications = getCitizenNotifications();
+      if (notifBadge) notifBadge.hidden = notifications.length === 0;
+      notifList.innerHTML = notifications.length
+        ? notifications
+            .map(
+              (n) => `
+              <li class="notif-dropdown__item">
+                <div class="notif-dropdown__content">
+                  <span class="notif-dropdown__message">${n.message}</span>
+                  <span class="notif-dropdown__time">${citizenTimeAgo(n.time)}</span>
+                </div>
+                <button type="button" class="notif-dropdown__dismiss" data-dismiss="${n.id}" aria-label="Dismiss notification">&times;</button>
+              </li>`
+            )
+            .join("")
+        : `<li class="notif-dropdown__item">No notifications yet</li>`;
+    };
+    renderNotifications();
+
+    notifList.addEventListener("click", (e) => {
+      const dismissBtn = e.target.closest("[data-dismiss]");
+      if (!dismissBtn) return;
+      e.stopPropagation();
+      removeCitizenNotification(dismissBtn.dataset.dismiss);
+      renderNotifications();
+    });
+
+    if (loggedIn) {
+      Promise.all([checkForReportUpdates(), checkForConcernUpdates()]).then(renderNotifications);
+      setInterval(() => {
+        Promise.all([checkForReportUpdates(), checkForConcernUpdates()]).then(renderNotifications);
+      }, 30000);
+    }
+
     const toggleNotifDropdown = () => {
       notifDropdown.hidden = !notifDropdown.hidden;
+      if (!notifDropdown.hidden) renderNotifications();
     };
     notifBell.addEventListener("click", (e) => {
       e.stopPropagation();

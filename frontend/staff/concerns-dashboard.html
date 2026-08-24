@@ -33,14 +33,10 @@
         <button type="button" class="admin-topbar__menu-btn" id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
         <div class="admin-topbar__profile">
           <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
-            &#128276;<span class="navbar__badge"></span>
+            &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
             <div class="notif-dropdown" id="notifDropdown" hidden>
               <h3 class="notif-dropdown__title">Notifications</h3>
-              <ul class="notif-dropdown__list">
-                <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">20 minutes ago</span></li>
-                <li class="notif-dropdown__item"><span>A suggestion was filed into a folder</span><span class="notif-dropdown__time">2 hours ago</span></li>
-                <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">5 hours ago</span></li>
-              </ul>
+              <ul class="notif-dropdown__list" id="notifList"></ul>
             </div>
           </span>
           <button type="button" class="admin-topbar__profile-btn" id="profileBtn">

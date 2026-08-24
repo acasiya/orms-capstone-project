@@ -21,15 +21,10 @@
       <li data-auth-only><a href="my-concerns.html">My Concerns/Suggestions</a></li>
     </ul>
     <span class="navbar__bell" data-auth-only role="button" tabindex="0" id="notifBell">
-      &#128276;<span class="navbar__badge"></span>
+      &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
       <div class="notif-dropdown" id="notifDropdown" hidden>
         <h3 class="notif-dropdown__title">Notifications</h3>
-        <ul class="notif-dropdown__list">
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">5 minutes ago</span></li>
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">15 minutes ago</span></li>
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">20 minutes ago</span></li>
-          <li class="notif-dropdown__item"><span>Your report has new updates</span><span class="notif-dropdown__time">25 minutes ago</span></li>
-        </ul>
+        <ul class="notif-dropdown__list" id="notifList"></ul>
       </div>
     </span>
     <div class="navbar__profile" role="button" tabindex="0">&#128100;</div>

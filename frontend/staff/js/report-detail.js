@@ -1,34 +1,63 @@
-// O.R.M.S. — Report detail: view a report's info and let staff change its
-// status (and attach remarks when the status is "With Remarks"). Edits are
-// kept in localStorage (via saveReportOverride) so they show up back on the
-// dashboard and reports list too.
+// O.R.M.S. — Report detail: view a report's real info and let staff change
+// its status (and attach remarks when the status is "With Remarks"). Saves
+// go through updateReportStatus (PATCH /api/reports/staff/<id>/) instead of
+// the old localStorage-only mock.
 
-document.addEventListener("DOMContentLoaded", () => {
+function formatTime12h(hhmmss) {
+  const [h, m] = hhmmss.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+const REPORT_EVIDENCE_VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"];
+
+function renderReportEvidence(container, urls) {
+  if (!urls || !urls.length) {
+    container.innerHTML = `<div class="evidence-photo" aria-hidden="true">&#128247;</div>`;
+    return;
+  }
+  container.className = "evidence-photo-grid";
+  container.innerHTML = urls
+    .map((url) => {
+      const isVideo = REPORT_EVIDENCE_VIDEO_EXTENSIONS.some((ext) => url.toLowerCase().endsWith(ext));
+      const media = isVideo ? `<video src="${url}" muted></video>` : `<img src="${url}" alt="Uploaded evidence" />`;
+      return `<a class="evidence-photo-grid__item" href="${url}" target="_blank" rel="noopener">${media}</a>`;
+    })
+    .join("");
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   const id = new URLSearchParams(window.location.search).get("id");
+  const main = document.querySelector(".report-detail-main");
+
+  try {
+    await ensureReportsLoaded();
+  } catch (err) {
+    main.innerHTML = `<p>${err.message}</p>`;
+    return;
+  }
+
   const report = getReportById(id);
 
   if (!report) {
-    document.querySelector(".report-detail-main").innerHTML = "<p>Report not found.</p>";
+    main.innerHTML = "<p>Report not found.</p>";
     return;
   }
 
   document.title = `${report.incidentType} — O.R.M.S.`;
 
-  function toDateInputValue(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-
   document.getElementById("reportName").value = report.reporter;
-  document.getElementById("reportContact").value = report.contactNumber;
+  document.getElementById("reportContact").value = report.contactNumber || "";
   document.getElementById("reportLocation").value = report.location;
   document.getElementById("reportOrdinance").append(new Option(report.ordinance, report.ordinance, true, true));
-  document.getElementById("reportDate").value = toDateInputValue(report.dateSubmitted);
-  const timeStr = report.dateSubmitted.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  document.getElementById("reportTime").append(new Option(timeStr, timeStr, true, true));
+  document.getElementById("reportDate").value = report.incidentDate;
+  const timeLabel = formatTime12h(report.incidentTimeRaw);
+  document.getElementById("reportTime").append(new Option(timeLabel, timeLabel, true, true));
   document.getElementById("reportNature").value = report.natureOfViolation;
+
+  const evidenceEl = document.querySelector(".evidence-photo");
+  if (evidenceEl) renderReportEvidence(evidenceEl, report.attachments);
 
   const STATUSES_ORDERED = ["New Submission", "In Process", "Resolved", "With Remarks"];
   const STATUS_PILL_CLASS = {
@@ -77,8 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderTimeline(status, dateSubmitted) {
     const steps = [
-      { label: "Submitted", description: "Your report has been submitted successfully.", hours: 0 },
-      { label: "Under Review", description: "Your report is being reviewed", hours: 3 },
+      { label: "Submitted", description: "The report was submitted.", hours: 0 },
+      { label: "Under Review", description: "The report is being reviewed", hours: 3 },
       { label: "For Action", description: "Appropriate actions are being taken.", hours: 26 },
       { label: "Final Verdict", description: "Report is finished and closed.", hours: 50 },
     ];
@@ -130,27 +159,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return false;
   }
 
-  function commitSave() {
-    currentStatus = pendingStatus();
+  async function commitSave() {
+    const nextStatus = pendingStatus();
     const patch = {
-      status: currentStatus,
-      remarks: currentStatus === "With Remarks" ? remarksInput.value.trim() : "",
+      status: nextStatus,
+      remarks: nextStatus === "With Remarks" ? remarksInput.value.trim() : "",
     };
-    saveReportOverride(report.id, patch);
-    savedStatus = currentStatus;
-    savedRemarks = patch.remarks;
 
-    applyPill(currentStatus);
-    updateRemarksEnabled(currentStatus);
-    remarksInput.value = patch.remarks;
-    statusPill.hidden = false;
-    statusSelect.hidden = true;
-    renderTimeline(currentStatus, report.dateSubmitted);
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+    try {
+      await updateReportStatus(report.id, patch);
+      currentStatus = nextStatus;
+      savedStatus = currentStatus;
+      savedRemarks = patch.remarks;
+
+      applyPill(currentStatus);
+      updateRemarksEnabled(currentStatus);
+      remarksInput.value = patch.remarks;
+      statusPill.hidden = false;
+      statusSelect.hidden = true;
+      renderTimeline(currentStatus, report.dateSubmitted);
+      return true;
+    } catch (err) {
+      alert(err.message);
+      return false;
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Changes";
+    }
   }
 
-  saveBtn.addEventListener("click", () => {
-    commitSave();
-    saveConfirmModal.hidden = false;
+  saveBtn.addEventListener("click", async () => {
+    if (await commitSave()) saveConfirmModal.hidden = false;
   });
   saveConfirmOk.addEventListener("click", () => {
     saveConfirmModal.hidden = true;
@@ -167,10 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
       goToReports();
     }
   });
-  unsavedSaveBtn.addEventListener("click", () => {
-    commitSave();
+  unsavedSaveBtn.addEventListener("click", async () => {
     unsavedChangesModal.hidden = true;
-    goToReports();
+    if (await commitSave()) goToReports();
   });
   unsavedDiscardBtn.addEventListener("click", () => {
     unsavedChangesModal.hidden = true;
@@ -184,16 +224,4 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.target === overlay) overlay.hidden = true;
     });
   });
-
-  const notifBell = document.getElementById("notifBell");
-  const notifDropdown = document.getElementById("notifDropdown");
-  if (notifBell && notifDropdown) {
-    notifBell.addEventListener("click", (e) => {
-      e.stopPropagation();
-      notifDropdown.hidden = !notifDropdown.hidden;
-    });
-    document.addEventListener("click", () => {
-      notifDropdown.hidden = true;
-    });
-  }
 });

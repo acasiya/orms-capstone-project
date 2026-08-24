@@ -11,14 +11,10 @@
   <header class="admin-topbar">
     <div class="admin-topbar__profile">
       <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
-        &#128276;<span class="navbar__badge"></span>
+        &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
         <div class="notif-dropdown" id="notifDropdown" hidden>
           <h3 class="notif-dropdown__title">Notifications</h3>
-          <ul class="notif-dropdown__list">
-            <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">20 minutes ago</span></li>
-            <li class="notif-dropdown__item"><span>A suggestion was filed into a folder</span><span class="notif-dropdown__time">2 hours ago</span></li>
-            <li class="notif-dropdown__item"><span>New concern submitted</span><span class="notif-dropdown__time">5 hours ago</span></li>
-          </ul>
+          <ul class="notif-dropdown__list" id="notifList"></ul>
         </div>
       </span>
       <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
@@ -67,15 +63,11 @@
 
         <div class="dash-card status-edit-card">
           <div class="status-edit-row">
-            <span class="status-edit-label">Folder:</span>
+            <span class="status-edit-label">Status:</span>
+            <span class="status-pill" id="statusPill"></span>
+            <select id="statusSelect" class="reports-filter" hidden></select>
+            <button type="button" class="status-edit-btn" id="statusEditBtn" aria-label="Edit status">&#9999;&#65039;</button>
           </div>
-          <div id="folderAssigned" hidden>
-            <div class="folder-row">
-              <span class="folder-chip" id="folderChip"></span>
-              <button type="button" class="folder-icon-btn folder-icon-btn--delete" id="folderUnassignBtn" aria-label="Remove from folder">&#10005;</button>
-            </div>
-          </div>
-          <button type="button" class="folder-add-btn" id="assignFolderBtn" aria-label="Assign to a folder">+</button>
 
           <label for="remarksInput" class="status-edit-remarks-label">Remarks:</label>
           <textarea id="remarksInput" class="status-edit-remarks" placeholder="Enter remarks to be shown to reportee." disabled></textarea>
@@ -115,28 +107,6 @@
       <div class="btn-row">
         <button type="button" class="btn" id="logoutYes">Yes</button>
         <button type="button" class="btn btn-danger" id="logoutNo">No</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Assign to folder -->
-  <div class="modal-overlay" id="assignFolderModal" hidden>
-    <div class="modal-card">
-      <h2>Assign to Folder</h2>
-      <div class="field">
-        <label for="assignFolderSelect">Choose an existing folder</label>
-        <select id="assignFolderSelect">
-          <option value="">&mdash; Select a folder &mdash;</option>
-        </select>
-      </div>
-      <div class="divider">OR</div>
-      <div class="field">
-        <label for="assignFolderNewInput">Create a new folder</label>
-        <input type="text" id="assignFolderNewInput" placeholder="e.g. No Loud Karaoke After 10PM" />
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn" id="assignFolderConfirm">Assign</button>
-        <button type="button" class="btn btn-danger" id="assignFolderCancel">Cancel</button>
       </div>
     </div>
   </div>

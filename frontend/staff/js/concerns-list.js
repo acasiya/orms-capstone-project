@@ -1,168 +1,35 @@
-// O.R.M.S. — Concerns/Suggestions list: search, folder filter, and folder
-// create/rename/delete. Folder state lives in concerns-data.js (localStorage).
+// O.R.M.S. — Concerns/Suggestions list: search, status filter, and
+// pagination across real concerns from concerns-data.js
+// (GET /api/concerns/staff/). Replaces the previous folder-based browsing —
+// there's no backend folder concept (see concerns-data.js).
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 9;
 
   const searchForm = document.getElementById("concernSearchForm");
   const searchInput = document.getElementById("concernSearchInput");
+  const statusFilter = document.getElementById("statusFilter");
   const list = document.getElementById("concernsList");
   const pagination = document.getElementById("concernsPagination");
-  const foldersList = document.getElementById("foldersList");
-  const allFoldersBtn = document.getElementById("allFoldersBtn");
-  const addFolderBtn = document.getElementById("addFolderBtn");
-
-  const folderNameModal = document.getElementById("folderNameModal");
-  const folderNameModalTitle = document.getElementById("folderNameModalTitle");
-  const folderNameInput = document.getElementById("folderNameInput");
-  const folderNameConfirm = document.getElementById("folderNameConfirm");
-  const folderNameCancel = document.getElementById("folderNameCancel");
-
-  const folderDeleteModal = document.getElementById("folderDeleteModal");
-  const folderDeleteName = document.getElementById("folderDeleteName");
-  const folderDeleteConfirm = document.getElementById("folderDeleteConfirm");
-  const folderDeleteCancel = document.getElementById("folderDeleteCancel");
 
   let page = 1;
-  let activeFolder = null; // null = "All Concerns/Suggestions"
-  let folderModalMode = "create"; // "create" | "rename"
-  let renameTarget = null;
-  let deleteTarget = null;
+
+  list.innerHTML = `<div class="ordinances-empty">Loading concerns/suggestions...</div>`;
+  try {
+    await ensureConcernsLoaded();
+  } catch (err) {
+    list.innerHTML = `<div class="ordinances-empty">${err.message}</div>`;
+    return;
+  }
 
   const badgeClass = {
-    "New Submission": "status-badge--submitted",
-    "In Folder": "status-badge--resolved",
+    Submitted: "status-badge--submitted",
+    Resolved: "status-badge--resolved",
   };
 
-  function folderCount(name) {
-    return liveConcerns().filter((c) => c.status === "In Folder" && c.folder === name).length;
+  function truncate(text, max) {
+    return text.length > max ? `${text.slice(0, max)}…` : text;
   }
-
-  function renderFolders() {
-    foldersList.innerHTML = getFoldersList()
-      .map(
-        (name) => `
-        <div class="folder-row">
-          <button type="button" class="folder-chip${activeFolder === name ? " active" : ""}" data-folder="${name}">
-            <span>&#128193; ${name}</span>
-            <span class="folder-chip__count">(${folderCount(name)})</span>
-          </button>
-          <button type="button" class="folder-icon-btn" data-rename="${name}" aria-label="Rename ${name}">&#9999;&#65039;</button>
-          <button type="button" class="folder-icon-btn folder-icon-btn--delete" data-delete="${name}" aria-label="Delete ${name}">&#128465;&#65039;</button>
-        </div>`
-      )
-      .join("");
-
-    foldersList.querySelectorAll(".folder-chip").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        activeFolder = btn.dataset.folder;
-        allFoldersBtn.classList.remove("active");
-        page = 1;
-        renderFolders();
-        render();
-      });
-    });
-    foldersList.querySelectorAll("[data-rename]").forEach((btn) => {
-      btn.addEventListener("click", () => openRenameModal(btn.dataset.rename));
-    });
-    foldersList.querySelectorAll("[data-delete]").forEach((btn) => {
-      btn.addEventListener("click", () => openDeleteModal(btn.dataset.delete));
-    });
-  }
-
-  allFoldersBtn.addEventListener("click", () => {
-    activeFolder = null;
-    allFoldersBtn.classList.add("active");
-    page = 1;
-    renderFolders();
-    render();
-  });
-
-  // ---- Create / rename folder modal ----
-
-  function openCreateModal() {
-    folderModalMode = "create";
-    folderNameModalTitle.textContent = "Create Folder";
-    folderNameConfirm.textContent = "Create";
-    folderNameInput.value = "";
-    folderNameModal.hidden = false;
-    folderNameInput.focus();
-  }
-
-  function openRenameModal(name) {
-    folderModalMode = "rename";
-    renameTarget = name;
-    folderNameModalTitle.textContent = "Rename Folder";
-    folderNameConfirm.textContent = "Rename";
-    folderNameInput.value = name;
-    folderNameModal.hidden = false;
-    folderNameInput.focus();
-  }
-
-  addFolderBtn.addEventListener("click", openCreateModal);
-  folderNameCancel.addEventListener("click", () => {
-    folderNameModal.hidden = true;
-  });
-  folderNameConfirm.addEventListener("click", () => {
-    const name = folderNameInput.value.trim();
-    if (!name) return;
-    const isDuplicate = getFoldersList().some(
-      (n) => n.toLowerCase() === name.toLowerCase() && n !== renameTarget
-    );
-    if (isDuplicate) {
-      folderNameModal.hidden = true;
-      return;
-    }
-
-    if (folderModalMode === "create") {
-      addFolder(name);
-    } else {
-      renameFolder(renameTarget, name);
-      normalizeConcernFolders();
-      if (activeFolder === renameTarget) activeFolder = name;
-    }
-
-    folderNameModal.hidden = true;
-    renderFolders();
-    render();
-  });
-  folderNameModal.addEventListener("click", (e) => {
-    if (e.target === folderNameModal) folderNameModal.hidden = true;
-  });
-  folderNameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      folderNameConfirm.click();
-    }
-  });
-
-  // ---- Delete folder modal ----
-
-  function openDeleteModal(name) {
-    deleteTarget = name;
-    folderDeleteName.textContent = name;
-    folderDeleteModal.hidden = false;
-  }
-
-  folderDeleteCancel.addEventListener("click", () => {
-    folderDeleteModal.hidden = true;
-  });
-  folderDeleteConfirm.addEventListener("click", () => {
-    deleteFolder(deleteTarget);
-    normalizeConcernFolders();
-    if (activeFolder === deleteTarget) {
-      activeFolder = null;
-      allFoldersBtn.classList.add("active");
-    }
-    folderDeleteModal.hidden = true;
-    renderFolders();
-    render();
-  });
-  folderDeleteModal.addEventListener("click", (e) => {
-    if (e.target === folderDeleteModal) folderDeleteModal.hidden = true;
-  });
-
-  // ---- List: search, filter, paginate ----
 
   function buildPageList(current, total) {
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -178,16 +45,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getFiltered() {
     let rows = liveConcerns();
-    if (activeFolder) {
-      rows = rows.filter((c) => c.status === "In Folder" && c.folder === activeFolder);
+    if (statusFilter.value !== "all") {
+      rows = rows.filter((c) => c.status === statusFilter.value);
     }
     const query = searchInput.value.trim().toLowerCase();
     if (query) {
       rows = rows.filter(
         (c) =>
-          c.id.toLowerCase().includes(query) ||
-          c.category.toLowerCase().includes(query) ||
-          c.location.toLowerCase().includes(query) ||
+          c.concernText.toLowerCase().includes(query) ||
+          (c.location && c.location.toLowerCase().includes(query)) ||
           c.reporter.toLowerCase().includes(query)
       );
     }
@@ -206,14 +72,14 @@ document.addEventListener("DOMContentLoaded", () => {
           .map(
             (c) => `
         <div class="concern-row">
-          <span class="concern-row__title">#${c.id}</span>
+          <span class="concern-row__title">${truncate(c.concernText, 60)}</span>
           <span class="concern-row__date">${formatConcernDate(c.dateSubmitted)}</span>
           <a class="concern-row__link" href="concern-detail.html?id=${encodeURIComponent(c.id)}">View Details</a>
-          <span class="status-badge ${badgeClass[c.status]}">${c.status}</span>
+          <span class="status-badge ${badgeClass[c.status] || ""}">${c.status}</span>
         </div>`
           )
           .join("")
-      : `<div class="ordinances-empty">No concerns/suggestions match your search or folder.</div>`;
+      : `<div class="ordinances-empty">${liveConcerns().length ? "No concerns/suggestions match your search or filter." : "No concerns/suggestions submitted yet."}</div>`;
 
     const pages = buildPageList(page, totalPages);
     let html = `<button type="button" data-page="prev" ${page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;
@@ -244,7 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
     page = 1;
     render();
   });
+  statusFilter.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
 
-  renderFolders();
   render();
 });
