@@ -9,6 +9,8 @@ urlpatterns = [
     path("reports/<uuid:pk>/", views.ReportDetailView.as_view(), name="report_detail"),
     path("concerns/staff/", views.StaffConcernListView.as_view(), name="staff_concern_list"),
     path("concerns/staff/<uuid:pk>/", views.StaffConcernDetailView.as_view(), name="staff_concern_detail"),
+    path("concerns/folders/", views.ConcernFolderListCreateView.as_view(), name="concern_folder_list_create"),
+    path("concerns/folders/<uuid:pk>/", views.ConcernFolderDetailView.as_view(), name="concern_folder_detail"),
     path("concerns/", views.ConcernListCreateView.as_view(), name="concern_list_create"),
     path("concerns/<uuid:pk>/", views.ConcernDetailView.as_view(), name="concern_detail"),
 ]

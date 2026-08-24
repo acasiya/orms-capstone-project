@@ -42,6 +42,25 @@ class ReportAttachment(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
+class ConcernFolder(models.Model):
+    """
+    A staff-defined category concerns/suggestions can be filed under (e.g.
+    "No Vaping in Public"). Exists to group similar concerns for the staff
+    Concerns/Suggestions dashboard's category breakdown, the same role
+    Report.ordinance plays for Reports.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Concern(models.Model):
     """A concern/suggestion filed by a citizen (Submit Suggestion)."""
 
@@ -55,6 +74,9 @@ class Concern(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     remarks = models.TextField(blank=True)
+    # Optional — staff assign a concern to a folder after reviewing it; a
+    # deleted folder just leaves its concerns unfoldered rather than deleting them.
+    folder = models.ForeignKey(ConcernFolder, on_delete=models.SET_NULL, null=True, blank=True, related_name="concerns")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

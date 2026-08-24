@@ -1,9 +1,9 @@
 // O.R.M.S. — Concerns/Suggestions Dashboard: week filter, status filter,
 // pagination, and the Total stat — all real, from concerns-data.js's
 // API-backed data. The category-based stats (top subject / biggest
-// increase) and the heatmap/pie need a category concept real concerns
-// don't have (no folders anymore — see concerns-data.js), so they're left
-// as an honest "No data yet" rather than fabricated.
+// increase) and the heatmap/pie still need real historical volume to be
+// meaningful, so they're left as an honest "No data yet" for now — folders
+// (see concerns-data.js) are what will eventually feed those.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
@@ -94,24 +94,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const recentConcernsBody = document.getElementById("recentConcernsBody");
   const recentConcernsPagination = document.getElementById("recentConcernsPagination");
 
-  // Relabels the old folder-based filter menu to the real Submitted/Resolved
-  // statuses, and the table's "Folder" column to a short text preview.
   viewAllMenu.innerHTML = `
     <li data-status="all" class="active">All Concerns/Suggestions</li>
     <li data-status="Submitted">Submitted</li>
     <li data-status="Resolved">Resolved</li>`;
-  const folderHeader = document.querySelector(".recent-reports-table thead th:nth-child(2)");
-  if (folderHeader) folderHeader.textContent = "Details";
 
   const STATUS_FILTER_LABELS = {
     all: "View All Concerns/Suggestions",
     Submitted: "Submitted",
     Resolved: "Resolved",
   };
-
-  function truncate(text, max) {
-    return text.length > max ? `${text.slice(0, max)}…` : text;
-  }
 
   viewAllMenu.querySelectorAll("li").forEach((li) => {
     li.addEventListener("click", () => {
@@ -155,7 +147,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           .map(
             (c) => `
         <tr>
-          <td>${truncate(c.concernText, 40)}</td>
+          <td>${c.id.slice(0, 8).toUpperCase()}</td>
+          <td>${c.folderName || "Unfoldered"}</td>
           <td>${c.location || "—"}</td>
           <td>${c.reporter}</td>
           <td><span class="status-pill ${statusPillClass(c.status)}">${c.status}</span></td>
@@ -164,7 +157,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </tr>`
           )
           .join("")
-      : `<tr><td colspan="6" class="ordinances-empty">No concerns/suggestions for this selection.</td></tr>`;
+      : `<tr><td colspan="7" class="ordinances-empty">No concerns/suggestions for this selection.</td></tr>`;
 
     const pages = buildPageList(state.page, totalPages);
     let html = `<button type="button" data-page="prev" ${state.page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;

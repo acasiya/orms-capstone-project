@@ -69,6 +69,17 @@
             <button type="button" class="status-edit-btn" id="statusEditBtn" aria-label="Edit status">&#9999;&#65039;</button>
           </div>
 
+          <div class="status-edit-row">
+            <span class="status-edit-label">Folder:</span>
+          </div>
+          <div id="folderAssigned" hidden>
+            <div class="folder-row">
+              <span class="folder-chip" id="folderChip"></span>
+              <button type="button" class="folder-icon-btn folder-icon-btn--delete" id="folderUnassignBtn" aria-label="Remove from folder">&#10005;</button>
+            </div>
+          </div>
+          <button type="button" class="folder-add-btn" id="assignFolderBtn" aria-label="Assign to a folder">+</button>
+
           <label for="remarksInput" class="status-edit-remarks-label">Remarks:</label>
           <textarea id="remarksInput" class="status-edit-remarks" placeholder="Enter remarks to be shown to reportee." disabled></textarea>
 
@@ -107,6 +118,28 @@
       <div class="btn-row">
         <button type="button" class="btn" id="logoutYes">Yes</button>
         <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign to folder -->
+  <div class="modal-overlay" id="assignFolderModal" hidden>
+    <div class="modal-card">
+      <h2>Assign to Folder</h2>
+      <div class="field">
+        <label for="assignFolderSelect">Choose an existing folder</label>
+        <select id="assignFolderSelect">
+          <option value="">&mdash; Select a folder &mdash;</option>
+        </select>
+      </div>
+      <div class="divider">OR</div>
+      <div class="field">
+        <label for="assignFolderNewInput">Create a new folder</label>
+        <input type="text" id="assignFolderNewInput" placeholder="e.g. No Loud Karaoke After 10PM" />
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="assignFolderConfirm">Assign</button>
+        <button type="button" class="btn btn-danger" id="assignFolderCancel">Cancel</button>
       </div>
     </div>
   </div>

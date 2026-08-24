@@ -182,6 +182,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .map(
             (r) => `
         <tr>
+          <td>${r.id.slice(0, 8).toUpperCase()}</td>
           <td>${r.incidentType}</td>
           <td>${r.location}</td>
           <td>${r.reporter}</td>

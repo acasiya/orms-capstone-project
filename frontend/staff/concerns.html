@@ -63,9 +63,20 @@
           </select>
         </div>
 
-        <div class="concerns-card" id="concernsList"></div>
-        <div class="pagination-bar dash-pagination reports-pagination-bar">
-          <div class="pagination-controls" id="concernsPagination"></div>
+        <div class="concerns-page-layout">
+          <div class="concerns-page-main">
+            <div class="concerns-card" id="concernsList"></div>
+            <div class="pagination-bar dash-pagination reports-pagination-bar">
+              <div class="pagination-controls" id="concernsPagination"></div>
+            </div>
+          </div>
+
+          <div class="dash-card folders-card">
+            <h2 class="folders-card__title">Folders</h2>
+            <button type="button" class="folder-chip folder-chip--all active" id="allFoldersBtn">All Concerns/Suggestions</button>
+            <div id="foldersList"></div>
+            <button type="button" class="folder-add-btn" id="addFolderBtn" aria-label="Create folder">+</button>
+          </div>
         </div>
       </div>
     </div>
@@ -74,6 +85,33 @@
   <script src="js/concerns-data.js"></script>
   <script src="js/concerns-list.js"></script>
   <script src="js/admin.js"></script>
+
+  <!-- Create/rename folder -->
+  <div class="modal-overlay" id="folderNameModal" hidden>
+    <div class="modal-card">
+      <h2 id="folderNameModalTitle">Create Folder</h2>
+      <div class="field">
+        <label for="folderNameInput">Folder Name</label>
+        <input type="text" id="folderNameInput" placeholder="e.g. No Loud Videoke After 10PM" />
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="folderNameConfirm">Create</button>
+        <button type="button" class="btn btn-danger" id="folderNameCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete folder confirmation -->
+  <div class="modal-overlay" id="folderDeleteModal" hidden>
+    <div class="modal-card">
+      <h2>Delete this folder?</h2>
+      <p class="auth-card__subtitle">Concerns/suggestions inside <strong id="folderDeleteName"></strong> will be moved back to unfoldered.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-danger" id="folderDeleteConfirm">Delete</button>
+        <button type="button" class="btn" id="folderDeleteCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>

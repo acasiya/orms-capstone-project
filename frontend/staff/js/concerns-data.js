@@ -1,8 +1,9 @@
 // O.R.M.S. — Concerns/Suggestions data, backed by the real API
-// (GET /api/concerns/staff/). Replaces the previous randomly-generated
-// mock dataset and its localStorage-based folder system — there's no
-// backend concept of folders, so concerns/suggestions now just carry a
-// plain Submitted/Resolved status + remarks, the same shape as Reports.
+// (GET /api/concerns/staff/). Status/remarks work the same way as Reports
+// (Submitted/Resolved + free-text remarks). Folders are a separate,
+// orthogonal categorization staff assign after the fact — backed by
+// /api/concerns/folders/ — used to group concerns for the (future)
+// category breakdown, the same role Report.ordinance plays for Reports.
 
 const CONCERN_STATUS_TO_LABEL = {
   submitted: "Submitted",
@@ -14,6 +15,7 @@ const CONCERN_LABEL_TO_STATUS = {
 };
 
 let _concernsCache = null;
+let _foldersCache = null;
 
 function mapConcern(c) {
   return {
@@ -24,6 +26,8 @@ function mapConcern(c) {
     concernText: c.description,
     status: CONCERN_STATUS_TO_LABEL[c.status] || c.status,
     remarks: c.remarks,
+    folderId: c.folder ? c.folder.id : null,
+    folderName: c.folder ? c.folder.name : null,
     dateSubmitted: new Date(c.created_at),
     attachments: c.attachments,
   };
@@ -57,11 +61,12 @@ async function refreshConcernInCache(id) {
   return updated;
 }
 
-// patch: { status?: <display label>, remarks?: <string> }
+// patch: { status?: <display label>, remarks?: <string>, folderId?: <uuid|null> }
 async function updateConcernStatus(id, patch) {
   const body = {};
   if (patch.status !== undefined) body.status = CONCERN_LABEL_TO_STATUS[patch.status] || patch.status;
   if (patch.remarks !== undefined) body.remarks = patch.remarks;
+  if (patch.folderId !== undefined) body.folder = patch.folderId;
 
   const response = await authFetch(`/api/concerns/staff/${encodeURIComponent(id)}/`, {
     method: "PATCH",
@@ -74,6 +79,79 @@ async function updateConcernStatus(id, patch) {
     throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not update this concern/suggestion.");
   }
   return refreshConcernInCache(id);
+}
+
+// ---- Folders (create/rename/delete, and assigning a concern to one) ----
+
+function mapFolder(f) {
+  return { id: f.id, name: f.name, count: f.count };
+}
+
+async function ensureFoldersLoaded() {
+  if (_foldersCache) return _foldersCache;
+  const response = await authFetch("/api/concerns/folders/");
+  if (!response.ok) throw new Error("Could not load folders.");
+  const data = await response.json();
+  _foldersCache = data.map(mapFolder);
+  return _foldersCache;
+}
+
+function liveFolders() {
+  return _foldersCache || [];
+}
+
+async function refreshFolders() {
+  _foldersCache = null;
+  return ensureFoldersLoaded();
+}
+
+async function throwFirstError(response, fallback) {
+  const data = await response.json().catch(() => ({}));
+  const firstError = Object.values(data)[0];
+  throw new Error(Array.isArray(firstError) ? firstError[0] : fallback);
+}
+
+async function createFolder(name) {
+  const response = await authFetch("/api/concerns/folders/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) await throwFirstError(response, "Could not create this folder.");
+  return refreshFolders();
+}
+
+async function renameFolder(id, name) {
+  const response = await authFetch(`/api/concerns/folders/${encodeURIComponent(id)}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) await throwFirstError(response, "Could not rename this folder.");
+  return refreshFolders();
+}
+
+async function deleteFolder(id) {
+  const response = await authFetch(`/api/concerns/folders/${encodeURIComponent(id)}/`, {
+    method: "DELETE",
+  });
+  if (!response.ok) await throwFirstError(response, "Could not delete this folder.");
+  await refreshFolders();
+  // Concerns that were in the deleted folder fall back to unfoldered server-side; reflect that locally too.
+  if (_concernsCache) {
+    _concernsCache.forEach((c) => {
+      if (c.folderId === id) {
+        c.folderId = null;
+        c.folderName = null;
+      }
+    });
+  }
+}
+
+async function assignConcernFolder(concernId, folderId) {
+  const updated = await updateConcernStatus(concernId, { folderId });
+  await refreshFolders();
+  return updated;
 }
 
 // ---- Date helpers (small local copies — see reports-data.js for the

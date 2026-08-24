@@ -1,7 +1,7 @@
-// O.R.M.S. — Concerns/Suggestions list: search, status filter, and
-// pagination across real concerns from concerns-data.js
-// (GET /api/concerns/staff/). Replaces the previous folder-based browsing —
-// there's no backend folder concept (see concerns-data.js).
+// O.R.M.S. — Concerns/Suggestions list: search, status filter, folder
+// filter/create/rename/delete, and pagination — all wired to the real API
+// (concerns-data.js). Folder membership is a separate axis from status;
+// selecting a folder narrows the list the same way the status dropdown does.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 9;
@@ -11,12 +11,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   const statusFilter = document.getElementById("statusFilter");
   const list = document.getElementById("concernsList");
   const pagination = document.getElementById("concernsPagination");
+  const foldersList = document.getElementById("foldersList");
+  const allFoldersBtn = document.getElementById("allFoldersBtn");
+  const addFolderBtn = document.getElementById("addFolderBtn");
+
+  const folderNameModal = document.getElementById("folderNameModal");
+  const folderNameModalTitle = document.getElementById("folderNameModalTitle");
+  const folderNameInput = document.getElementById("folderNameInput");
+  const folderNameConfirm = document.getElementById("folderNameConfirm");
+  const folderNameCancel = document.getElementById("folderNameCancel");
+
+  const folderDeleteModal = document.getElementById("folderDeleteModal");
+  const folderDeleteName = document.getElementById("folderDeleteName");
+  const folderDeleteConfirm = document.getElementById("folderDeleteConfirm");
+  const folderDeleteCancel = document.getElementById("folderDeleteCancel");
 
   let page = 1;
+  let activeFolderId = null; // null = "All Concerns/Suggestions"
+  let folderModalMode = "create"; // "create" | "rename"
+  let renameTargetId = null;
+  let deleteTargetId = null;
 
   list.innerHTML = `<div class="ordinances-empty">Loading concerns/suggestions...</div>`;
   try {
-    await ensureConcernsLoaded();
+    await Promise.all([ensureConcernsLoaded(), ensureFoldersLoaded()]);
   } catch (err) {
     list.innerHTML = `<div class="ordinances-empty">${err.message}</div>`;
     return;
@@ -30,6 +48,141 @@ document.addEventListener("DOMContentLoaded", async () => {
   function truncate(text, max) {
     return text.length > max ? `${text.slice(0, max)}…` : text;
   }
+
+  // ---- Folders sidebar ----
+
+  function renderFolders() {
+    foldersList.innerHTML = liveFolders()
+      .map(
+        (f) => `
+        <div class="folder-row">
+          <button type="button" class="folder-chip${activeFolderId === f.id ? " active" : ""}" data-folder="${f.id}">
+            <span>&#128193; ${f.name}</span>
+            <span class="folder-chip__count">(${f.count})</span>
+          </button>
+          <button type="button" class="folder-icon-btn" data-rename="${f.id}" aria-label="Rename ${f.name}">&#9999;&#65039;</button>
+          <button type="button" class="folder-icon-btn folder-icon-btn--delete" data-delete="${f.id}" aria-label="Delete ${f.name}">&#128465;&#65039;</button>
+        </div>`
+      )
+      .join("");
+
+    foldersList.querySelectorAll(".folder-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeFolderId = btn.dataset.folder;
+        allFoldersBtn.classList.remove("active");
+        page = 1;
+        renderFolders();
+        render();
+      });
+    });
+    foldersList.querySelectorAll("[data-rename]").forEach((btn) => {
+      btn.addEventListener("click", () => openRenameModal(btn.dataset.rename));
+    });
+    foldersList.querySelectorAll("[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", () => openDeleteModal(btn.dataset.delete));
+    });
+  }
+
+  allFoldersBtn.addEventListener("click", () => {
+    activeFolderId = null;
+    allFoldersBtn.classList.add("active");
+    page = 1;
+    renderFolders();
+    render();
+  });
+
+  // ---- Create / rename folder modal ----
+
+  function openCreateModal() {
+    folderModalMode = "create";
+    folderNameModalTitle.textContent = "Create Folder";
+    folderNameConfirm.textContent = "Create";
+    folderNameInput.value = "";
+    folderNameModal.hidden = false;
+    folderNameInput.focus();
+  }
+
+  function openRenameModal(id) {
+    const folder = liveFolders().find((f) => f.id === id);
+    if (!folder) return;
+    folderModalMode = "rename";
+    renameTargetId = id;
+    folderNameModalTitle.textContent = "Rename Folder";
+    folderNameConfirm.textContent = "Rename";
+    folderNameInput.value = folder.name;
+    folderNameModal.hidden = false;
+    folderNameInput.focus();
+  }
+
+  addFolderBtn.addEventListener("click", openCreateModal);
+  folderNameCancel.addEventListener("click", () => {
+    folderNameModal.hidden = true;
+  });
+  folderNameConfirm.addEventListener("click", async () => {
+    const name = folderNameInput.value.trim();
+    if (!name) return;
+
+    folderNameConfirm.disabled = true;
+    try {
+      if (folderModalMode === "create") {
+        await createFolder(name);
+      } else {
+        await renameFolder(renameTargetId, name);
+      }
+      folderNameModal.hidden = true;
+      renderFolders();
+      render();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      folderNameConfirm.disabled = false;
+    }
+  });
+  folderNameModal.addEventListener("click", (e) => {
+    if (e.target === folderNameModal) folderNameModal.hidden = true;
+  });
+  folderNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      folderNameConfirm.click();
+    }
+  });
+
+  // ---- Delete folder modal ----
+
+  function openDeleteModal(id) {
+    const folder = liveFolders().find((f) => f.id === id);
+    if (!folder) return;
+    deleteTargetId = id;
+    folderDeleteName.textContent = folder.name;
+    folderDeleteModal.hidden = false;
+  }
+
+  folderDeleteCancel.addEventListener("click", () => {
+    folderDeleteModal.hidden = true;
+  });
+  folderDeleteConfirm.addEventListener("click", async () => {
+    folderDeleteConfirm.disabled = true;
+    try {
+      await deleteFolder(deleteTargetId);
+      if (activeFolderId === deleteTargetId) {
+        activeFolderId = null;
+        allFoldersBtn.classList.add("active");
+      }
+      folderDeleteModal.hidden = true;
+      renderFolders();
+      render();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      folderDeleteConfirm.disabled = false;
+    }
+  });
+  folderDeleteModal.addEventListener("click", (e) => {
+    if (e.target === folderDeleteModal) folderDeleteModal.hidden = true;
+  });
+
+  // ---- List: search, status filter, folder filter, paginate ----
 
   function buildPageList(current, total) {
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -45,6 +198,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getFiltered() {
     let rows = liveConcerns();
+    if (activeFolderId) {
+      rows = rows.filter((c) => c.folderId === activeFolderId);
+    }
     if (statusFilter.value !== "all") {
       rows = rows.filter((c) => c.status === statusFilter.value);
     }
@@ -79,7 +235,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>`
           )
           .join("")
-      : `<div class="ordinances-empty">${liveConcerns().length ? "No concerns/suggestions match your search or filter." : "No concerns/suggestions submitted yet."}</div>`;
+      : `<div class="ordinances-empty">${liveConcerns().length ? "No concerns/suggestions match your search or filters." : "No concerns/suggestions submitted yet."}</div>`;
 
     const pages = buildPageList(page, totalPages);
     let html = `<button type="button" data-page="prev" ${page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;
@@ -115,5 +271,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   });
 
+  renderFolders();
   render();
 });

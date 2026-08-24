@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const main = document.querySelector(".report-detail-main");
 
   try {
-    await ensureConcernsLoaded();
+    await Promise.all([ensureConcernsLoaded(), ensureFoldersLoaded()]);
   } catch (err) {
     main.innerHTML = `<p>${err.message}</p>`;
     return;
@@ -94,6 +94,89 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   applyPill(currentStatus);
+
+  // ---- Folder assignment — saves immediately on Assign/Remove, independent
+  // of the Status/Remarks Save Changes flow below. ----
+
+  const folderAssigned = document.getElementById("folderAssigned");
+  const folderChip = document.getElementById("folderChip");
+  const folderUnassignBtn = document.getElementById("folderUnassignBtn");
+  const assignFolderBtn = document.getElementById("assignFolderBtn");
+  const assignFolderModal = document.getElementById("assignFolderModal");
+  const assignFolderSelect = document.getElementById("assignFolderSelect");
+  const assignFolderNewInput = document.getElementById("assignFolderNewInput");
+  const assignFolderConfirm = document.getElementById("assignFolderConfirm");
+  const assignFolderCancel = document.getElementById("assignFolderCancel");
+
+  function renderFolderAssignment() {
+    if (concern.folderId) {
+      folderAssigned.hidden = false;
+      assignFolderBtn.hidden = true;
+      folderChip.innerHTML = `&#128193; ${concern.folderName}`;
+    } else {
+      folderAssigned.hidden = true;
+      assignFolderBtn.hidden = false;
+    }
+  }
+  renderFolderAssignment();
+
+  function populateFolderSelect() {
+    assignFolderSelect.innerHTML =
+      `<option value="">&mdash; Select a folder &mdash;</option>` +
+      liveFolders().map((f) => `<option value="${f.id}">${f.name}</option>`).join("");
+  }
+
+  assignFolderBtn.addEventListener("click", () => {
+    populateFolderSelect();
+    assignFolderNewInput.value = "";
+    assignFolderModal.hidden = false;
+  });
+  folderUnassignBtn.addEventListener("click", async () => {
+    try {
+      await assignConcernFolder(concern.id, null);
+      concern.folderId = null;
+      concern.folderName = null;
+      renderFolderAssignment();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+  assignFolderCancel.addEventListener("click", () => {
+    assignFolderModal.hidden = true;
+  });
+  assignFolderModal.addEventListener("click", (e) => {
+    if (e.target === assignFolderModal) assignFolderModal.hidden = true;
+  });
+  assignFolderConfirm.addEventListener("click", async () => {
+    const newName = assignFolderNewInput.value.trim();
+    assignFolderConfirm.disabled = true;
+    try {
+      let folderId = assignFolderSelect.value;
+      let folderName;
+      if (newName) {
+        await createFolder(newName);
+        const created = liveFolders().find((f) => f.name.toLowerCase() === newName.toLowerCase());
+        if (!created) throw new Error("Could not create this folder.");
+        folderId = created.id;
+        folderName = created.name;
+      } else if (folderId) {
+        folderName = liveFolders().find((f) => f.id === folderId)?.name;
+      } else {
+        assignFolderConfirm.disabled = false;
+        return;
+      }
+
+      await assignConcernFolder(concern.id, folderId);
+      concern.folderId = folderId;
+      concern.folderName = folderName;
+      renderFolderAssignment();
+      assignFolderModal.hidden = true;
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      assignFolderConfirm.disabled = false;
+    }
+  });
 
   statusEditBtn.addEventListener("click", () => {
     statusSelect.value = currentStatus;

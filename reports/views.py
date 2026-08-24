@@ -1,11 +1,13 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.views import IsStaffOrAdmin
 
-from .models import Concern, Report
+from .models import Concern, ConcernFolder, Report
 from .serializers import (
+    ConcernFolderSerializer,
     ConcernSerializer,
     ReportSerializer,
     StaffConcernSerializer,
@@ -89,7 +91,6 @@ class StaffReportDetailView(APIView):
     permission_classes = [IsStaffOrAdmin]
 
     def get_object(self, pk):
-        from django.shortcuts import get_object_or_404
         return get_object_or_404(Report.objects.select_related("citizen"), pk=pk)
 
     def get(self, request, pk):
@@ -106,7 +107,7 @@ class StaffReportDetailView(APIView):
 
 class StaffConcernListView(generics.ListAPIView):
     """GET /api/concerns/staff/ — every citizen's submitted concerns/suggestions (Staff/Admin Dashboard)."""
-    queryset = Concern.objects.select_related("citizen").all()
+    queryset = Concern.objects.select_related("citizen", "folder").all()
     serializer_class = StaffConcernSerializer
     permission_classes = [IsStaffOrAdmin]
 
@@ -117,13 +118,12 @@ class StaffConcernListView(generics.ListAPIView):
 class StaffConcernDetailView(APIView):
     """
     GET /api/concerns/staff/<id>/ — full detail of any citizen's concern/suggestion.
-    PATCH /api/concerns/staff/<id>/ — updates status/remarks only.
+    PATCH /api/concerns/staff/<id>/ — updates status/remarks/folder only.
     """
     permission_classes = [IsStaffOrAdmin]
 
     def get_object(self, pk):
-        from django.shortcuts import get_object_or_404
-        return get_object_or_404(Concern.objects.select_related("citizen"), pk=pk)
+        return get_object_or_404(Concern.objects.select_related("citizen", "folder"), pk=pk)
 
     def get(self, request, pk):
         concern = self.get_object(pk)
@@ -135,3 +135,23 @@ class StaffConcernDetailView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(StaffConcernSerializer(concern, context={"request": request}).data)
+
+
+class ConcernFolderListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/concerns/folders/ — every folder, with how many concerns are in it.
+    POST /api/concerns/folders/ — create a new folder (Concerns/Suggestions sidebar).
+    """
+    queryset = ConcernFolder.objects.all()
+    serializer_class = ConcernFolderSerializer
+    permission_classes = [IsStaffOrAdmin]
+
+
+class ConcernFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    PATCH /api/concerns/folders/<id>/ — rename a folder.
+    DELETE /api/concerns/folders/<id>/ — delete a folder; its concerns fall back to unfoldered (see Concern.folder).
+    """
+    queryset = ConcernFolder.objects.all()
+    serializer_class = ConcernFolderSerializer
+    permission_classes = [IsStaffOrAdmin]

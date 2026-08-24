@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Concern, ConcernAttachment, Report, ReportAttachment
+from .models import Concern, ConcernAttachment, ConcernFolder, Report, ReportAttachment
 
 MAX_ATTACHMENTS = 5
 MAX_TOTAL_ATTACHMENT_BYTES = 50 * 1024 * 1024
@@ -121,18 +121,52 @@ class StaffReportUpdateSerializer(serializers.ModelSerializer):
         fields = ["status", "remarks"]
 
 
+class ConcernFolderSerializer(serializers.ModelSerializer):
+    """Folder CRUD for the Concerns/Suggestions sidebar — `count` is how many concerns currently sit in it."""
+
+    count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ConcernFolder
+        fields = ["id", "name", "count", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+    def get_count(self, obj):
+        return obj.concerns.count()
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Folder name can't be empty.")
+        qs = ConcernFolder.objects.filter(name__iexact=value)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A folder with this name already exists.")
+        return value
+
+
+class ConcernFolderMiniSerializer(serializers.ModelSerializer):
+    """Nested representation used on a concern — just enough to show/label the assigned folder."""
+
+    class Meta:
+        model = ConcernFolder
+        fields = ["id", "name"]
+
+
 class StaffConcernSerializer(serializers.ModelSerializer):
     """Read side for Staff/Admin (View Concerns/Suggestions Dashboard) — same idea as StaffReportSerializer."""
 
     reporter = serializers.SerializerMethodField()
     contact_number = serializers.CharField(source="citizen.contact_number", read_only=True)
     attachments = serializers.SerializerMethodField()
+    folder = ConcernFolderMiniSerializer(read_only=True)
 
     class Meta:
         model = Concern
         fields = [
             "id", "reporter", "contact_number", "location", "description",
-            "status", "remarks", "created_at", "updated_at", "attachments",
+            "status", "remarks", "folder", "created_at", "updated_at", "attachments",
         ]
 
     def get_reporter(self, obj):
@@ -145,8 +179,12 @@ class StaffConcernSerializer(serializers.ModelSerializer):
 
 
 class StaffConcernUpdateSerializer(serializers.ModelSerializer):
-    """PATCH-only — status/remarks are the only things Staff/Admin get to change on someone else's concern."""
+    """PATCH-only — status/remarks/folder are the only things Staff/Admin get to change on someone else's concern."""
+
+    folder = serializers.PrimaryKeyRelatedField(
+        queryset=ConcernFolder.objects.all(), required=False, allow_null=True
+    )
 
     class Meta:
         model = Concern
-        fields = ["status", "remarks"]
+        fields = ["status", "remarks", "folder"]
