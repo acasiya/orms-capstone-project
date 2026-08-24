@@ -78,18 +78,22 @@ function accountTypeGroup(type) {
 // New report/concern submissions raise a notification automatically (no
 // opt-in — this is core to the job, unlike the Admin portal's broader
 // account/login notifications). Stored in localStorage so a notification
-// raised on one page is still there after navigating to another.
-const ADMIN_NOTIFICATIONS_KEY = "orms_admin_notifications";
-const ADMIN_NOTIFICATIONS_MAX = 20;
+// raised on one page is still there after navigating to another. Uses its
+// own key, distinct from the Admin portal's "orms_admin_notifications" —
+// localStorage is shared across the whole site (same origin regardless of
+// /admin/ vs /staff/), so a shared key would have let the two portals'
+// notifications leak into each other on any browser used for both.
+const STAFF_NOTIFICATIONS_KEY = "orms_staff_notifications";
+const STAFF_NOTIFICATIONS_MAX = 20;
 
 function makeNotifId() {
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function getAdminNotifications() {
+function getStaffNotifications() {
   let notifications;
   try {
-    notifications = JSON.parse(localStorage.getItem(ADMIN_NOTIFICATIONS_KEY)) || [];
+    notifications = JSON.parse(localStorage.getItem(STAFF_NOTIFICATIONS_KEY)) || [];
   } catch {
     notifications = [];
   }
@@ -99,22 +103,22 @@ function getAdminNotifications() {
     backfilled = true;
     return { ...n, id: makeNotifId() };
   });
-  if (backfilled) localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  if (backfilled) localStorage.setItem(STAFF_NOTIFICATIONS_KEY, JSON.stringify(notifications));
   return notifications;
 }
 
-function addAdminNotification(message) {
-  const notifications = getAdminNotifications();
+function addStaffNotification(message) {
+  const notifications = getStaffNotifications();
   notifications.unshift({ id: makeNotifId(), message, time: Date.now() });
   localStorage.setItem(
-    ADMIN_NOTIFICATIONS_KEY,
-    JSON.stringify(notifications.slice(0, ADMIN_NOTIFICATIONS_MAX))
+    STAFF_NOTIFICATIONS_KEY,
+    JSON.stringify(notifications.slice(0, STAFF_NOTIFICATIONS_MAX))
   );
 }
 
-function removeAdminNotification(id) {
-  const notifications = getAdminNotifications().filter((n) => n.id !== id);
-  localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+function removeStaffNotification(id) {
+  const notifications = getStaffNotifications().filter((n) => n.id !== id);
+  localStorage.setItem(STAFF_NOTIFICATIONS_KEY, JSON.stringify(notifications));
 }
 
 function timeAgo(timestamp) {
@@ -168,7 +172,7 @@ async function checkForNewReports() {
 
   list
     .filter((r) => !seen.includes(r.id))
-    .forEach((r) => addAdminNotification(`New report submitted by ${r.reporter}: ${r.ordinance}`));
+    .forEach((r) => addStaffNotification(`New report submitted by ${r.reporter}: ${r.ordinance}`));
   setSeenIds(NOTIF_SEEN_REPORTS_KEY, currentIds);
 }
 
@@ -193,7 +197,7 @@ async function checkForNewConcerns() {
 
   list
     .filter((c) => !seen.includes(c.id))
-    .forEach((c) => addAdminNotification(`New concern/suggestion submitted by ${c.reporter}`));
+    .forEach((c) => addStaffNotification(`New concern/suggestion submitted by ${c.reporter}`));
   setSeenIds(NOTIF_SEEN_CONCERNS_KEY, currentIds);
 }
 
@@ -315,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (notifBell && notifDropdown && notifList) {
     const renderNotifications = () => {
-      const notifications = getAdminNotifications();
+      const notifications = getStaffNotifications();
       notifBadge.hidden = notifications.length === 0;
       notifList.innerHTML = notifications.length
         ? notifications
@@ -339,7 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const dismissBtn = e.target.closest("[data-dismiss]");
       if (!dismissBtn) return;
       e.stopPropagation();
-      removeAdminNotification(dismissBtn.dataset.dismiss);
+      removeStaffNotification(dismissBtn.dataset.dismiss);
       renderNotifications();
     });
 

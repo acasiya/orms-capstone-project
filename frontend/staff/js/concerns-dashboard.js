@@ -284,10 +284,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   const categoryPie = document.getElementById("categoryPie");
   const categoryLegend = document.getElementById("categoryLegend");
 
-  function renderPeriodMenu(menuEl, selectedValue) {
+  // Rebuilds the menu's <li>s AND rewires their click handlers every call —
+  // rebuilding innerHTML without redoing this leaves the fresh <li>s with no
+  // listeners, so only the first selection would ever do anything.
+  function renderPeriodMenu(menuEl, labelEl, getValue, setValue, onChange) {
     menuEl.innerHTML = buildPeriodOptions()
-      .map((o) => `<li data-value="${o.value}" class="${o.value === selectedValue ? "active" : ""}">${o.label}</li>`)
+      .map((o) => `<li data-value="${o.value}" class="${o.value === getValue() ? "active" : ""}">${o.label}</li>`)
       .join("");
+    menuEl.querySelectorAll("li").forEach((li) => {
+      li.addEventListener("click", () => {
+        setValue(li.dataset.value);
+        labelEl.textContent = li.textContent;
+        renderPeriodMenu(menuEl, labelEl, getValue, setValue, onChange);
+        onChange();
+      });
+    });
   }
 
   function renderCategoryPie() {
@@ -455,19 +466,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Wire up period dropdowns ----
 
-  function wirePeriodDropdown(menuEl, labelEl, getValue, setValue, onChange) {
-    renderPeriodMenu(menuEl, getValue());
-    menuEl.querySelectorAll("li").forEach((li) => {
-      li.addEventListener("click", () => {
-        setValue(li.dataset.value);
-        labelEl.textContent = li.textContent;
-        renderPeriodMenu(menuEl, getValue());
-        onChange();
-      });
-    });
-  }
-
-  wirePeriodDropdown(
+  renderPeriodMenu(
     categoryPeriodMenu,
     categoryPeriodLabel,
     () => state.categoryPeriod,
