@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   list.innerHTML = `<div class="ordinances-empty">Loading reports...</div>`;
   try {
+    await ensureOrdinancesLoaded();
     await ensureReportsLoaded();
   } catch (err) {
     list.innerHTML = `<div class="ordinances-empty">${err.message}</div>`;

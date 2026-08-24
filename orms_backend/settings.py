@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "accounts",
     "reports",
+    "ordinances",
 ]
 
 MIDDLEWARE = [

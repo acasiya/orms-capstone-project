@@ -183,6 +183,38 @@ async function checkForConcernUpdates() {
   setNotifSnapshot(CONCERN_SNAPSHOT_KEY, snapshot);
 }
 
+// Ordinances are a shared/global list rather than something a citizen owns,
+// so unlike the report/concern checks above, the very first-ever poll
+// (localStorage key never set at all) silently baselines every ordinance
+// that already exists — otherwise a brand-new citizen would get flooded
+// with "new ordinance" notices for the whole existing library.
+const ORDINANCE_SNAPSHOT_KEY = "orms_citizen_ordinance_snapshot";
+
+async function checkForOrdinanceUpdates() {
+  let list;
+  try {
+    const res = await fetch("/api/ordinances/");
+    if (!res.ok) return;
+    list = await res.json();
+  } catch {
+    return;
+  }
+
+  const neverChecked = localStorage.getItem(ORDINANCE_SNAPSHOT_KEY) === null;
+  const snapshot = getNotifSnapshot(ORDINANCE_SNAPSHOT_KEY);
+  list.forEach((o) => {
+    const hash = `${o.title}|${o.description}|${o.updated_at}`;
+    const isFirstSight = !(o.id in snapshot);
+    if (isFirstSight) {
+      if (!neverChecked) addCitizenNotification(`A new ordinance was uploaded: ${o.number} — ${o.title}`);
+    } else if (snapshot[o.id] !== hash) {
+      addCitizenNotification(`Ordinance ${o.number} — ${o.title} was updated.`);
+    }
+    snapshot[o.id] = hash;
+  });
+  setNotifSnapshot(ORDINANCE_SNAPSHOT_KEY, snapshot);
+}
+
 function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
@@ -738,9 +770,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (loggedIn) {
-      Promise.all([checkForReportUpdates(), checkForConcernUpdates()]).then(renderNotifications);
+      Promise.all([checkForReportUpdates(), checkForConcernUpdates(), checkForOrdinanceUpdates()]).then(renderNotifications);
       setInterval(() => {
-        Promise.all([checkForReportUpdates(), checkForConcernUpdates()]).then(renderNotifications);
+        Promise.all([checkForReportUpdates(), checkForConcernUpdates(), checkForOrdinanceUpdates()]).then(renderNotifications);
       }, 30000);
     }
 

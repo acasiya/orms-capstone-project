@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const main = document.querySelector(".report-detail-main");
 
   try {
+    await ensureOrdinancesLoaded();
     await ensureReportsLoaded();
   } catch (err) {
     main.innerHTML = `<p>${err.message}</p>`;

@@ -63,6 +63,7 @@
               <input type="text" id="ordinanceSearch" placeholder="Search..." />
               <button type="submit">Search</button>
             </form>
+            <button type="button" class="btn" id="uploadOrdinanceBtn">+ Upload Ordinance</button>
           </div>
 
           <div class="ordinances-table-wrap">
@@ -94,6 +95,50 @@
   <script src="js/ordinances-data.js"></script>
   <script src="js/ordinances-list.js"></script>
   <script src="js/admin.js"></script>
+
+  <!-- Upload ordinance -->
+  <div class="modal-overlay" id="uploadOrdinanceModal" hidden>
+    <div class="modal-card">
+      <h2>Upload Ordinance</h2>
+      <div class="field">
+        <label for="ordNumberInput">Ordinance No.</label>
+        <input type="text" id="ordNumberInput" placeholder="e.g. No. 31-(2026)" />
+      </div>
+      <div class="field">
+        <label for="ordTitleInput">Title</label>
+        <input type="text" id="ordTitleInput" placeholder="Ordinance title" />
+      </div>
+      <div class="field">
+        <label for="ordAuthorInput">Authored by</label>
+        <input type="text" id="ordAuthorInput" placeholder="e.g. Hon. Juan Dela Cruz" />
+      </div>
+      <div class="field">
+        <label for="ordCategoryInput">Category</label>
+        <input type="text" id="ordCategoryInput" placeholder="e.g. Public Safety" />
+      </div>
+      <div class="field">
+        <label for="ordDateInput">Date Approved</label>
+        <input type="date" id="ordDateInput" />
+      </div>
+      <div class="field">
+        <label for="ordDescriptionInput">Description</label>
+        <textarea id="ordDescriptionInput" placeholder="Full ordinance text/summary..."></textarea>
+      </div>
+      <div class="field">
+        <label class="upload-drop upload-drop--compact" for="ordPdfInput" id="ordPdfLabel">
+          <span class="upload-drop__icon">&#11014;&#65039;</span>
+          <span class="upload-drop__text" id="ordPdfLabelText">Click to browse for the ordinance PDF</span>
+          <span class="upload-drop__formats">PDF only.</span>
+        </label>
+        <input type="file" id="ordPdfInput" accept="application/pdf" hidden />
+      </div>
+      <p class="form-error" id="uploadOrdinanceError" hidden></p>
+      <div class="btn-row">
+        <button type="button" class="btn" id="uploadOrdinanceConfirm">Upload</button>
+        <button type="button" class="btn btn-danger" id="uploadOrdinanceCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>

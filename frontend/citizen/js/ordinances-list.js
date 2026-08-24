@@ -1,6 +1,6 @@
 // O.R.M.S. — Ordinances list: filter, search, sort, paginate, render, and navigate to detail.
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("ordinanceRows");
   const sortSelect = document.getElementById("sortField");
   const searchInput = document.getElementById("ordinanceSearch");
@@ -12,10 +12,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const PAGE_SIZE = 5;
   let currentPage = 1;
 
+  tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
+  try {
+    await ensureOrdinancesLoaded();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
+    return;
+  }
+
   function getFiltered() {
     const query = searchInput.value.trim().toLowerCase();
 
-    return ORDINANCES.filter((o) => {
+    return liveOrdinances().filter((o) => {
       return (
         !query ||
         o.title.toLowerCase().includes(query) ||
@@ -54,7 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const rows = allRows.slice(start, start + PAGE_SIZE);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">No ordinances match your search.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${
+        liveOrdinances().length ? "No ordinances match your search." : "No ordinances uploaded yet."
+      }</td></tr>`;
     } else {
       tbody.innerHTML = rows
         .map(

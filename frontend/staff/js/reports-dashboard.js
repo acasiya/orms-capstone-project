@@ -1,10 +1,10 @@
 // O.R.M.S. — Reports Dashboard: week filter, status filter, pagination,
 // stat cards, and the category pie — all real, from reports-data.js's
 // API-backed data (category comes from matching each report's ordinance
-// against ORDINANCES — see reports-data.js's categoryForOrdinance). The
-// heatmap stays an honest "No data yet": the old mock drove it off a
-// "severity" field real reports don't have, so there's nothing real to
-// show yet.
+// against the real uploaded ordinances — see reports-data.js's
+// categoryForOrdinance). The heatmap stays an honest "No data yet": the
+// old mock drove it off a "severity" field real reports don't have, so
+// there's nothing real to show yet.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
+    await ensureOrdinancesLoaded();
     await ensureReportsLoaded();
   } catch (err) {
     if (dashboardMain) {
@@ -39,11 +40,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Every category ORDINANCES defines, plus "Other" only if some report's
-  // ordinance text didn't match any of them — computed once so the pie
-  // legend doesn't reshuffle as the period dropdown changes.
+  // Every category a real ordinance defines, plus "Other" only if some
+  // report's ordinance text didn't match any of them — computed once so the
+  // pie legend doesn't reshuffle as the period dropdown changes.
   const REPORT_CATEGORIES = Array.from(
-    new Set([...ORDINANCES.map((o) => o.category), ...liveReports().map((r) => r.category)])
+    new Set([...liveOrdinances().map((o) => o.category), ...liveReports().map((r) => r.category)])
   );
 
   function categoryColor(name) {

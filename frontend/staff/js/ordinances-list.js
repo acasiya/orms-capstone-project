@@ -1,6 +1,7 @@
-// O.R.M.S. — Ordinances list: filter, search, sort, paginate, render, and navigate to detail.
+// O.R.M.S. — Ordinances list: filter, search, sort, paginate, render,
+// navigate to detail, plus (Staff/Admin only) uploading a new ordinance.
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("ordinanceRows");
   const sortSelect = document.getElementById("sortField");
   const searchInput = document.getElementById("ordinanceSearch");
@@ -12,10 +13,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const PAGE_SIZE = 5;
   let currentPage = 1;
 
+  tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
+  try {
+    await ensureOrdinancesLoaded();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
+    return;
+  }
+
   function getFiltered() {
     const query = searchInput.value.trim().toLowerCase();
 
-    return ORDINANCES.filter((o) => {
+    return liveOrdinances().filter((o) => {
       return (
         !query ||
         o.title.toLowerCase().includes(query) ||
@@ -54,7 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const rows = allRows.slice(start, start + PAGE_SIZE);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">No ordinances match your search.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${
+        liveOrdinances().length ? "No ordinances match your search." : "No ordinances uploaded yet."
+      }</td></tr>`;
     } else {
       tbody.innerHTML = rows
         .map(
@@ -112,4 +123,79 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   render();
+
+  // ---- Upload Ordinance modal ----
+
+  const uploadBtn = document.getElementById("uploadOrdinanceBtn");
+  const uploadModal = document.getElementById("uploadOrdinanceModal");
+  const numberInput = document.getElementById("ordNumberInput");
+  const titleInput = document.getElementById("ordTitleInput");
+  const authorInput = document.getElementById("ordAuthorInput");
+  const categoryInput = document.getElementById("ordCategoryInput");
+  const dateInput = document.getElementById("ordDateInput");
+  const descriptionInput = document.getElementById("ordDescriptionInput");
+  const pdfInput = document.getElementById("ordPdfInput");
+  const pdfLabelText = document.getElementById("ordPdfLabelText");
+  const uploadConfirm = document.getElementById("uploadOrdinanceConfirm");
+  const uploadCancel = document.getElementById("uploadOrdinanceCancel");
+  const uploadError = document.getElementById("uploadOrdinanceError");
+
+  function resetUploadForm() {
+    [numberInput, titleInput, authorInput, categoryInput, dateInput, descriptionInput].forEach((el) => (el.value = ""));
+    pdfInput.value = "";
+    pdfLabelText.textContent = "Click to browse for the ordinance PDF";
+    uploadError.hidden = true;
+  }
+
+  uploadBtn.addEventListener("click", () => {
+    resetUploadForm();
+    uploadModal.hidden = false;
+  });
+  uploadCancel.addEventListener("click", () => {
+    uploadModal.hidden = true;
+  });
+  uploadModal.addEventListener("click", (e) => {
+    if (e.target === uploadModal) uploadModal.hidden = true;
+  });
+  pdfInput.addEventListener("change", () => {
+    pdfLabelText.textContent = pdfInput.files[0] ? pdfInput.files[0].name : "Click to browse for the ordinance PDF";
+  });
+
+  uploadConfirm.addEventListener("click", async () => {
+    const fields = {
+      number: numberInput.value.trim(),
+      title: titleInput.value.trim(),
+      author: authorInput.value.trim(),
+      category: categoryInput.value.trim(),
+      dateApproved: dateInput.value,
+      description: descriptionInput.value.trim(),
+      pdfFile: pdfInput.files[0],
+    };
+
+    if (!fields.number || !fields.title || !fields.author || !fields.category || !fields.dateApproved || !fields.description) {
+      uploadError.textContent = "Please fill in every field.";
+      uploadError.hidden = false;
+      return;
+    }
+    if (!fields.pdfFile) {
+      uploadError.textContent = "Please attach the ordinance PDF.";
+      uploadError.hidden = false;
+      return;
+    }
+
+    uploadConfirm.disabled = true;
+    uploadConfirm.textContent = "Uploading...";
+    try {
+      await createOrdinance(fields);
+      uploadModal.hidden = true;
+      currentPage = 1;
+      render();
+    } catch (err) {
+      uploadError.textContent = err.message;
+      uploadError.hidden = false;
+    } finally {
+      uploadConfirm.disabled = false;
+      uploadConfirm.textContent = "Upload";
+    }
+  });
 });

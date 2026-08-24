@@ -20,10 +20,13 @@ const REPORT_LABEL_TO_STATUS = {
 let _reportsCache = null;
 
 // Reports store the exact ordinance text the citizen picked (see
-// file-report.js) — that's matched back against ORDINANCES (ordinances-data.js)
-// to get its category, since Ordinances aren't a real backend model yet.
+// file-report.js) — that's matched back against liveOrdinances()
+// (ordinances-data.js) to get its category. Report.ordinance stays free
+// text rather than a foreign key, since a report should keep showing what
+// ordinance it cited even if that ordinance is later edited or removed.
+// Callers must await ensureOrdinancesLoaded() before ensureReportsLoaded().
 function categoryForOrdinance(ordinanceText) {
-  const match = ORDINANCES.find((o) => `${o.number} — ${o.title}` === ordinanceText);
+  const match = liveOrdinances().find((o) => `${o.number} — ${o.title}` === ordinanceText);
   return match ? match.category : "Other";
 }
 

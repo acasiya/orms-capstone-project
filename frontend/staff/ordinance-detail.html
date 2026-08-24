@@ -55,9 +55,12 @@
             <a class="detail-back" href="ordinances.html" aria-label="Back to Ordinances">&#8592;</a>
 
             <div id="detailBody">
-              <h1 class="detail-title" id="detailTitle">Loading…</h1>
+              <div class="status-edit-row">
+                <h1 class="detail-title" id="detailTitle">Loading…</h1>
+                <button type="button" class="status-edit-btn" id="editOrdinanceBtn" aria-label="Edit ordinance">&#9999;&#65039;</button>
+              </div>
 
-              <dl class="detail-meta">
+              <dl class="detail-meta" id="detailMeta">
                 <dt>Title</dt>
                 <dd id="detailOrdinanceTitle"></dd>
                 <dt>Authored by</dt>
@@ -68,7 +71,7 @@
 
               <div class="detail-description" id="detailDescription"></div>
 
-              <div class="doc-preview">
+              <div class="doc-preview" id="detailDocPreview">
                 <div class="doc-preview__header">
                   <span class="doc-preview__seal"></span>
                   <span class="doc-preview__masthead">
@@ -89,6 +92,47 @@
               </div>
 
               <a class="download-btn" id="detailDownload" href="#">Download</a>
+
+              <!-- Edit form — hidden until "Edit ordinance" is clicked -->
+              <div id="editOrdinanceForm" hidden>
+                <div class="field">
+                  <label for="editNumberInput">Ordinance No.</label>
+                  <input type="text" id="editNumberInput" />
+                </div>
+                <div class="field">
+                  <label for="editTitleInput">Title</label>
+                  <input type="text" id="editTitleInput" />
+                </div>
+                <div class="field">
+                  <label for="editAuthorInput">Authored by</label>
+                  <input type="text" id="editAuthorInput" />
+                </div>
+                <div class="field">
+                  <label for="editCategoryInput">Category</label>
+                  <input type="text" id="editCategoryInput" />
+                </div>
+                <div class="field">
+                  <label for="editDateInput">Date Approved</label>
+                  <input type="date" id="editDateInput" />
+                </div>
+                <div class="field">
+                  <label for="editDescriptionInput">Description</label>
+                  <textarea id="editDescriptionInput"></textarea>
+                </div>
+                <div class="field">
+                  <label class="upload-drop upload-drop--compact" for="editPdfInput" id="editPdfLabel">
+                    <span class="upload-drop__icon">&#11014;&#65039;</span>
+                    <span class="upload-drop__text" id="editPdfLabelText">Click to replace the PDF (optional)</span>
+                    <span class="upload-drop__formats">PDF only. Leave empty to keep the current file.</span>
+                  </label>
+                  <input type="file" id="editPdfInput" accept="application/pdf" hidden />
+                </div>
+                <p class="form-error" id="editOrdinanceError" hidden></p>
+                <div class="btn-row">
+                  <button type="button" class="btn" id="editOrdinanceSave">Save Changes</button>
+                  <button type="button" class="btn btn-danger" id="editOrdinanceCancel">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
