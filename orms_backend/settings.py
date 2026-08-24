@@ -78,10 +78,16 @@ WSGI_APPLICATION = "orms_backend.wsgi.application"
 # Reads DATABASE_URL from the environment (Render/Neon/Supabase all provide
 # this format). Falls back to local sqlite for quick local dev without
 # needing Postgres installed.
+#
+# Goes through decouple's config() rather than dj_database_url.config()
+# (which reads os.environ directly) — decouple loads .env into its own
+# internal store without also populating os.environ, so dj_database_url.config()
+# was silently never seeing DATABASE_URL and always falling back to sqlite,
+# even with a real Postgres URL set in .env.
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    "default": dj_database_url.parse(
+        config("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
     )
 }

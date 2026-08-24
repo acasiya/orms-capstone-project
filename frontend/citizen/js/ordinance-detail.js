@@ -34,13 +34,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     descriptionEl.appendChild(p);
   });
 
+  const pdfPreview = document.getElementById("pdfPreview");
+  const pdfPreviewFrame = document.getElementById("pdfPreviewFrame");
+  const pdfPreviewNote = document.getElementById("pdfPreviewNote");
   const downloadBtn = document.getElementById("detailDownload");
   if (ordinance.pdf) {
+    pdfPreviewFrame.src = ordinance.pdf;
+    pdfPreview.hidden = false;
+    pdfPreviewNote.hidden = false;
     downloadBtn.href = ordinance.pdf;
     downloadBtn.target = "_blank";
     downloadBtn.rel = "noopener";
     downloadBtn.textContent = `Download ${ordinance.number}`;
   } else {
+    pdfPreview.hidden = true;
+    pdfPreviewNote.hidden = true;
     downloadBtn.hidden = true;
   }
 });

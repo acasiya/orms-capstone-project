@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const detailMeta = document.getElementById("detailMeta");
   const detailDescription = document.getElementById("detailDescription");
   const detailDocPreview = document.getElementById("detailDocPreview");
+  const pdfPreviewFrame = document.getElementById("pdfPreviewFrame");
+  const pdfPreviewNote = document.getElementById("pdfPreviewNote");
   const detailDownload = document.getElementById("detailDownload");
 
   function renderDisplay() {
@@ -42,12 +44,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (ordinance.pdf) {
+      pdfPreviewFrame.src = ordinance.pdf;
+      detailDocPreview.hidden = false;
+      pdfPreviewNote.hidden = false;
       detailDownload.href = ordinance.pdf;
       detailDownload.target = "_blank";
       detailDownload.rel = "noopener";
       detailDownload.textContent = `Download ${ordinance.number}`;
       detailDownload.hidden = false;
     } else {
+      detailDocPreview.hidden = true;
+      pdfPreviewNote.hidden = true;
       detailDownload.hidden = true;
     }
   }
@@ -70,7 +77,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const cancelBtn = document.getElementById("editOrdinanceCancel");
   const editError = document.getElementById("editOrdinanceError");
 
-  const displayEls = [detailTitle, detailMeta, detailDescription, detailDocPreview, detailDownload];
+  // detailDocPreview/detailDownload are excluded here — their visibility
+  // depends on whether ordinance.pdf exists, which renderDisplay() already
+  // handles; blindly un-hiding them on exit would show an empty PDF preview
+  // for an ordinance with no PDF.
+  const displayEls = [detailTitle, detailMeta, detailDescription];
 
   function enterEditMode() {
     numberInput.value = ordinance.number;
@@ -84,12 +95,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     editError.hidden = true;
 
     displayEls.forEach((el) => (el.hidden = true));
+    detailDocPreview.hidden = true;
+    pdfPreviewNote.hidden = true;
+    detailDownload.hidden = true;
     editBtn.hidden = true;
     editForm.hidden = false;
   }
 
   function exitEditMode() {
     displayEls.forEach((el) => (el.hidden = false));
+    detailDocPreview.hidden = !ordinance.pdf;
+    pdfPreviewNote.hidden = !ordinance.pdf;
+    detailDownload.hidden = !ordinance.pdf;
     editBtn.hidden = false;
     editForm.hidden = true;
   }
