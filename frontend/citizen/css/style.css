@@ -714,31 +714,44 @@ button {
   margin-bottom: 26px;
 }
 
-.detail-info-panel {
-  background: var(--navy);
-  color: var(--white);
-  border-radius: 8px;
-  padding: 20px 24px;
+.detail-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 26px;
 }
 
-.detail-info-panel .detail-meta {
-  margin-bottom: 14px;
+.detail-info-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 0.9rem;
 }
 
-.detail-info-panel .detail-meta dt {
+.detail-info-block__label {
+  font-weight: 600;
   color: rgba(255, 255, 255, 0.65);
+  flex-shrink: 0;
+  width: 120px;
 }
 
-.detail-info-panel .detail-meta dd {
+.detail-info-block__value {
   color: var(--white);
 }
 
-.detail-info-panel .detail-description {
-  background: none;
-  padding: 0;
-  margin-bottom: 0;
-  border-radius: 0;
+.detail-info-block--description {
+  display: block;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.detail-info-block--description p:last-child {
+  margin-bottom: 0 !important;
 }
 
 .doc-preview {
