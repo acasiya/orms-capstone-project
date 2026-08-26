@@ -33,40 +33,46 @@
     <div class="navbar__profile" role="button" tabindex="0">&#128100;</div>
   </nav>
 
-  <div class="page-shell">
-    <div class="ordinances-toolbar">
-      <select id="sortField" class="sort-select">
-        <option value="none">- All -</option>
-        <option value="numberSort">No.</option>
-        <option value="title" selected>Title</option>
-        <option value="author">Author</option>
-        <option value="dateSort">Date Approved</option>
-      </select>
-      <form class="ordinances-search" id="ordinanceSearchForm">
-        <input type="text" id="ordinanceSearch" placeholder="Search..." />
-        <button type="submit">Search</button>
-      </form>
-    </div>
+  <div class="plain-page">
+    <div class="plain-page__inner plain-page__inner--wide">
+      <h1 class="page-heading">Ordinances</h1>
 
-    <div class="ordinances-table-wrap">
-      <table class="ordinances-table">
-        <thead>
-          <tr>
-            <th>Ordinance Name</th>
-            <th>Author</th>
-            <th>Ordinance No.</th>
-            <th>Date Approved</th>
-          </tr>
-        </thead>
-        <tbody id="ordinanceRows"></tbody>
-      </table>
-    </div>
+      <div class="ordinances-card">
+        <div class="ordinances-toolbar">
+          <select id="sortField" class="sort-select">
+            <option value="none">- All -</option>
+            <option value="numberSort">No.</option>
+            <option value="title" selected>Title</option>
+            <option value="author">Author</option>
+            <option value="dateSort">Date Approved</option>
+          </select>
+          <form class="ordinances-search" id="ordinanceSearchForm">
+            <input type="text" id="ordinanceSearch" placeholder="Search..." />
+            <button type="submit">Search</button>
+          </form>
+        </div>
 
-    <div class="pagination-bar">
-      <span id="paginationInfo"></span>
-      <div class="pagination-controls">
-        <button type="button" id="paginationPrev" aria-label="Previous page">&#8249;</button>
-        <button type="button" id="paginationNext" aria-label="Next page">&#8250;</button>
+        <div class="ordinances-table-wrap">
+          <table class="ordinances-table">
+            <thead>
+              <tr>
+                <th>Ordinance Name</th>
+                <th>Author</th>
+                <th>Ordinance No.</th>
+                <th>Date Approved</th>
+              </tr>
+            </thead>
+            <tbody id="ordinanceRows"></tbody>
+          </table>
+        </div>
+
+        <div class="pagination-bar">
+          <span id="paginationInfo"></span>
+          <div class="pagination-controls">
+            <button type="button" id="paginationPrev" aria-label="Previous page">&#8249;</button>
+            <button type="button" id="paginationNext" aria-label="Next page">&#8250;</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

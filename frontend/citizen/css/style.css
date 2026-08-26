@@ -496,6 +496,13 @@ button {
   padding: 32px 28px 64px;
 }
 
+.ordinances-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 32px 24px;
+}
+
 .ordinances-toolbar {
   display: flex;
   gap: 14px;
@@ -705,6 +712,33 @@ button {
   font-size: 0.88rem;
   line-height: 1.6;
   margin-bottom: 26px;
+}
+
+.detail-info-panel {
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 26px;
+}
+
+.detail-info-panel .detail-meta {
+  margin-bottom: 14px;
+}
+
+.detail-info-panel .detail-meta dt {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.detail-info-panel .detail-meta dd {
+  color: var(--white);
+}
+
+.detail-info-panel .detail-description {
+  background: none;
+  padding: 0;
+  margin-bottom: 0;
+  border-radius: 0;
 }
 
 .doc-preview {
