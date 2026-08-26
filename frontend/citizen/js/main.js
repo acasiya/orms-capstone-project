@@ -666,7 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
         authGateTitle.textContent =
           link.dataset.authGate === "report"
             ? "Want to Submit a Report?"
-            : "Want to be Submit a Concern/Suggestion?";
+            : "Want to Submit a Concern/Suggestion?";
         authGateModal.hidden = false;
       });
     });

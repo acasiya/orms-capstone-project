@@ -1413,6 +1413,11 @@ button {
   gap: 8px;
 }
 
+.status-timeline__item > div {
+  flex: 1;
+  min-width: 0;
+}
+
 .status-timeline__item::before {
   content: "";
   position: absolute;
@@ -1448,6 +1453,7 @@ button {
   align-items: baseline;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .status-timeline__label {
@@ -1467,7 +1473,10 @@ button {
 .status-timeline__desc {
   font-size: 0.82rem;
   color: var(--text-muted);
-  margin: 4px 0 22px 18px;
+  margin: 4px 0 22px;
+  line-height: 1.5;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Citizen profile ---------- */
@@ -1679,8 +1688,187 @@ button {
   }
 }
 
+@media (max-width: 560px) {
+  .plain-page,
+  .plain-hero {
+    padding: 20px 14px 36px;
+  }
+
+  .report-card {
+    padding: 22px 18px 20px;
+  }
+
+  .page-heading {
+    font-size: 1.35rem;
+    margin-bottom: 14px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .btn-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-row .btn {
+    width: 100%;
+    padding: 12px 18px;
+  }
+
+  .upload-drop--compact {
+    max-width: none;
+    width: 100%;
+    padding: 18px 12px;
+  }
+
+  .consent-row {
+    max-width: none;
+    font-size: 0.76rem;
+    text-align: left;
+  }
+
+  .navbar {
+    padding: 10px 14px;
+  }
+
+  .navbar__brand span {
+    display: none;
+  }
+
+  .navbar__controls {
+    gap: 8px;
+  }
+
+  .navbar__avatar,
+  .notif-button,
+  .navbar__hamburger {
+    width: 38px;
+    height: 38px;
+  }
+
+  .page-shell,
+  .container,
+  .panel,
+  .content-shell {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .auth-card,
+  .profile-panel,
+  .form-card,
+  .detail-card,
+  .card-panel {
+    padding: 20px 16px 18px;
+  }
+
+  .auth-card {
+    max-width: 100%;
+  }
+
+  .profile-layout,
+  .profile-sidebar,
+  .concern-detail {
+    gap: 16px;
+  }
+
+  .profile-sidebar {
+    padding: 18px 16px;
+  }
+
+  .detail-card,
+  .concern-detail__main,
+  .concern-detail__sidebar,
+  .remarks-card {
+    padding: 20px 16px;
+  }
+
+  .detail-title {
+    font-size: 1.2rem;
+  }
+
+  .status-timeline__notice {
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .concern-detail__sidebar .btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  .modal-card {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+@media (max-width: 480px) {
+  .plain-page,
+  .plain-hero {
+    padding: 16px 12px 32px;
+  }
+
+  .report-card {
+    padding: 18px 14px 16px;
+  }
+
+  .page-heading {
+    font-size: 1.25rem;
+  }
+
+  .navbar {
+    padding: 10px 14px;
+  }
+
+  .navbar__brand span {
+    display: none;
+  }
+
+  .auth-card {
+    padding: 20px 16px 18px;
+  }
+
+  .modal-card {
+    max-width: calc(100vw - 32px);
+  }
+
+  .btn,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  .ordinances-table {
+    font-size: 0.82rem;
+  }
+}
+
 /* ---------- Small phones: tighten spacing, keep touch targets usable ---------- */
 @media (max-width: 480px) {
+  .plain-page {
+    padding: 16px 12px 32px;
+  }
+
+  .report-card {
+    padding: 18px 14px 16px;
+  }
+
+  .page-heading {
+    font-size: 1.25rem;
+  }
+
   .navbar {
     padding: 10px 14px;
   }

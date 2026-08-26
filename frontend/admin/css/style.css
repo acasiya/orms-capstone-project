@@ -2148,6 +2148,57 @@ button {
   }
 }
 
+@media (max-width: 560px) {
+  .admin-topbar {
+    padding: 12px 14px;
+  }
+
+  .admin-topbar__menu-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .admin-topbar__profile-btn {
+    gap: 6px;
+  }
+
+  .admin-topbar__avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .admin-content {
+    padding: 14px 12px 26px;
+  }
+
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-select {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .admin-sidebar__brand {
+    padding: 18px 16px 20px;
+  }
+
+  .admin-sidebar__nav a,
+  .admin-sidebar__logout {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .admin-table thead th,
+  .admin-table tbody td {
+    padding: 12px 14px;
+  }
+}
+
 /* ---------- Small phones: tighten spacing, keep touch targets usable ---------- */
 @media (max-width: 480px) {
   .admin-topbar {
