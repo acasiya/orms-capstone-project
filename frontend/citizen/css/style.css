@@ -929,14 +929,22 @@ button {
   padding: 12px 32px;
 }
 
-.btn-clear,
-.btn-success {
-  background: #4caf50;
+.btn-clear {
+  background: #eef2f6;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
-.btn-clear:hover,
+.btn-clear:hover {
+  background: #e5e7eb;
+}
+
+.btn-success {
+  background: #2e8b57;
+}
+
 .btn-success:hover {
-  background: #429a46;
+  background: #26724a;
 }
 
 /* ---------- Modal ---------- */
