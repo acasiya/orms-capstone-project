@@ -77,9 +77,12 @@ function getCitizenNotifications() {
   return notifications;
 }
 
-function addCitizenNotification(message) {
+// link (optional) — the page a click on this notification should navigate
+// to (e.g. the report/concern/ordinance it's about); omitted for
+// notifications with no obvious destination.
+function addCitizenNotification(message, link) {
   const notifications = getCitizenNotifications();
-  notifications.unshift({ id: makeNotifId(), message, time: Date.now() });
+  notifications.unshift({ id: makeNotifId(), message, link: link || null, time: Date.now() });
   localStorage.setItem(
     CITIZEN_NOTIFICATIONS_KEY,
     JSON.stringify(notifications.slice(0, CITIZEN_NOTIFICATIONS_MAX))
@@ -89,6 +92,10 @@ function addCitizenNotification(message) {
 function removeCitizenNotification(id) {
   const notifications = getCitizenNotifications().filter((n) => n.id !== id);
   localStorage.setItem(CITIZEN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+}
+
+function clearAllCitizenNotifications() {
+  localStorage.setItem(CITIZEN_NOTIFICATIONS_KEY, JSON.stringify([]));
 }
 
 function citizenTimeAgo(timestamp) {
@@ -151,7 +158,7 @@ async function checkForReportUpdates() {
     const changed = isFirstSight ? !isFreshSubmission : snapshot[r.id] !== hash;
     if (changed) {
       const label = REPORT_STATUS_LABELS_FOR_NOTIF[r.status] || r.status;
-      addCitizenNotification(`Your report "${r.ordinance}" is now ${label}.`);
+      addCitizenNotification(`Your report "${r.ordinance}" is now ${label}.`, `my-report-detail.html?id=${r.id}`);
     }
     snapshot[r.id] = hash;
   });
@@ -176,7 +183,7 @@ async function checkForConcernUpdates() {
     const changed = isFirstSight ? !isFreshSubmission : snapshot[c.id] !== hash;
     if (changed) {
       const label = CONCERN_STATUS_LABELS_FOR_NOTIF[c.status] || c.status;
-      addCitizenNotification(`Your concern/suggestion is now ${label}.`);
+      addCitizenNotification(`Your concern/suggestion is now ${label}.`, `my-concern-detail.html?id=${c.id}`);
     }
     snapshot[c.id] = hash;
   });
@@ -206,9 +213,9 @@ async function checkForOrdinanceUpdates() {
     const hash = `${o.title}|${o.description}|${o.updated_at}`;
     const isFirstSight = !(o.id in snapshot);
     if (isFirstSight) {
-      if (!neverChecked) addCitizenNotification(`A new ordinance was uploaded: ${o.number} — ${o.title}`);
+      if (!neverChecked) addCitizenNotification(`A new ordinance was uploaded: ${o.number} — ${o.title}`, `ordinance-detail.html?id=${o.id}`);
     } else if (snapshot[o.id] !== hash) {
-      addCitizenNotification(`Ordinance ${o.number} — ${o.title} was updated.`);
+      addCitizenNotification(`Ordinance ${o.number} — ${o.title} was updated.`, `ordinance-detail.html?id=${o.id}`);
     }
     snapshot[o.id] = hash;
   });
@@ -739,6 +746,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const notifDropdown = document.getElementById("notifDropdown");
   const notifBadge = document.getElementById("notifBadge");
   const notifList = document.getElementById("notifList");
+  const notifClearAll = document.getElementById("notifClearAll");
 
   if (notifBell && notifDropdown && notifList) {
     const renderNotifications = () => {
@@ -749,7 +757,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .map(
               (n) => `
               <li class="notif-dropdown__item">
-                <div class="notif-dropdown__content">
+                <div class="notif-dropdown__content" data-goto="${n.id}">
                   <span class="notif-dropdown__message">${n.message}</span>
                   <span class="notif-dropdown__time">${citizenTimeAgo(n.time)}</span>
                 </div>
@@ -763,11 +771,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     notifList.addEventListener("click", (e) => {
       const dismissBtn = e.target.closest("[data-dismiss]");
-      if (!dismissBtn) return;
-      e.stopPropagation();
-      removeCitizenNotification(dismissBtn.dataset.dismiss);
-      renderNotifications();
+      if (dismissBtn) {
+        e.stopPropagation();
+        removeCitizenNotification(dismissBtn.dataset.dismiss);
+        renderNotifications();
+        return;
+      }
+      // Clicking the notification's content (not the dismiss button)
+      // navigates to whatever it's about and clears it, same as reading and
+      // acting on it — matches how a notification is a means to an end, not
+      // something to keep around once you've followed it.
+      const goto = e.target.closest("[data-goto]");
+      if (!goto) return;
+      const notification = getCitizenNotifications().find((n) => n.id === goto.dataset.goto);
+      removeCitizenNotification(goto.dataset.goto);
+      if (notification && notification.link) {
+        window.location.href = notification.link;
+      } else {
+        renderNotifications();
+      }
     });
+
+    if (notifClearAll) {
+      notifClearAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        clearAllCitizenNotifications();
+        renderNotifications();
+      });
+    }
 
     if (loggedIn) {
       Promise.all([checkForReportUpdates(), checkForConcernUpdates(), checkForOrdinanceUpdates()]).then(renderNotifications);

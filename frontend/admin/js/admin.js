@@ -107,10 +107,11 @@ function getAdminNotifications() {
   return notifications;
 }
 
-// Called from other admin pages (e.g. Create Account) to raise a notification.
-function addAdminNotification(message) {
+// Called from other admin pages (e.g. Create Account) to raise a
+// notification. link (optional) — the page a click on it should navigate to.
+function addAdminNotification(message, link) {
   const notifications = getAdminNotifications();
-  notifications.unshift({ id: makeNotifId(), message, time: Date.now() });
+  notifications.unshift({ id: makeNotifId(), message, link: link || null, time: Date.now() });
   localStorage.setItem(
     ADMIN_NOTIFICATIONS_KEY,
     JSON.stringify(notifications.slice(0, ADMIN_NOTIFICATIONS_MAX))
@@ -121,6 +122,10 @@ function addAdminNotification(message) {
 function removeAdminNotification(id) {
   const notifications = getAdminNotifications().filter((n) => n.id !== id);
   localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+}
+
+function clearAllAdminNotifications() {
+  localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify([]));
 }
 
 function timeAgo(timestamp) {
@@ -197,7 +202,7 @@ async function checkForNewVerifications() {
 
   list
     .filter((v) => !seen.includes(v.id))
-    .forEach((v) => addAdminNotification(`New account verification request from ${v.owner}`));
+    .forEach((v) => addAdminNotification(`New account verification request from ${v.owner}`, "approve-accounts.html"));
   setSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY, currentIds);
 }
 
@@ -227,7 +232,7 @@ async function checkForNewAuditLogs() {
 
   recent
     .filter((l) => !seen.includes(l.id))
-    .forEach((l) => addAdminNotification(`${l.owner} (${l.type}) logged in at ${l.loggedOnLabel}`));
+    .forEach((l) => addAdminNotification(`${l.owner} (${l.type}) logged in at ${l.loggedOnLabel}`, "audit-logs.html"));
   setSeenIds(NOTIF_SEEN_LOGINS_KEY, Array.from(new Set(currentIds.concat(seen))));
 }
 
@@ -346,6 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const notifDropdown = document.getElementById("notifDropdown");
   const notifBadge = document.getElementById("notifBadge");
   const notifList = document.getElementById("notifList");
+  const notifClearAll = document.getElementById("notifClearAll");
 
   if (notifBell && notifDropdown && notifList) {
     const renderNotifications = () => {
@@ -356,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .map(
               (n) => `
               <li class="notif-dropdown__item">
-                <div class="notif-dropdown__content">
+                <div class="notif-dropdown__content" data-goto="${n.id}">
                   <span class="notif-dropdown__message">${n.message}</span>
                   <span class="notif-dropdown__time">${timeAgo(n.time)}</span>
                 </div>
@@ -368,21 +374,43 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     renderNotifications();
 
-    // Dismiss (×) button on each notification — removes just that one.
+    // Dismiss (×) button removes just that one; clicking the notification's
+    // content instead navigates to what it's about and clears it.
     notifList.addEventListener("click", (e) => {
       const dismissBtn = e.target.closest("[data-dismiss]");
-      if (!dismissBtn) return;
-      // Otherwise this bubbles to notifBell's click handler and toggles the
-      // whole dropdown closed instead of just removing the one notification.
-      e.stopPropagation();
-      removeAdminNotification(dismissBtn.dataset.dismiss);
-      renderNotifications();
+      if (dismissBtn) {
+        // Otherwise this bubbles to notifBell's click handler and toggles the
+        // whole dropdown closed instead of just removing the one notification.
+        e.stopPropagation();
+        removeAdminNotification(dismissBtn.dataset.dismiss);
+        renderNotifications();
+        return;
+      }
+      const goto = e.target.closest("[data-goto]");
+      if (!goto) return;
+      const notification = getAdminNotifications().find((n) => n.id === goto.dataset.goto);
+      removeAdminNotification(goto.dataset.goto);
+      if (notification && notification.link) {
+        window.location.href = notification.link;
+      } else {
+        renderNotifications();
+      }
     });
+
+    if (notifClearAll) {
+      notifClearAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        clearAllAdminNotifications();
+        renderNotifications();
+      });
+    }
 
     // Lets the admin choose which real backend events raise a notification
     // (both off by default — see getNotifPrefs). Injected here via JS
     // rather than duplicated into every admin page's dropdown markup.
-    const notifTitle = notifDropdown.querySelector(".notif-dropdown__title");
+    // Placed after the whole header row (title + Clear All), not just after
+    // the title, so it doesn't end up squeezed inside that flex row.
+    const notifHeader = notifDropdown.querySelector(".notif-dropdown__header");
     const prefsRow = document.createElement("div");
     prefsRow.className = "notif-dropdown__prefs";
     prefsRow.innerHTML = `
@@ -399,7 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // to notifBell's own click handler otherwise, which would toggle the
     // dropdown closed the instant a checkbox is clicked.
     prefsRow.addEventListener("click", (e) => e.stopPropagation());
-    notifTitle.insertAdjacentElement("afterend", prefsRow);
+    notifHeader.insertAdjacentElement("afterend", prefsRow);
 
     const prefVerifications = prefsRow.querySelector("#notifPrefVerifications");
     const prefAuditLogs = prefsRow.querySelector("#notifPrefAuditLogs");

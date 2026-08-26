@@ -35,7 +35,10 @@
           <span class="navbar__bell" role="button" tabindex="0" id="notifBell">
             &#128276;<span class="navbar__badge" id="notifBadge" hidden></span>
             <div class="notif-dropdown" id="notifDropdown" hidden>
-              <h3 class="notif-dropdown__title">Notifications</h3>
+              <div class="notif-dropdown__header">
+                <h3 class="notif-dropdown__title">Notifications</h3>
+                <button type="button" class="notif-dropdown__clear-all" id="notifClearAll">Clear All</button>
+              </div>
               <ul class="notif-dropdown__list" id="notifList"></ul>
             </div>
           </span>

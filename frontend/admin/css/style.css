@@ -1086,6 +1086,32 @@ button {
   color: var(--text);
 }
 
+.notif-dropdown__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notif-dropdown__header .notif-dropdown__title {
+  margin: 0 0 8px;
+}
+
+.notif-dropdown__clear-all {
+  background: none;
+  border: none;
+  color: var(--navy);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0 8px;
+  flex-shrink: 0;
+}
+
+.notif-dropdown__clear-all:hover {
+  text-decoration: underline;
+}
+
 .notif-dropdown__prefs {
   display: flex;
   flex-direction: column;
@@ -1137,6 +1163,14 @@ button {
   gap: 3px;
   min-width: 0;
   flex: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: -4px -6px;
+  padding: 4px 6px;
+}
+
+.notif-dropdown__content:hover {
+  background: #f6f4ef;
 }
 
 .notif-dropdown__message {

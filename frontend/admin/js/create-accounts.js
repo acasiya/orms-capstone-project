@@ -74,7 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       addAdminNotification(
-        `New account created: ${created.first_name} ${created.last_name} (${created.role})`
+        `New account created: ${created.first_name} ${created.last_name} (${created.role})`,
+        "manage-accounts.html"
       );
 
       createdModal.hidden = false;

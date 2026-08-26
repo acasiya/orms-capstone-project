@@ -107,9 +107,10 @@ function getStaffNotifications() {
   return notifications;
 }
 
-function addStaffNotification(message) {
+// link (optional) — the page a click on this notification should navigate to.
+function addStaffNotification(message, link) {
   const notifications = getStaffNotifications();
-  notifications.unshift({ id: makeNotifId(), message, time: Date.now() });
+  notifications.unshift({ id: makeNotifId(), message, link: link || null, time: Date.now() });
   localStorage.setItem(
     STAFF_NOTIFICATIONS_KEY,
     JSON.stringify(notifications.slice(0, STAFF_NOTIFICATIONS_MAX))
@@ -119,6 +120,10 @@ function addStaffNotification(message) {
 function removeStaffNotification(id) {
   const notifications = getStaffNotifications().filter((n) => n.id !== id);
   localStorage.setItem(STAFF_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+}
+
+function clearAllStaffNotifications() {
+  localStorage.setItem(STAFF_NOTIFICATIONS_KEY, JSON.stringify([]));
 }
 
 function timeAgo(timestamp) {
@@ -172,7 +177,7 @@ async function checkForNewReports() {
 
   list
     .filter((r) => !seen.includes(r.id))
-    .forEach((r) => addStaffNotification(`New report submitted by ${r.reporter}: ${r.ordinance}`));
+    .forEach((r) => addStaffNotification(`New report submitted by ${r.reporter}: ${r.ordinance}`, `report-detail.html?id=${r.id}`));
   setSeenIds(NOTIF_SEEN_REPORTS_KEY, currentIds);
 }
 
@@ -197,7 +202,7 @@ async function checkForNewConcerns() {
 
   list
     .filter((c) => !seen.includes(c.id))
-    .forEach((c) => addStaffNotification(`New concern/suggestion submitted by ${c.reporter}`));
+    .forEach((c) => addStaffNotification(`New concern/suggestion submitted by ${c.reporter}`, `concern-detail.html?id=${c.id}`));
   setSeenIds(NOTIF_SEEN_CONCERNS_KEY, currentIds);
 }
 
@@ -316,6 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const notifDropdown = document.getElementById("notifDropdown");
   const notifBadge = document.getElementById("notifBadge");
   const notifList = document.getElementById("notifList");
+  const notifClearAll = document.getElementById("notifClearAll");
 
   if (notifBell && notifDropdown && notifList) {
     const renderNotifications = () => {
@@ -326,7 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .map(
               (n) => `
               <li class="notif-dropdown__item">
-                <div class="notif-dropdown__content">
+                <div class="notif-dropdown__content" data-goto="${n.id}">
                   <span class="notif-dropdown__message">${n.message}</span>
                   <span class="notif-dropdown__time">${timeAgo(n.time)}</span>
                 </div>
@@ -338,14 +344,34 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     renderNotifications();
 
-    // Dismiss (×) button on each notification — removes just that one.
+    // Dismiss (×) button removes just that one; clicking the notification's
+    // content instead navigates to what it's about and clears it.
     notifList.addEventListener("click", (e) => {
       const dismissBtn = e.target.closest("[data-dismiss]");
-      if (!dismissBtn) return;
-      e.stopPropagation();
-      removeStaffNotification(dismissBtn.dataset.dismiss);
-      renderNotifications();
+      if (dismissBtn) {
+        e.stopPropagation();
+        removeStaffNotification(dismissBtn.dataset.dismiss);
+        renderNotifications();
+        return;
+      }
+      const goto = e.target.closest("[data-goto]");
+      if (!goto) return;
+      const notification = getStaffNotifications().find((n) => n.id === goto.dataset.goto);
+      removeStaffNotification(goto.dataset.goto);
+      if (notification && notification.link) {
+        window.location.href = notification.link;
+      } else {
+        renderNotifications();
+      }
     });
+
+    if (notifClearAll) {
+      notifClearAll.addEventListener("click", (e) => {
+        e.stopPropagation();
+        clearAllStaffNotifications();
+        renderNotifications();
+      });
+    }
 
     // Check immediately on page load, then keep polling — there's no
     // real-time push here, so this is what makes new report/concern
