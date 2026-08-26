@@ -71,7 +71,7 @@
           <textarea id="reportNature" disabled></textarea>
         </div>
 
-        <div class="evidence-photo" aria-hidden="true">&#128247;</div>
+        <div id="reportEvidence"></div>
       </div>
 
       <div class="report-detail-side">
@@ -131,6 +131,14 @@
         <button type="button" class="btn" id="logoutYes">Yes</button>
         <button type="button" class="btn btn-danger" id="logoutNo">No</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Evidence lightbox: clicking a thumbnail overlays the full-size photo/video here -->
+  <div class="modal-overlay" id="mediaLightbox" hidden>
+    <div class="modal-card media-lightbox-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div class="media-lightbox__body" id="mediaLightboxBody"></div>
     </div>
   </div>
 

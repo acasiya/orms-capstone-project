@@ -70,10 +70,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         .map(
           (o) => `
           <tr data-id="${o.id}" tabindex="0">
-            <td data-label="Ordinance Name"><span class="ordinance-name">${escapeHtml(o.title)}</span></td>
-            <td data-label="Author">${escapeHtml(o.author)}</td>
-            <td data-label="Ordinance No.">${escapeHtml(o.number)}</td>
-            <td data-label="Date Approved">${escapeHtml(o.dateApproved)}</td>
+            <td><span class="ordinance-name">${escapeHtml(o.title)}</span></td>
+            <td>${escapeHtml(o.author)}</td>
+            <td>${escapeHtml(o.number)}</td>
+            <td>${escapeHtml(o.dateApproved)}</td>
           </tr>`
         )
         .join("");

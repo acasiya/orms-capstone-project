@@ -28,12 +28,24 @@ function formatDateTime(iso) {
 
 const VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"];
 
+// Opens the clicked thumbnail full-size in an overlay on this same page,
+// instead of navigating to it in a new tab.
+function openMediaLightbox(url, isVideo) {
+  const lightbox = document.getElementById("mediaLightbox");
+  const body = document.getElementById("mediaLightboxBody");
+  if (!lightbox || !body) return;
+  body.innerHTML = isVideo
+    ? `<video src="${url}" controls autoplay></video>`
+    : `<img src="${url}" alt="Uploaded evidence" />`;
+  lightbox.hidden = false;
+}
+
 // Renders the real uploaded files (photos/videos) into `container`, or
-// falls back to the plain camera-icon placeholder when nothing was
+// falls back to a plain "No uploaded evidence" notice when nothing was
 // attached — same box either way, just with or without real content.
 function renderEvidence(container, urls) {
   if (!urls || !urls.length) {
-    container.innerHTML = `<div class="evidence-photo" aria-hidden="true">&#128247;</div>`;
+    container.innerHTML = `<div class="evidence-photo">No uploaded evidence</div>`;
     return;
   }
   container.className = "evidence-photo-grid";
@@ -43,9 +55,12 @@ function renderEvidence(container, urls) {
       const media = isVideo
         ? `<video src="${url}" muted></video>`
         : `<img src="${url}" alt="Uploaded evidence" />`;
-      return `<a class="evidence-photo-grid__item" href="${url}" target="_blank" rel="noopener">${media}</a>`;
+      return `<button type="button" class="evidence-photo-grid__item" data-lightbox-url="${url}" data-lightbox-video="${isVideo}">${media}</button>`;
     })
     .join("");
+  container.querySelectorAll("[data-lightbox-url]").forEach((btn) => {
+    btn.addEventListener("click", () => openMediaLightbox(btn.dataset.lightboxUrl, btn.dataset.lightboxVideo === "true"));
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

@@ -1335,15 +1335,16 @@ button {
 /* ---------- Report detail: evidence photo + notice + remarks ---------- */
 
 .evidence-photo {
-  width: 180px;
-  height: 140px;
-  border-radius: 8px;
-  background: #e3e1da;
-  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  min-height: 60px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #e3e1da;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
   margin-top: 6px;
 }
 
@@ -1361,6 +1362,47 @@ button {
   border-radius: 8px;
   overflow: hidden;
   background: #e3e1da;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Lightbox — clicking an evidence thumbnail overlays the full-size media on
+   the current page instead of navigating to it in a new tab. Reuses the
+   .modal-overlay/.modal-close plumbing (click-outside/close-button wiring
+   already generic in admin.js), just with a transparent, unpadded card. */
+.media-lightbox-card {
+  position: relative;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  max-width: min(90vw, 900px);
+  width: auto;
+}
+
+.media-lightbox-card .modal-close {
+  top: -36px;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--white);
+  font-size: 1.6rem;
+}
+
+.media-lightbox-card .modal-close:hover {
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--white);
+}
+
+.media-lightbox__body img,
+.media-lightbox__body video {
+  display: block;
+  max-width: 100%;
+  max-height: 85vh;
+  margin: 0 auto;
+  border-radius: 8px;
 }
 
 .evidence-photo-grid__item img,
