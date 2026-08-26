@@ -1740,6 +1740,71 @@ button {
     flex-direction: column;
   }
 
+  /* The table doesn't fit a phone width without horizontal scrolling, so
+     each row becomes its own stacked card instead — same data, no
+     scrolling needed to see every column. */
+  .ordinances-table-wrap {
+    overflow-x: visible;
+    border: none;
+  }
+
+  .ordinances-table thead {
+    display: none;
+  }
+
+  .ordinances-table,
+  .ordinances-table tbody,
+  .ordinances-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .ordinances-table tbody tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 14px;
+  }
+
+  .ordinances-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .ordinances-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+  }
+
+  .ordinances-table td:last-child {
+    border-bottom: none;
+  }
+
+  .ordinances-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* The "no ordinances" placeholder row has no data-label — skip the
+     label-row treatment and just show it centered like on desktop. */
+  .ordinances-table td.ordinances-empty {
+    display: block;
+    text-align: center;
+    border-bottom: none;
+  }
+
+  .ordinances-table td.ordinances-empty::before {
+    content: none;
+  }
+
   .detail-meta {
     grid-template-columns: 1fr;
     row-gap: 4px;
@@ -1806,6 +1871,15 @@ button {
   .btn-row .btn {
     width: 100%;
     padding: 12px 18px;
+  }
+
+  /* File Report / Submit Suggestion: Submit stacks above Clear on mobile —
+     DOM order (Clear, then Submit) stays put for tab order, just the visual
+     stacking is flipped, so this is scoped to these two forms rather than
+     every .btn-row (e.g. the Yes/No logout modal keeps its own order). */
+  #reportForm .btn-row,
+  #suggestionForm .btn-row {
+    flex-direction: column-reverse;
   }
 
   .upload-drop--compact {
