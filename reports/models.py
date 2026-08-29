@@ -8,10 +8,17 @@ class Report(models.Model):
     """An ordinance-violation report filed by a citizen (File Report)."""
 
     class Status(models.TextChoices):
+        # Mirrors the 4 stages shown in the status timeline on the detail
+        # pages exactly (Submitted -> Under Review -> In Action -> Resolved,
+        # i.e. "Final Verdict" reached) — one status per stage, so which
+        # stage is "done" is just this status's position in the list, not a
+        # separate calculation. Remarks are a plain always-editable field
+        # (see StaffReportUpdateSerializer/report-detail.js) rather than a
+        # status of their own.
         SUBMITTED = "submitted", "Submitted"
-        IN_PROCESS = "in_process", "In Process"
+        UNDER_REVIEW = "under_review", "Under Review"
+        IN_ACTION = "in_action", "In Action"
         RESOLVED = "resolved", "Resolved"
-        WITH_REMARKS = "with_remarks", "With Remarks"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports")

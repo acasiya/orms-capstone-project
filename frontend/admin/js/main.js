@@ -110,9 +110,9 @@ function citizenTimeAgo(timestamp) {
 
 const REPORT_STATUS_LABELS_FOR_NOTIF = {
   submitted: "Submitted",
-  in_process: "In Process",
+  under_review: "Under Review",
+  in_action: "In Action",
   resolved: "Resolved",
-  with_remarks: "With Remarks",
 };
 const CONCERN_STATUS_LABELS_FOR_NOTIF = { submitted: "Submitted", resolved: "Resolved" };
 
@@ -358,28 +358,72 @@ const COMMON_PASSWORDS = new Set([
   "computer1", "jessica1", "pepper123", "1qaz2wsx", "flower123",
 ]);
 
+// Evaluates each client-checkable requirement independently — used to drive
+// the live checkbox feedback next to the password field, so each rule ticks
+// off as soon as it's satisfied rather than only reporting the first failure.
+// An empty password reports every rule but "length" as unsatisfied, even
+// though e.g. "" isn't technically all-numeric — nothing's been typed yet,
+// so nothing should look already-satisfied.
+function getPasswordRuleStatus(pw, attrs = {}) {
+  const lowerPw = pw.toLowerCase();
+  const candidates = [attrs.firstName, attrs.lastName, (attrs.email || "").split("@")[0]].filter(Boolean);
+  const tooSimilar = candidates.some((candidate) => {
+    const lowerCandidate = candidate.toLowerCase().trim();
+    return lowerCandidate.length >= 3 && (lowerPw.includes(lowerCandidate) || lowerCandidate.includes(lowerPw));
+  });
+  return {
+    length: pw.length >= 8,
+    numeric: pw.length > 0 && !/^\d+$/.test(pw),
+    common: pw.length > 0 && !COMMON_PASSWORDS.has(lowerPw),
+    similar: pw.length > 0 && !tooSimilar,
+  };
+}
+
 // Returns an error message if the password fails a client-checkable
 // requirement, or null if it looks fine. attrs are the resident's own
 // name/email fields, since a password too similar to those is rejected too.
 function getPasswordRequirementError(pw, attrs = {}) {
-  if (pw.length < 8) {
-    return "Password must be at least 8 characters.";
-  }
-  if (/^\d+$/.test(pw)) {
-    return "Password can't be entirely numbers.";
-  }
-  if (COMMON_PASSWORDS.has(pw.toLowerCase())) {
-    return "That password is too common. Please choose a less predictable one.";
-  }
-  const lowerPw = pw.toLowerCase();
-  const candidates = [attrs.firstName, attrs.lastName, (attrs.email || "").split("@")[0]].filter(Boolean);
-  for (const candidate of candidates) {
-    const lowerCandidate = candidate.toLowerCase().trim();
-    if (lowerCandidate.length >= 3 && (lowerPw.includes(lowerCandidate) || lowerCandidate.includes(lowerPw))) {
-      return "Password is too similar to your name or email.";
-    }
-  }
+  const status = getPasswordRuleStatus(pw, attrs);
+  if (!status.length) return "Password must be at least 8 characters.";
+  if (!status.numeric) return "Password can't be entirely numbers.";
+  if (!status.common) return "That password is too common. Please choose a less predictable one.";
+  if (!status.similar) return "Password is too similar to your name or email.";
   return null;
+}
+
+// Wires live checkbox feedback for every .password-hint list on the page —
+// each <li data-rule="..."> ticks its checkbox and highlights once that
+// specific requirement is met, updating as the resident types the password
+// or edits their name/email (since "too similar" depends on those too).
+function setupPasswordHints() {
+  document.querySelectorAll(".password-hint").forEach((hintList) => {
+    const form = hintList.closest("form");
+    if (!form) return;
+    const passwordField = form.querySelector('input[type="password"]');
+    if (!passwordField) return;
+    const firstNameField = form.querySelector('[name="first_name"]');
+    const lastNameField = form.querySelector('[name="last_name"]');
+    const emailField = form.querySelector('[name="email"]');
+
+    function update() {
+      const status = getPasswordRuleStatus(passwordField.value, {
+        firstName: firstNameField ? firstNameField.value : "",
+        lastName: lastNameField ? lastNameField.value : "",
+        email: emailField ? emailField.value : "",
+      });
+      hintList.querySelectorAll("li[data-rule]").forEach((li) => {
+        const satisfied = !!status[li.dataset.rule];
+        li.classList.toggle("is-satisfied", satisfied);
+        const checkbox = li.querySelector('input[type="checkbox"]');
+        if (checkbox) checkbox.checked = satisfied;
+      });
+    }
+
+    [passwordField, firstNameField, lastNameField, emailField].forEach((field) => {
+      if (field) field.addEventListener("input", update);
+    });
+    update();
+  });
 }
 
 // Runs on every Staff/Admin portal page except the login page itself. The
@@ -416,6 +460,42 @@ function enforcePortalAccess() {
 
 document.addEventListener("DOMContentLoaded", () => {
   enforcePortalAccess();
+  setupPasswordHints();
+
+  // Sign Up's Street field: a type-to-filter combobox over the fixed
+  // STREETS list (streets-data.js), same pattern as File Report's location
+  // field. Guarded on STREETS existing since not every page that loads
+  // main.js also loads streets-data.js.
+  if (typeof STREETS !== "undefined") {
+    const streetInput = document.getElementById("signupStreet");
+    const streetList = document.getElementById("signupStreetList");
+    if (streetInput && streetList) {
+      const renderStreetOptions = () => {
+        const query = streetInput.value.trim().toLowerCase();
+        const matches = query ? STREETS.filter((s) => s.toLowerCase().includes(query)) : STREETS;
+        streetList.innerHTML = matches.length
+          ? matches.map((s) => `<li data-value="${s}">${s}</li>`).join("")
+          : `<li class="combobox__empty">No matching street</li>`;
+        streetList.hidden = false;
+      };
+      streetInput.addEventListener("focus", renderStreetOptions);
+      streetInput.addEventListener("input", renderStreetOptions);
+      streetList.addEventListener("click", (e) => {
+        const option = e.target.closest("li[data-value]");
+        if (!option) return;
+        streetInput.value = option.dataset.value;
+        streetList.hidden = true;
+      });
+      document.addEventListener("click", (e) => {
+        if (!streetInput.contains(e.target) && !streetList.contains(e.target)) {
+          streetList.hidden = true;
+        }
+      });
+      streetInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") streetList.hidden = true;
+      });
+    }
+  }
 
   // Prevent full page reload on forms that don't have a real backend yet;
   // just follow the link/button's intended navigation.
@@ -457,6 +537,19 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
+        // Street is a select-from-the-list combobox (see the STREETS wiring
+        // above) rather than free text, so it has to actually match an
+        // entry — typing something and not clicking an option shouldn't
+        // silently go through as if it were a valid street.
+        const streetField = document.getElementById("signupStreet");
+        const blockLotField = document.getElementById("signupBlockLot");
+        const street = streetField ? streetField.value.trim() : "";
+        const blockLot = blockLotField ? blockLotField.value.trim() : "";
+        if (streetField && typeof STREETS !== "undefined" && !STREETS.includes(street)) {
+          showFormError(form, "Please select a street from the list.");
+          return;
+        }
+
         sessionStorage.setItem(
           SIGNUP_DRAFT_KEY,
           JSON.stringify({
@@ -465,7 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
             first_name: firstName,
             last_name: lastName,
             contact_number: form.querySelector('[name="phone"]').value.trim(),
-            address: form.querySelector('[name="address"]').value.trim(),
+            address: streetField ? `${blockLot}, ${street}` : form.querySelector('[name="address"]').value.trim(),
           })
         );
         window.location.href = form.dataset.goto;

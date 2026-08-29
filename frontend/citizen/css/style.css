@@ -351,14 +351,20 @@ button {
 }
 
 .password-hint li {
-  position: relative;
-  padding-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.password-hint li::before {
-  content: "\2022";
-  position: absolute;
-  left: 0;
+.password-hint li input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: #2e7d32;
+  pointer-events: none;
+}
+
+.password-hint li.is-satisfied {
+  color: #2e7d32;
 }
 
 .field--code input {

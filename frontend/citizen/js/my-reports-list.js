@@ -8,9 +8,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const badgeClass = {
     Submitted: "status-badge--submitted",
-    "In Process": "status-badge--in-process",
+    "Under Review": "status-badge--in-process",
+    "In Action": "status-badge--with-remarks",
     Resolved: "status-badge--resolved",
-    "With Remarks": "status-badge--with-remarks",
   };
 
   function formatDate(iso) {

@@ -1,7 +1,8 @@
 // O.R.M.S. — Report detail: view a report's real info and let staff change
-// its status (and attach remarks when the status is "With Remarks"). Saves
-// go through updateReportStatus (PATCH /api/reports/staff/<id>/) instead of
-// the old localStorage-only mock.
+// its status and remarks (remarks are always editable, independent of
+// status — not gated to one specific status choice). Saves go through
+// updateReportStatus (PATCH /api/reports/staff/<id>/) instead of the old
+// localStorage-only mock.
 
 function formatTime12h(hhmmss) {
   const [h, m] = hhmmss.split(":").map(Number);
@@ -75,12 +76,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const evidenceEl = document.getElementById("reportEvidence");
   if (evidenceEl) renderReportEvidence(evidenceEl, report.attachments);
 
-  const STATUSES_ORDERED = ["New Submission", "In Process", "Resolved", "With Remarks"];
+  // Ordered to exactly match the status timeline's 4 stages below — a
+  // status's completed-steps count is just its index here, no separate
+  // mapping to keep in sync.
+  const STATUSES_ORDERED = ["New Submission", "Under Review", "In Action", "Resolved"];
   const STATUS_PILL_CLASS = {
     "New Submission": "status-pill--new",
-    "In Process": "status-pill--in-process",
+    "Under Review": "status-pill--in-process",
+    "In Action": "status-pill--remarks",
     Resolved: "status-pill--resolved",
-    "With Remarks": "status-pill--remarks",
   };
 
   const statusPill = document.getElementById("statusPill");
@@ -112,10 +116,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusPill.textContent = status;
   }
 
-  function updateRemarksEnabled(status) {
-    remarksInput.disabled = status !== "With Remarks";
-  }
-
   function offsetHours(base, hours) {
     return new Date(base.getTime() + hours * 3600000);
   }
@@ -124,10 +124,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const steps = [
       { label: "Submitted", description: "The report was submitted.", hours: 0 },
       { label: "Under Review", description: "The report is being reviewed", hours: 3 },
-      { label: "For Action", description: "Appropriate actions are being taken.", hours: 26 },
+      { label: "In Action", description: "Appropriate actions are being taken.", hours: 26 },
       { label: "Final Verdict", description: "Report is finished and closed.", hours: 50 },
     ];
-    const completedSteps = status === "New Submission" ? 1 : status === "In Process" ? 2 : 4;
+    // Status is one of STATUSES_ORDERED, in the same order as these 4
+    // stages, so "how many steps are done" is just that status's position.
+    const completedSteps = STATUSES_ORDERED.indexOf(status) + 1;
 
     timelineItems.innerHTML = steps
       .map((step, i) => {
@@ -152,34 +154,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   applyPill(currentStatus);
-  updateRemarksEnabled(currentStatus);
   renderTimeline(currentStatus, report.dateSubmitted);
 
   statusEditBtn.addEventListener("click", () => {
     statusSelect.value = currentStatus;
-    updateRemarksEnabled(statusSelect.value);
     statusPill.hidden = true;
     statusSelect.hidden = false;
   });
-
-  statusSelect.addEventListener("change", () => updateRemarksEnabled(statusSelect.value));
 
   function pendingStatus() {
     return statusSelect.hidden ? currentStatus : statusSelect.value;
   }
 
+  // Remarks are always editable, so a remarks edit counts as dirty
+  // regardless of which status is currently selected.
   function isDirty() {
-    const status = pendingStatus();
-    if (status !== savedStatus) return true;
-    if (status === "With Remarks") return remarksInput.value.trim() !== savedRemarks;
-    return false;
+    return pendingStatus() !== savedStatus || remarksInput.value.trim() !== savedRemarks;
   }
 
   async function commitSave() {
     const nextStatus = pendingStatus();
     const patch = {
       status: nextStatus,
-      remarks: nextStatus === "With Remarks" ? remarksInput.value.trim() : "",
+      remarks: remarksInput.value.trim(),
     };
 
     saveBtn.disabled = true;
@@ -191,7 +188,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       savedRemarks = patch.remarks;
 
       applyPill(currentStatus);
-      updateRemarksEnabled(currentStatus);
       remarksInput.value = patch.remarks;
       statusPill.hidden = false;
       statusSelect.hidden = true;

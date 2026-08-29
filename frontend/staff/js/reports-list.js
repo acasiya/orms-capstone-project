@@ -36,9 +36,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const badgeClass = {
     "New Submission": "status-badge--submitted",
-    "In Process": "status-badge--in-process",
+    "Under Review": "status-badge--in-process",
+    "In Action": "status-badge--with-remarks",
     Resolved: "status-badge--resolved",
-    "With Remarks": "status-badge--with-remarks",
   };
 
   function buildPageList(current, total) {

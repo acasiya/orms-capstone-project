@@ -96,13 +96,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Stats + delta ----
 
+  // stats.process/remarks keep their old names to match the statProcess/
+  // statRemarks element ids below, but now count "Under Review"/"In Action"
+  // respectively.
   function computeStats(reports) {
     const stats = { total: reports.length, new: 0, process: 0, resolved: 0, remarks: 0 };
     reports.forEach((r) => {
       if (r.status === "New Submission") stats.new++;
-      else if (r.status === "In Process") stats.process++;
+      else if (r.status === "Under Review") stats.process++;
       else if (r.status === "Resolved") stats.resolved++;
-      else if (r.status === "With Remarks") stats.remarks++;
+      else if (r.status === "In Action") stats.remarks++;
     });
     return stats;
   }
@@ -167,7 +170,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const STATUS_FILTER_LABELS = {
     all: "View All Reports",
     "New Submission": "New Submission Reports",
-    "In Process": "In Process Reports",
+    "Under Review": "Under Review Reports",
+    "In Action": "In Action Reports",
     Resolved: "Resolved Reports",
   };
 
@@ -183,9 +187,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function statusPillClass(status) {
     if (status === "New Submission") return "status-pill--new";
-    if (status === "In Process") return "status-pill--in-process";
-    if (status === "Resolved") return "status-pill--resolved";
-    return "status-pill--remarks";
+    if (status === "Under Review") return "status-pill--in-process";
+    if (status === "In Action") return "status-pill--remarks";
+    return "status-pill--resolved";
   }
 
   function buildPageList(current, total) {

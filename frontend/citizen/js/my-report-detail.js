@@ -3,15 +3,16 @@
 const REPORT_TIMELINE_STEPS = [
   { label: "Submitted", description: "Your report has been submitted successfully." },
   { label: "Under Review", description: "Your report is being reviewed" },
-  { label: "For Action", description: "Appropriate actions are being taken." },
+  { label: "In Action", description: "Appropriate actions are being taken." },
   { label: "Final Verdict", description: "Report is finished and closed." },
 ];
 
 // How many of the 4 steps count as "done" for a given backend status. There's
 // no per-stage history yet (just one status field), so anything past step 1
 // is dated with updated_at as the best available approximation of when that
-// stage was reached, rather than a fabricated date.
-const REPORT_COMPLETED_STEPS = { submitted: 1, in_process: 2, with_remarks: 2, resolved: 4 };
+// stage was reached, rather than a fabricated date. Statuses mirror the 4
+// stages above exactly, so this is just each status's position.
+const REPORT_COMPLETED_STEPS = { submitted: 1, under_review: 2, in_action: 3, resolved: 4 };
 
 function formatTime12h(hhmm) {
   const [h, m] = hhmm.split(":").map(Number);

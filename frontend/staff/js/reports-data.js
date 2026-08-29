@@ -6,15 +6,15 @@
 
 const REPORT_STATUS_TO_LABEL = {
   submitted: "New Submission",
-  in_process: "In Process",
+  under_review: "Under Review",
+  in_action: "In Action",
   resolved: "Resolved",
-  with_remarks: "With Remarks",
 };
 const REPORT_LABEL_TO_STATUS = {
   "New Submission": "submitted",
-  "In Process": "in_process",
+  "Under Review": "under_review",
+  "In Action": "in_action",
   Resolved: "resolved",
-  "With Remarks": "with_remarks",
 };
 
 let _reportsCache = null;
