@@ -30,10 +30,10 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = [
             "id", "location", "ordinance", "incident_date", "incident_time",
-            "nature_of_violation", "status", "remarks", "created_at",
+            "nature_of_violation", "status", "remarks", "created_at", "updated_at",
             "files", "attachments",
         ]
-        read_only_fields = ["id", "status", "remarks", "created_at"]
+        read_only_fields = ["id", "status", "remarks", "created_at", "updated_at"]
 
     def validate_files(self, files):
         return validate_attachment_files(files)

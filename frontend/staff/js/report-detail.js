@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  const report = getReportById(id);
+  let report = getReportById(id);
 
   if (!report) {
     main.innerHTML = "<p>Report not found.</p>";
@@ -116,16 +116,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusPill.textContent = status;
   }
 
-  function offsetHours(base, hours) {
-    return new Date(base.getTime() + hours * 3600000);
-  }
-
-  function renderTimeline(status, dateSubmitted) {
+  function renderTimeline(status, dateSubmitted, dateUpdated) {
     const steps = [
-      { label: "Submitted", description: "The report was submitted.", hours: 0 },
-      { label: "Under Review", description: "The report is being reviewed", hours: 3 },
-      { label: "In Action", description: "Appropriate actions are being taken.", hours: 26 },
-      { label: "Final Verdict", description: "Report is finished and closed.", hours: 50 },
+      { label: "Submitted", description: "The report was submitted." },
+      { label: "Under Review", description: "The report is being reviewed" },
+      { label: "In Action", description: "Appropriate actions are being taken." },
+      { label: "Final Verdict", description: "Report is finished and closed." },
     ];
     // Status is one of STATUSES_ORDERED, in the same order as these 4
     // stages, so "how many steps are done" is just that status's position.
@@ -134,7 +130,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     timelineItems.innerHTML = steps
       .map((step, i) => {
         const pending = i >= completedSteps;
-        const stepDate = offsetHours(dateSubmitted, step.hours);
+        // There's no per-stage history (just one status field), so every
+        // completed stage past "Submitted" is dated with the report's last
+        // update time — the best real timestamp available, rather than a
+        // fabricated offset.
+        const stepDate = i === 0 ? dateSubmitted : dateUpdated;
         const dateLabel = pending
           ? "Pending"
           : `${formatReportDate(stepDate)}, ${stepDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   applyPill(currentStatus);
-  renderTimeline(currentStatus, report.dateSubmitted);
+  renderTimeline(currentStatus, report.dateSubmitted, report.dateUpdated);
 
   statusEditBtn.addEventListener("click", () => {
     statusSelect.value = currentStatus;
@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving...";
     try {
-      await updateReportStatus(report.id, patch);
+      report = await updateReportStatus(report.id, patch);
       currentStatus = nextStatus;
       savedStatus = currentStatus;
       savedRemarks = patch.remarks;
@@ -191,7 +191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       remarksInput.value = patch.remarks;
       statusPill.hidden = false;
       statusSelect.hidden = true;
-      renderTimeline(currentStatus, report.dateSubmitted);
+      renderTimeline(currentStatus, report.dateSubmitted, report.dateUpdated);
       return true;
     } catch (err) {
       alert(err.message);

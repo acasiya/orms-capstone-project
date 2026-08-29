@@ -43,6 +43,10 @@ function mapReport(r) {
     status: REPORT_STATUS_TO_LABEL[r.status] || r.status,
     remarks: r.remarks,
     dateSubmitted: new Date(r.created_at),
+    // Only one status field exists (no per-stage history), so this is the
+    // best real timestamp available for whichever stage was most recently
+    // reached — see report-detail.js's renderTimeline.
+    dateUpdated: new Date(r.updated_at),
     incidentDate: r.incident_date,
     incidentTimeRaw: r.incident_time,
     attachments: r.attachments,
