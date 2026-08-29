@@ -340,6 +340,48 @@ function clearFormError(form) {
   if (errEl) errEl.remove();
 }
 
+// Mirrors the backend's AUTH_PASSWORD_VALIDATORS (see orms_backend/settings.py)
+// closely enough to catch obviously-invalid passwords before the resident
+// spends time on the ID photo step, without duplicating Django's full
+// ~20,000-entry common-password list — this list covers the most likely
+// ones; anything it misses still gets caught by the real validator when the
+// account is actually created.
+const COMMON_PASSWORDS = new Set([
+  "password", "123456", "12345678", "qwerty", "123456789", "12345",
+  "1234567890", "1234567", "password1", "111111", "iloveyou", "1234",
+  "abc123", "123123", "qwerty123", "welcome", "admin123", "letmein",
+  "monkey123", "login", "princess", "solo123", "starwars", "dragon",
+  "passw0rd", "master", "hello123", "freedom", "whatever", "qazwsx",
+  "trustno1", "000000", "football", "baseball", "shadow123", "michael1",
+  "superman1", "batman123", "charlie1", "jordan23", "harley123",
+  "hunter123", "ranger123", "buster123", "soccer123", "hockey123",
+  "computer1", "jessica1", "pepper123", "1qaz2wsx", "flower123",
+]);
+
+// Returns an error message if the password fails a client-checkable
+// requirement, or null if it looks fine. attrs are the resident's own
+// name/email fields, since a password too similar to those is rejected too.
+function getPasswordRequirementError(pw, attrs = {}) {
+  if (pw.length < 8) {
+    return "Password must be at least 8 characters.";
+  }
+  if (/^\d+$/.test(pw)) {
+    return "Password can't be entirely numbers.";
+  }
+  if (COMMON_PASSWORDS.has(pw.toLowerCase())) {
+    return "That password is too common. Please choose a less predictable one.";
+  }
+  const lowerPw = pw.toLowerCase();
+  const candidates = [attrs.firstName, attrs.lastName, (attrs.email || "").split("@")[0]].filter(Boolean);
+  for (const candidate of candidates) {
+    const lowerCandidate = candidate.toLowerCase().trim();
+    if (lowerCandidate.length >= 3 && (lowerPw.includes(lowerCandidate) || lowerCandidate.includes(lowerPw))) {
+      return "Password is too similar to your name or email.";
+    }
+  }
+  return null;
+}
+
 // Runs on every Staff/Admin portal page except the login page itself. The
 // Citizen portal deliberately allows guest browsing (viewing ordinances
 // without an account, per the scope doc), so it's excluded here — the
@@ -401,19 +443,27 @@ document.addEventListener("DOMContentLoaded", () => {
       if (form.dataset.signupStep1 !== undefined) {
         const password = form.querySelector('[name="password"]');
         const confirmPassword = form.querySelector('[name="confirmPassword"]');
+        const firstName = form.querySelector('[name="first_name"]').value.trim();
+        const lastName = form.querySelector('[name="last_name"]').value.trim();
+        const email = form.querySelector('[name="email"]').value.trim();
         clearFormError(form);
         if (password.value !== confirmPassword.value) {
           showFormError(form, "Passwords do not match.");
+          return;
+        }
+        const passwordError = getPasswordRequirementError(password.value, { firstName, lastName, email });
+        if (passwordError) {
+          showFormError(form, passwordError);
           return;
         }
 
         sessionStorage.setItem(
           SIGNUP_DRAFT_KEY,
           JSON.stringify({
-            email: form.querySelector('[name="email"]').value.trim(),
+            email,
             password: password.value,
-            first_name: form.querySelector('[name="first_name"]').value.trim(),
-            last_name: form.querySelector('[name="last_name"]').value.trim(),
+            first_name: firstName,
+            last_name: lastName,
             contact_number: form.querySelector('[name="phone"]').value.trim(),
             address: form.querySelector('[name="address"]').value.trim(),
           })

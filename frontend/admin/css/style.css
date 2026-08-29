@@ -278,6 +278,28 @@ button {
   box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
 }
 
+.password-hint {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: -8px 0 16px;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.password-hint li {
+  position: relative;
+  padding-left: 12px;
+}
+
+.password-hint li::before {
+  content: "\2022";
+  position: absolute;
+  left: 0;
+}
+
 .field--code input {
   text-align: center;
   letter-spacing: 6px;

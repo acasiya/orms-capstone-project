@@ -75,8 +75,8 @@
               <input type="text" id="caLastName" name="last_name" placeholder="lastname" required />
             </div>
             <div class="field">
-              <label for="caFirstName">First name</label>
-              <input type="text" id="caFirstName" name="first_name" placeholder="firstname" required />
+              <label for="caFirstName">Given Name</label>
+              <input type="text" id="caFirstName" name="first_name" placeholder="given name" required />
             </div>
             <div class="field">
               <label for="caPhone">Phone</label>
@@ -109,6 +109,12 @@
               <label for="caConfirmPassword">Confirm Password</label>
               <input type="password" id="caConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
             </div>
+            <ul class="password-hint">
+              <li>At least 8 characters</li>
+              <li>Not entirely numbers</li>
+              <li>Not a commonly used password</li>
+              <li>Not too similar to the account's name or email</li>
+            </ul>
             <button type="submit" class="btn">Create Account</button>
           </div>
         </form>

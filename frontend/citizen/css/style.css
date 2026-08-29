@@ -292,6 +292,75 @@ button {
   box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
 }
 
+.combobox {
+  position: relative;
+}
+
+.combobox__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.combobox__list[hidden] {
+  display: none;
+}
+
+.combobox__list li {
+  padding: 9px 10px;
+  border-radius: 5px;
+  font-size: 0.88rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.combobox__list li:hover,
+.combobox__list li:focus {
+  background: #f6f4ef;
+}
+
+.combobox__list li.combobox__empty {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.combobox__list li.combobox__empty:hover {
+  background: none;
+}
+
+.password-hint {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: -8px 0 16px;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.password-hint li {
+  position: relative;
+  padding-left: 12px;
+}
+
+.password-hint li::before {
+  content: "\2022";
+  position: absolute;
+  left: 0;
+}
+
 .field--code input {
   text-align: center;
   letter-spacing: 6px;

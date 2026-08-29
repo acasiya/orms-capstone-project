@@ -43,14 +43,10 @@
         <form id="reportForm">
           <div class="field">
             <label for="reportLocation">Specific Location</label>
-            <input type="text" id="reportLocation" name="location" placeholder="Street Address/Landmark" required />
-          </div>
-
-          <div class="field">
-            <label for="ordinanceSelect">Ordinance in Violation</label>
-            <select id="ordinanceSelect" name="ordinance" required>
-              <option value="" selected disabled>Select</option>
-            </select>
+            <div class="combobox" id="reportLocationCombobox">
+              <input type="text" id="reportLocation" name="location" placeholder="Type to search streets..." autocomplete="off" required />
+              <ul class="combobox__list" id="reportLocationList" hidden></ul>
+            </div>
           </div>
 
           <div class="form-row">
@@ -62,6 +58,18 @@
               <label for="incidentTime">Time of Incident</label>
               <input type="time" id="incidentTime" name="incidentTime" required />
             </div>
+          </div>
+
+          <div class="field">
+            <label for="ordinanceSelect">Ordinance in Violation</label>
+            <select id="ordinanceSelect" name="ordinance" required>
+              <option value="" selected disabled>Select</option>
+            </select>
+          </div>
+
+          <div class="field" id="otherOrdinanceField" hidden>
+            <label for="otherOrdinanceInput">Please specify</label>
+            <input type="text" id="otherOrdinanceInput" placeholder="Describe the ordinance in violation" />
           </div>
 
           <div class="field">
@@ -100,6 +108,7 @@
     </div>
   </div>
 
+  <script src="js/streets-data.js"></script>
   <script src="js/ordinances-data.js"></script>
   <script src="js/file-report.js"></script>
   <script src="js/main.js"></script>
