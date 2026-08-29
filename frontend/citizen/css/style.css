@@ -1393,28 +1393,32 @@ button {
   width: 100%;
 }
 
+/* New Submission — grey */
 .status-badge--submitted {
-  background: #fbf7c4;
-  border: 1px solid #d8cf7a;
-  color: #7a6f1e;
+  background: #e2e2e2;
+  border: 1px solid #b8b8b8;
+  color: #4a4a4a;
 }
 
+/* In Action — yellow-green */
 .status-badge--with-remarks {
-  background: #d3d3d3;
-  border: 1px solid #b3b3b3;
-  color: #3a3a3a;
+  background: #e3edb8;
+  border: 1px solid #b9cf6c;
+  color: #56671c;
 }
 
+/* Resolved — green */
 .status-badge--resolved {
   background: #d3ecd9;
   border: 1px solid #a3d6b1;
   color: #226b3f;
 }
 
+/* Under Review — yellow */
 .status-badge--in-process {
-  background: #fbe3c4;
-  border: 1px solid #eec99a;
-  color: #a15d1c;
+  background: #fbf7c4;
+  border: 1px solid #d8cf7a;
+  color: #7a6f1e;
 }
 
 /* ---------- My Reports list ---------- */
