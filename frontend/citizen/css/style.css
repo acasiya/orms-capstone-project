@@ -441,6 +441,107 @@ button {
   object-fit: cover;
 }
 
+/* Evidence tray: chosen photos/videos listed below the dropzone, each
+   with a thumbnail, a View link and a Remove button (see main.js). */
+.evidence-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evidence-list[hidden] {
+  display: none;
+}
+
+.evidence-list__caption {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  padding: 0 2px;
+}
+
+.evidence-list__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.evidence-list__thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f2f1ec;
+  font-size: 1.2rem;
+}
+
+.evidence-list__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.evidence-list__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evidence-list__name {
+  font-size: 0.82rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.evidence-list__size {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.evidence-list__view {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+.evidence-list__remove {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.evidence-list__remove:hover {
+  background: var(--danger, #c0392b);
+  border-color: var(--danger, #c0392b);
+  color: var(--white);
+}
+
 .field-hint {
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -1026,18 +1127,18 @@ button {
 
 .consent-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   gap: 8px;
   margin: 22px auto 0;
   max-width: 420px;
   font-size: 0.8rem;
   color: var(--text);
-  text-align: center;
+  text-align: left;
 }
 
 .consent-row input {
-  margin-top: 3px;
+  margin: 0;
   flex-shrink: 0;
 }
 
@@ -1640,7 +1741,8 @@ button {
   background: var(--border);
 }
 
-.status-timeline__item:last-child::before {
+.status-timeline__item:last-child::before,
+.status-timeline__item:last-of-type::before {
   display: none;
 }
 
@@ -1859,6 +1961,21 @@ button {
 
   .ordinances-toolbar {
     flex-direction: column;
+    gap: 10px;
+  }
+
+  .sort-select {
+    width: 100%;
+    /* 16px keeps mobile Safari from auto-zooming when the control is tapped */
+    font-size: 16px;
+    padding: 13px 44px 13px 16px;
+    background-position: right 16px center;
+    background-size: 16px;
+  }
+
+  .ordinances-search input,
+  .ordinances-search button {
+    font-size: 16px;
   }
 
   .detail-meta {
@@ -1913,6 +2030,100 @@ button {
   .page-heading {
     font-size: 1.35rem;
     margin-bottom: 14px;
+  }
+
+  /* Ordinance repository: the 4-column table can't fit a phone, so each row
+     collapses into a stacked card with the column header shown as a label
+     (via each td's data-label attribute set in ordinances-list.js). */
+  .ordinances-table-wrap {
+    overflow-x: visible;
+    border: none;
+    border-radius: 0;
+  }
+
+  .ordinances-table {
+    font-size: 0.88rem;
+  }
+
+  .ordinances-table thead {
+    /* visually hidden but kept for screen readers / semantics */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ordinances-table tbody tr {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    padding: 4px 14px;
+    margin-bottom: 12px;
+  }
+
+  .ordinances-table tbody tr:hover {
+    background: var(--white);
+  }
+
+  .ordinances-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 14px;
+    padding: 9px 0;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ordinances-table td:last-child {
+    border-bottom: none;
+  }
+
+  .ordinances-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .ordinances-table td[data-label="Ordinance Name"] {
+    display: block;
+  }
+
+  .ordinances-table td[data-label="Ordinance Name"]::before {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .ordinances-table td .ordinance-name {
+    font-size: 0.95rem;
+  }
+
+  .ordinances-table .ordinances-empty {
+    display: block;
+    text-align: center;
+    padding: 32px 14px;
+  }
+
+  .ordinances-table .ordinances-empty::before {
+    display: none;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .pagination-controls {
+    justify-content: center;
   }
 
   .field {

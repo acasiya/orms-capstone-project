@@ -2440,15 +2440,42 @@ button {
   color: #d64545;
 }
 
-/* Incident heatmap (stylized placeholder, not a live map) */
+/* Incident heatmap — real Leaflet + OpenStreetMap map (see js/heatmap.js) */
 
+/* z-index: 0 traps Leaflet's internal panes/controls (which climb to ~1000)
+   in a local stacking context, so the map can't paint over the page's
+   modal overlay (z-index 50) or the sidebar. */
 .heatmap-canvas {
   position: relative;
+  z-index: 0;
   border-radius: 8px;
   overflow: hidden;
   height: 260px;
   background: linear-gradient(135deg, #eef1e6 0%, #e3ead9 45%, #e9e4d3 100%);
   cursor: pointer;
+}
+
+.heatmap-canvas .leaflet-container {
+  height: 100%;
+  background: #e8eae6;
+  font: inherit;
+}
+
+.heatmap-canvas .leaflet-control-attribution {
+  font-size: 0.62rem;
+}
+
+/* Keep the period dropdown (in the card/modal header, a sibling above the
+   map) and its open menu clickable over the trapped map. */
+.heatmap-card .dash-card__header,
+.heatmap-modal-card .dash-card__header {
+  position: relative;
+  z-index: 1;
+}
+
+.heatmap-card .dash-dropdown-menu,
+.heatmap-modal-card .dash-dropdown-menu {
+  z-index: 30;
 }
 
 .heatmap-canvas:hover .heatmap-canvas__expand {
@@ -2467,14 +2494,16 @@ button {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
   color: var(--text);
-  z-index: 2;
-  opacity: 0.75;
+  z-index: 1100;
+  opacity: 0.85;
+  pointer-events: none;
   transition: opacity 0.15s ease;
 }
 
@@ -2489,17 +2518,12 @@ button {
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   padding: 4px 9px;
   border-radius: 5px;
-  z-index: 2;
-}
-
-.heatmap-canvas svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  z-index: 1100;
+  pointer-events: none;
 }
 
 .heatmap-canvas__empty {
@@ -2508,8 +2532,12 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--text);
   font-size: 0.9rem;
+  font-weight: 600;
+  background: rgba(247, 246, 241, 0.82);
+  z-index: 1050;
+  pointer-events: none;
 }
 
 .heatmap-legend {

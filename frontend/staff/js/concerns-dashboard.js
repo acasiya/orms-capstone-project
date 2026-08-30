@@ -1,9 +1,11 @@
 // O.R.M.S. — Concerns/Suggestions Dashboard: week filter, status filter,
-// pagination, stats, category pie, and heatmap — all real, driven by
-// concerns-data.js's API-backed concerns and folders. Folders (shared
-// across every staff/admin account via the backend — see
+// pagination, stats, category pie, and the incident heatmap — all real,
+// driven by concerns-data.js's API-backed concerns and folders. Folders
+// (shared across every staff/admin account via the backend — see
 // /api/concerns/folders/) stand in for "category" here, the same role
-// Report.ordinance plays for Reports.
+// Report.ordinance plays for Reports. The heatmap is a Leaflet +
+// OpenStreetMap density map keyed on each concern's street — see
+// js/heatmap.js (shared with the Reports dashboard).
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
@@ -19,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusFilter: "all",
     page: 1,
     categoryPeriod: "week",
-    heatmapPeriod: "week0",
+    heatmapPeriod: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -69,22 +71,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return best;
   }
 
-  function hashString(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
-    return h;
-  }
-
-  function mulberry32(seed) {
-    return function () {
-      seed |= 0;
-      seed = (seed + 0x6d2b79f5) | 0;
-      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
   function buildPeriodOptions() {
     const opts = [{ value: "week", label: "This Week" }];
     for (let m = 0; m <= MONTHS_BACK_COUNT; m++) {
@@ -93,22 +79,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         value: `month${m}`,
         label: m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       });
-    }
-    return opts;
-  }
-
-  function buildHeatmapPeriodOptions() {
-    const opts = [];
-    for (let i = 0; i < WEEK_OPTIONS_COUNT; i++) {
-      const { label, start } = getWeekRange(i);
-      const short = i === 0 ? "This Week" : i === 1 ? "Last Week" : `Week of ${formatConcernDate(start)}`;
-      const full = i === 0 ? `This Week — ${label}` : i === 1 ? `Last Week — ${label}` : label;
-      opts.push({ value: `week${i}`, label: full, short });
-    }
-    for (let m = 0; m <= MONTHS_BACK_COUNT; m++) {
-      const { start } = getMonthRange(m);
-      const short = m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-      opts.push({ value: `month${m}`, label: short, short });
     }
     return opts;
   }
@@ -347,122 +317,111 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  // ---- Concerns/Suggestions heatmap (stylized, colored by folder proportion) ----
+  // ---- Concerns/Suggestions heatmap (real Leaflet + OpenStreetMap density
+  // map, keyed on each concern's street — see js/heatmap.js, shared with the
+  // Reports dashboard). Concerns filed without a location just don't appear. ----
 
+  const heatmapCanvasEl = document.getElementById("heatmapCanvas");
+  const heatmapModal = document.getElementById("heatmapModal");
+  const heatmapCanvasModalEl = document.getElementById("heatmapCanvasModal");
   const heatmapPeriodMenu = document.getElementById("heatmapPeriodMenu");
   const heatmapPeriodLabel = document.getElementById("heatmapPeriodLabel");
-  const heatmapCanvas = document.getElementById("heatmapCanvas");
-  const heatmapCanvasModal = document.getElementById("heatmapCanvasModal");
-  const heatmapModal = document.getElementById("heatmapModal");
   const heatmapModalPeriodMenu = document.getElementById("heatmapModalPeriodMenu");
   const heatmapModalPeriodLabel = document.getElementById("heatmapModalPeriodLabel");
-  const heatmapLegend = document.getElementById("heatmapLegend");
-  const heatmapModalLegend = document.getElementById("heatmapModalLegend");
 
-  const HEATMAP_PATHS = [
-    "M30,70 C110,30 170,100 250,60 S350,40 380,80",
-    "M25,150 C90,120 150,180 220,140 S320,110 375,160",
-    "M55,220 C140,200 190,240 260,210 S345,190 385,230",
-    "M20,110 C80,150 140,100 200,130 S300,160 365,120",
-    "M45,35 C100,75 160,45 210,85 S300,65 355,45",
-    "M65,190 C130,160 170,210 230,180 S325,225 375,195",
-  ];
+  // No-op unless setupHeatmap() succeeds — a failed map init (Leaflet or the
+  // tile host unreachable) then just leaves an empty heatmap card instead of
+  // taking down the stats, table, and pie with it.
+  let renderHeatmaps = () => {};
 
-  function renderHeatmapLegend() {
-    const folders = liveFolders();
-    const html = folders.length
-      ? folders.map((f) => `<span><i class="legend-dot" style="background:${folderColor(f.id)}"></i>${f.name}</span>`).join("")
-      : "";
-    heatmapLegend.innerHTML = html;
-    heatmapModalLegend.innerHTML = html;
-  }
-
-  function renderHeatmap() {
-    const folders = liveFolders();
-
-    [heatmapCanvas, heatmapCanvasModal].forEach((canvas) => {
-      const oldSvg = canvas.querySelector("svg");
-      if (oldSvg) oldSvg.remove();
-      const oldEmpty = canvas.querySelector(".heatmap-canvas__empty");
-      if (oldEmpty) oldEmpty.remove();
-    });
-
-    if (!folders.length) {
-      [heatmapCanvas, heatmapCanvasModal].forEach((canvas) => {
-        canvas.insertAdjacentHTML("beforeend", `<div class="heatmap-canvas__empty">No folders yet — create one on Concerns/Suggestions.</div>`);
-      });
-      return;
+  function setupHeatmap() {
+    if (typeof L === "undefined" || typeof createIncidentHeatmap !== "function") {
+      throw new Error("Leaflet / heatmap.js not loaded");
     }
 
-    const concerns = getConcernsForPeriod(state.heatmapPeriod);
-    const counts = countByFolder(concerns);
-    const total = folders.reduce((sum, f) => sum + (counts[f.id] || 0), 0) || 1;
-
-    let pool = [];
-    folders.forEach((f) => {
-      const weight = Math.max(1, Math.round(((counts[f.id] || 0) / total) * HEATMAP_PATHS.length));
-      for (let k = 0; k < weight; k++) pool.push(folderColor(f.id));
+    const cardHeatmap = createIncidentHeatmap(heatmapCanvasEl, {
+      interactive: false,
+      emptyMessage: "No located concerns in this period",
     });
-    while (pool.length < HEATMAP_PATHS.length) pool.push(folderColor(folders[0].id));
-    pool = pool.slice(0, HEATMAP_PATHS.length);
+    let modalHeatmap = null;
 
-    const rng = mulberry32(hashString(state.heatmapPeriod));
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
+    const heatmapCounts = () => countByLocation(getConcernsForPeriod(state.heatmapPeriod));
 
-    const paths = HEATMAP_PATHS.map(
-      (d, i) => `<path d="${d}" fill="none" stroke="${pool[i]}" stroke-width="4" stroke-linecap="round" opacity="0.85" />`
-    ).join("");
-    const svg = `<svg viewBox="0 0 400 260" preserveAspectRatio="none">${paths}</svg>`;
+    renderHeatmaps = () => {
+      const counts = heatmapCounts();
+      const unmapped = cardHeatmap.render(counts) || [];
+      if (modalHeatmap) modalHeatmap.render(counts);
+      if (unmapped.length) {
+        console.warn("[heatmap] concerns on streets with no known coordinates:", unmapped);
+      }
+    };
 
-    [heatmapCanvas, heatmapCanvasModal].forEach((canvas) => {
-      canvas.insertAdjacentHTML("beforeend", svg);
-    });
-  }
-
-  function wireHeatmapPeriodDropdowns() {
-    const sets = [
-      { menu: heatmapPeriodMenu, label: heatmapPeriodLabel },
-      { menu: heatmapModalPeriodMenu, label: heatmapModalPeriodLabel },
-    ];
-
-    function renderMenus() {
-      const opts = buildHeatmapPeriodOptions();
-      sets.forEach(({ menu }) => {
+    // Card and modal each have their own period dropdown; both drive
+    // state.heatmapPeriod and are rebuilt together so their active row and
+    // button label stay in sync.
+    function renderHeatmapMenus() {
+      const opts = buildPeriodOptions();
+      [
+        [heatmapPeriodMenu, heatmapPeriodLabel],
+        [heatmapModalPeriodMenu, heatmapModalPeriodLabel],
+      ].forEach(([menu, label]) => {
+        if (!menu) return;
         menu.innerHTML = opts
-          .map(
-            (o) =>
-              `<li data-value="${o.value}" data-short="${o.short}" class="${o.value === state.heatmapPeriod ? "active" : ""}">${o.label}</li>`
-          )
+          .map((o) => `<li data-value="${o.value}" class="${o.value === state.heatmapPeriod ? "active" : ""}">${o.label}</li>`)
           .join("");
+        const cur = opts.find((o) => o.value === state.heatmapPeriod) || opts[0];
+        if (label) label.textContent = cur.label;
         menu.querySelectorAll("li").forEach((li) => {
           li.addEventListener("click", () => {
             state.heatmapPeriod = li.dataset.value;
-            sets.forEach((s) => (s.label.textContent = li.dataset.short));
-            renderMenus();
-            renderHeatmap();
+            renderHeatmapMenus();
+            renderHeatmaps();
           });
         });
       });
     }
 
-    renderMenus();
-  }
-
-  function openHeatmapModal() {
-    heatmapModal.hidden = false;
-    renderHeatmap();
-  }
-
-  heatmapCanvas.addEventListener("click", openHeatmapModal);
-  heatmapCanvas.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      openHeatmapModal();
+    function openHeatmapModal() {
+      heatmapModal.hidden = false;
+      if (!modalHeatmap) {
+        modalHeatmap = createIncidentHeatmap(heatmapCanvasModalEl, {
+          interactive: true,
+          emptyMessage: "No located concerns in this period",
+        });
+      }
+      // The modal container was display:none until now — Leaflet sized it as
+      // 0×0. Wait two frames for the browser to lay the shown modal out, then
+      // recalc size, repaint the heat, and frame it to the concern spread.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          modalHeatmap.invalidate();
+          modalHeatmap.render(heatmapCounts());
+          modalHeatmap.fit();
+        })
+      );
     }
-  });
+
+    heatmapCanvasEl.addEventListener("click", openHeatmapModal);
+    heatmapCanvasEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openHeatmapModal();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      cardHeatmap.invalidate();
+      if (modalHeatmap) modalHeatmap.invalidate();
+    });
+
+    renderHeatmapMenus();
+    // Defer the first paint: during DOMContentLoaded the card hasn't been
+    // laid out yet, so Leaflet would measure it at 0×0 and mis-fit the view.
+    requestAnimationFrame(() => {
+      cardHeatmap.invalidate();
+      renderHeatmaps();
+    });
+  }
 
   // ---- Wire up period dropdowns ----
 
@@ -473,7 +432,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     (v) => (state.categoryPeriod = v),
     renderCategoryPie
   );
-  wireHeatmapPeriodDropdowns();
+
+  try {
+    setupHeatmap();
+  } catch (err) {
+    console.error("[heatmap] disabled:", err);
+    heatmapCanvasEl.classList.remove("heatmap-canvas");
+    heatmapCanvasEl.innerHTML = `<div class="ordinances-empty">Map unavailable</div>`;
+  }
 
   // ---- Wire up ----
 
@@ -485,7 +451,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   renderAll();
-  renderHeatmapLegend();
   renderCategoryPie();
-  renderHeatmap();
 });
