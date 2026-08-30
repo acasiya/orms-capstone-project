@@ -699,22 +699,156 @@ document.addEventListener("DOMContentLoaded", () => {
   // these labels reference their input through for="…"/id="…" as siblings,
   // not by wrapping it, so a selector like `.upload-drop input` (requiring
   // the input to be a descendant) would never match anything here.
+  const MAX_EVIDENCE_FILES = 5;
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
   document.querySelectorAll("label.upload-drop").forEach((label) => {
     const input = label.control;
     if (!input || input.type !== "file") return;
     const textEl = label.querySelector(".upload-drop__text");
     if (!textEl) return;
     const defaultText = textEl.textContent;
-    input.addEventListener("change", () => {
-      const files = Array.from(input.files);
-      textEl.textContent = !files.length
+
+    // Multi-file inputs (report / suggestion evidence) get an "evidence tray"
+    // below the dropzone: every chosen photo/video shows as a chip with a
+    // thumbnail, a View link (opens the file in a new tab) and a Remove
+    // button, so a resident can drop the wrong file and swap just that one
+    // instead of clearing the whole selection. `picked` is the source of
+    // truth; input.files is rebuilt from it via DataTransfer after every
+    // add/remove. Single-file inputs (Barangay ID) keep the old behavior.
+    const isMulti = input.multiple;
+    let picked = [];
+    let tray = null;
+    const objectUrls = new Set();
+
+    function releaseObjectUrls() {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      objectUrls.clear();
+    }
+
+    function syncInputFiles() {
+      const dt = new DataTransfer();
+      picked.forEach((file) => dt.items.add(file));
+      input.files = dt.files;
+    }
+
+    function updateLabelText() {
+      const count = input.files.length;
+      textEl.textContent = !count
         ? defaultText
-        : files.length === 1
-          ? files[0].name
-          : `${files.length} files selected`;
+        : count === 1
+          ? input.files[0].name
+          : `${count} files selected`;
+    }
+
+    function renderTray() {
+      if (!isMulti) return;
+      if (!tray) {
+        tray = document.createElement("ul");
+        tray.className = "evidence-list";
+        input.insertAdjacentElement("afterend", tray);
+      }
+      releaseObjectUrls();
+      tray.textContent = "";
+      tray.hidden = picked.length === 0;
+
+      if (picked.length) {
+        const caption = document.createElement("li");
+        caption.className = "evidence-list__caption";
+        caption.textContent = `${picked.length} of ${MAX_EVIDENCE_FILES} files added`;
+        tray.appendChild(caption);
+      }
+
+      picked.forEach((file, index) => {
+        const url = URL.createObjectURL(file);
+        objectUrls.add(url);
+        const isImage = file.type.startsWith("image/");
+
+        const item = document.createElement("li");
+        item.className = "evidence-list__item";
+
+        const thumb = document.createElement("span");
+        thumb.className = "evidence-list__thumb";
+        if (isImage) {
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = "";
+          thumb.appendChild(img);
+        } else {
+          thumb.textContent = "\u{1F3AC}";
+        }
+
+        const meta = document.createElement("span");
+        meta.className = "evidence-list__meta";
+        const name = document.createElement("span");
+        name.className = "evidence-list__name";
+        name.textContent = file.name;
+        const size = document.createElement("span");
+        size.className = "evidence-list__size";
+        size.textContent = formatBytes(file.size);
+        meta.append(name, size);
+
+        const view = document.createElement("a");
+        view.className = "evidence-list__view";
+        view.href = url;
+        view.target = "_blank";
+        view.rel = "noopener";
+        view.textContent = "View";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "evidence-list__remove";
+        remove.setAttribute("aria-label", `Remove ${file.name}`);
+        remove.textContent = "×";
+        remove.addEventListener("click", () => {
+          picked.splice(index, 1);
+          syncInputFiles();
+          updateLabelText();
+          renderTray();
+        });
+
+        item.append(thumb, meta, view, remove);
+        tray.appendChild(item);
+      });
+    }
+
+    function addFiles(fileList) {
+      const incoming = Array.from(fileList);
+      if (!incoming.length) return;
+      for (const file of incoming) {
+        const dupe = picked.some(
+          (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+        );
+        if (!dupe && picked.length < MAX_EVIDENCE_FILES) picked.push(file);
+      }
+      syncInputFiles();
+      updateLabelText();
+      renderTray();
+    }
+
+    input.addEventListener("change", () => {
+      if (!isMulti) {
+        updateLabelText();
+        return;
+      }
+      // A native re-pick replaces the FileList; fold it into `picked` so
+      // earlier selections aren't lost, then re-sync from `picked`.
+      addFiles(input.files);
     });
+
     if (input.form) {
       input.form.addEventListener("reset", () => {
+        picked = [];
+        releaseObjectUrls();
+        if (tray) {
+          tray.textContent = "";
+          tray.hidden = true;
+        }
         textEl.textContent = defaultText;
       });
     }
@@ -733,8 +867,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     label.addEventListener("drop", (e) => {
       if (!e.dataTransfer || !e.dataTransfer.files.length) return;
-      input.files = e.dataTransfer.files;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (isMulti) {
+        addFiles(e.dataTransfer.files);
+      } else {
+        input.files = e.dataTransfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
     });
   });
 
