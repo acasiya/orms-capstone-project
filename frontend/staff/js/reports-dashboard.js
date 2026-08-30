@@ -1,10 +1,10 @@
 // O.R.M.S. — Reports Dashboard: week filter, status filter, pagination,
-// stat cards, and the category pie — all real, from reports-data.js's
-// API-backed data (category comes from matching each report's ordinance
-// against the real uploaded ordinances — see reports-data.js's
-// categoryForOrdinance). The heatmap stays an honest "No data yet": the
-// old mock drove it off a "severity" field real reports don't have, so
-// there's nothing real to show yet.
+// stat cards, the category pie, and the incident heatmap — all real, from
+// reports-data.js's API-backed data (category comes from matching each
+// report's ordinance against the real uploaded ordinances — see
+// reports-data.js's categoryForOrdinance). The heatmap is a Leaflet +
+// OpenStreetMap density map keyed on each report's street (geocoded to a
+// centroid in street-coordinates.js) — see js/heatmap.js.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusFilter: "all",
     page: 1,
     categoryPeriod: "week",
+    heatmapPeriod: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -331,12 +332,114 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCategoryPie
   );
 
-  // ---- Incident heatmap: still an honest "No data yet" — the old mock drove
-  // it off a "severity" field real reports don't have (see file header). ----
+  // ---- Incident heatmap (real Leaflet + OpenStreetMap density map) ----
+  //
+  // Intensity = number of reports per street for the selected period, placed
+  // at that street's centroid (street-coordinates.js). The small card is a
+  // static map that opens the enlarged, pannable/zoomable modal on click.
 
-  const heatmapCard = document.getElementById("heatmapCanvas")?.closest(".dash-card");
-  if (heatmapCard) {
-    heatmapCard.innerHTML = `<h2 class="dash-card__title">Incident Heatmap</h2><div class="ordinances-empty">No data yet</div>`;
+  const heatmapCanvasEl = document.getElementById("heatmapCanvas");
+  const heatmapModal = document.getElementById("heatmapModal");
+  const heatmapCanvasModalEl = document.getElementById("heatmapCanvasModal");
+  const heatmapPeriodMenu = document.getElementById("heatmapPeriodMenu");
+  const heatmapPeriodLabel = document.getElementById("heatmapPeriodLabel");
+  const heatmapModalPeriodMenu = document.getElementById("heatmapModalPeriodMenu");
+  const heatmapModalPeriodLabel = document.getElementById("heatmapModalPeriodLabel");
+
+  // No-op unless setupHeatmap() succeeds — a failed map init (Leaflet or the
+  // tile host unreachable) then just leaves an empty heatmap card instead of
+  // taking down the stats, table, and pie with it.
+  let renderHeatmaps = () => {};
+
+  function setupHeatmap() {
+    if (typeof L === "undefined" || typeof createIncidentHeatmap !== "function") {
+      throw new Error("Leaflet / heatmap.js not loaded");
+    }
+
+    const cardHeatmap = createIncidentHeatmap(heatmapCanvasEl, { interactive: false });
+    let modalHeatmap = null;
+
+    const heatmapCounts = () => countByLocation(getReportsForPeriod(state.heatmapPeriod));
+
+    renderHeatmaps = () => {
+      const counts = heatmapCounts();
+      const unmapped = cardHeatmap.render(counts) || [];
+      if (modalHeatmap) modalHeatmap.render(counts);
+      if (unmapped.length) {
+        console.warn("[heatmap] reports on streets with no known coordinates:", unmapped);
+      }
+    };
+
+    // Card and modal each have their own period dropdown; both drive
+    // state.heatmapPeriod and are rebuilt together so their active row and
+    // button label stay in sync.
+    function renderHeatmapMenus() {
+      const opts = buildPeriodOptions();
+      [
+        [heatmapPeriodMenu, heatmapPeriodLabel],
+        [heatmapModalPeriodMenu, heatmapModalPeriodLabel],
+      ].forEach(([menu, label]) => {
+        if (!menu) return;
+        menu.innerHTML = opts
+          .map((o) => `<li data-value="${o.value}" class="${o.value === state.heatmapPeriod ? "active" : ""}">${o.label}</li>`)
+          .join("");
+        const cur = opts.find((o) => o.value === state.heatmapPeriod) || opts[0];
+        if (label) label.textContent = cur.label;
+        menu.querySelectorAll("li").forEach((li) => {
+          li.addEventListener("click", () => {
+            state.heatmapPeriod = li.dataset.value;
+            renderHeatmapMenus();
+            renderHeatmaps();
+          });
+        });
+      });
+    }
+
+    function openHeatmapModal() {
+      heatmapModal.hidden = false;
+      if (!modalHeatmap) {
+        modalHeatmap = createIncidentHeatmap(heatmapCanvasModalEl, { interactive: true });
+      }
+      // The modal container was display:none until now — Leaflet sized it as
+      // 0×0. Wait two frames for the browser to lay the shown modal out, then
+      // recalc size, repaint the heat, and frame it to the incident spread.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          modalHeatmap.invalidate();
+          modalHeatmap.render(heatmapCounts());
+          modalHeatmap.fit();
+        })
+      );
+    }
+
+    heatmapCanvasEl.addEventListener("click", openHeatmapModal);
+    heatmapCanvasEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openHeatmapModal();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      cardHeatmap.invalidate();
+      if (modalHeatmap) modalHeatmap.invalidate();
+    });
+
+    renderHeatmapMenus();
+    // Defer the first paint: during DOMContentLoaded the card hasn't been
+    // laid out yet, so Leaflet would measure it at 0×0 and mis-fit the view.
+    requestAnimationFrame(() => {
+      cardHeatmap.invalidate();
+      renderHeatmaps();
+    });
+  }
+
+  try {
+    setupHeatmap();
+  } catch (err) {
+    console.error("[heatmap] disabled:", err);
+    heatmapCanvasEl.classList.remove("heatmap-canvas");
+    heatmapCanvasEl.innerHTML = `<div class="ordinances-empty">Map unavailable</div>`;
   }
 
   // ---- Wire up ----

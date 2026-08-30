@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>O.R.M.S. — Concerns/Suggestions Dashboard</title>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -150,7 +151,12 @@
               <span class="heatmap-canvas__label">Barangay Platero</span>
               <span class="heatmap-canvas__expand" aria-hidden="true">&#10530;</span>
             </div>
-            <div class="heatmap-legend" id="heatmapLegend"></div>
+            <div class="heatmap-legend">
+              <span><i class="legend-dot legend-dot--low"></i>Low</span>
+              <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
+              <span><i class="legend-dot legend-dot--high"></i>High</span>
+              <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
+            </div>
           </div>
 
           <div class="dash-card category-card">
@@ -173,6 +179,10 @@
     </div>
   </div>
 
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/leaflet/leaflet-heat.js"></script>
+  <script src="js/street-coordinates.js"></script>
+  <script src="js/heatmap.js"></script>
   <script src="js/concerns-data.js"></script>
   <script src="js/concerns-dashboard.js"></script>
   <script src="js/admin.js"></script>
@@ -192,7 +202,12 @@
       <div class="heatmap-canvas heatmap-canvas--large" id="heatmapCanvasModal">
         <span class="heatmap-canvas__label">Barangay Platero</span>
       </div>
-      <div class="heatmap-legend" id="heatmapModalLegend"></div>
+      <div class="heatmap-legend">
+        <span><i class="legend-dot legend-dot--low"></i>Low</span>
+        <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
+        <span><i class="legend-dot legend-dot--high"></i>High</span>
+        <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
+      </div>
       <button type="button" class="btn heatmap-modal-back" data-close-modal>Go Back</button>
     </div>
   </div>
