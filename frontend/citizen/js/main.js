@@ -18,6 +18,12 @@ const REFRESH_TOKEN_KEY = "orms_refresh_token";
 // fields + photo) can be submitted as one multipart request from there.
 const SIGNUP_DRAFT_KEY = "orms_signup_draft";
 
+// Same idea, for the Forgot Password flow's 3 separate pages (Forgot
+// Password -> Input Code -> Reset Password): holds the email, and once
+// Input Code succeeds, the verified code too, so Reset Password can submit
+// both without asking for either again.
+const RESET_DRAFT_KEY = "orms_reset_draft";
+
 // Maps each backend role to the page it should land on after login, and to
 // which portal folder that role is allowed into. Keeps the redirect logic
 // in one place instead of duplicated per login form.
@@ -311,6 +317,68 @@ async function apiRegister(formData) {
   return response.json();
 }
 
+// Forgot Password step 1 — emails a 6-digit code to the account, if one
+// exists for that address.
+async function apiRequestPasswordReset(email) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/password-reset/request/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not send a reset code.");
+  }
+  return response.json();
+}
+
+// Forgot Password step 2 (Input Code) — checks the code before Reset
+// Password will accept it.
+async function apiVerifyPasswordResetCode(email, code) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/password-reset/verify/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Invalid or expired code.");
+  }
+  return response.json();
+}
+
+// Forgot Password step 3 (Reset Password) — actually sets the new password.
+async function apiConfirmPasswordReset(email, code, password) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/password-reset/confirm/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, password }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not reset your password.");
+  }
+  return response.json();
+}
+
 // Attaches the stored JWT to a fetch call. Every authenticated API request
 // (reports, ordinances, concerns, etc. once those endpoints exist) should
 // go through this helper rather than calling fetch() directly.
@@ -601,6 +669,102 @@ document.addEventListener("DOMContentLoaded", () => {
           showFormError(form, err.message);
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit";
+        }
+        return;
+      }
+
+      // Forgot Password step 1 (forgot-password.html): request a reset code
+      // by email — stashes the email in sessionStorage for the next two
+      // steps, same pattern as the signup draft above.
+      if (form.dataset.forgotRequest !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = form.querySelector('[name="email"]').value.trim();
+        clearFormError(form);
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending...";
+        try {
+          await apiRequestPasswordReset(email);
+          sessionStorage.setItem(RESET_DRAFT_KEY, JSON.stringify({ email }));
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Get Code";
+        }
+        return;
+      }
+
+      // Forgot Password step 2 (verify-code.html): confirms the code before
+      // letting them set a new password.
+      if (form.dataset.forgotVerify !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const code = form.querySelector('[name="code"]').value.trim();
+        clearFormError(form);
+
+        let draft = null;
+        try {
+          draft = JSON.parse(sessionStorage.getItem(RESET_DRAFT_KEY));
+        } catch {
+          draft = null;
+        }
+        if (!draft || !draft.email) {
+          window.location.href = "forgot-password.html";
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Verifying...";
+        try {
+          await apiVerifyPasswordResetCode(draft.email, code);
+          sessionStorage.setItem(RESET_DRAFT_KEY, JSON.stringify({ email: draft.email, code }));
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Enter";
+        }
+        return;
+      }
+
+      // Forgot Password step 3 (reset-password.html): sets the new password
+      // and clears the draft — the flow is done either way after this.
+      if (form.dataset.forgotConfirm !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const password = form.querySelector('[name="password"]');
+        const confirmPassword = form.querySelector('[name="confirmPassword"]');
+        clearFormError(form);
+
+        let draft = null;
+        try {
+          draft = JSON.parse(sessionStorage.getItem(RESET_DRAFT_KEY));
+        } catch {
+          draft = null;
+        }
+        if (!draft || !draft.email || !draft.code) {
+          window.location.href = "forgot-password.html";
+          return;
+        }
+        if (password.value !== confirmPassword.value) {
+          showFormError(form, "Passwords do not match.");
+          return;
+        }
+        const passwordError = getPasswordRequirementError(password.value, { email: draft.email });
+        if (passwordError) {
+          showFormError(form, passwordError);
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Resetting...";
+        try {
+          await apiConfirmPasswordReset(draft.email, draft.code, password.value);
+          sessionStorage.removeItem(RESET_DRAFT_KEY);
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Reset Password";
         }
         return;
       }

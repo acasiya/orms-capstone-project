@@ -134,6 +134,27 @@
     </div>
   </div>
 
+  <!-- Reject Account reason popup: opened by "Reject Account" in the Approve Account popup -->
+  <div class="modal-overlay" id="rejectReasonModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Reject Account</h2>
+      <p class="auth-card__subtitle" style="margin: -8px 0 16px; text-align: left;">
+        Explain what's wrong so the applicant knows what to fix — this gets emailed to them, and they can sign up again with the same email once it's corrected.
+      </p>
+      <form id="rejectReasonForm" novalidate>
+        <div class="field field--boxed">
+          <label for="rejectReasonInput">Reason</label>
+          <textarea id="rejectReasonInput" rows="4" placeholder="e.g. The uploaded ID photo is blurry/unreadable." required></textarea>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn">Reject &amp; Notify</button>
+          <button type="button" class="btn btn-muted" id="rejectReasonCancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ID Photo preview popup: opened by clicking "View Photo" -->
   <div class="modal-overlay" id="idPhotoModal" hidden>
     <div class="modal-card">

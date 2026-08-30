@@ -1,10 +1,16 @@
+import random
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import LoginSession, VoterVerification
+from orms_backend.emails import send_password_reset_email
+
+from .models import LoginSession, PasswordResetCode, VoterVerification
 
 User = get_user_model()
 
@@ -215,6 +221,89 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         data["user"] = UserSerializer(self.user, context=self.context).data
         return data
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Forgot Password step 1 — emails a fresh 6-digit code to the account."""
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            self._user = User.objects.get(email__iexact=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No account found with that email.")
+        return value
+
+    def save(self):
+        # Invalidate any earlier unused codes so only the one just emailed works.
+        PasswordResetCode.objects.filter(user=self._user, used_at__isnull=True).update(
+            used_at=timezone.now()
+        )
+        code = f"{random.randint(0, 999999):06d}"
+        PasswordResetCode.objects.create(
+            user=self._user,
+            code=code,
+            expires_at=timezone.now() + timedelta(minutes=PasswordResetCode.CODE_TTL_MINUTES),
+        )
+        send_password_reset_email(self._user, code, PasswordResetCode.CODE_TTL_MINUTES)
+
+
+class PasswordResetVerifySerializer(serializers.Serializer):
+    """Forgot Password step 2 — Input Code checks the code before step 3."""
+
+    email = serializers.EmailField()
+    code = serializers.CharField()
+
+    def validate(self, attrs):
+        reset_code = (
+            PasswordResetCode.objects.filter(
+                user__email__iexact=attrs["email"], code=attrs["code"], used_at__isnull=True
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if not reset_code or not reset_code.is_valid():
+            raise serializers.ValidationError("Invalid or expired code.")
+        attrs["reset_code"] = reset_code
+        return attrs
+
+    def save(self):
+        reset_code = self.validated_data["reset_code"]
+        reset_code.verified_at = timezone.now()
+        reset_code.save(update_fields=["verified_at"])
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Forgot Password step 3 — Reset Password actually sets the new password."""
+
+    email = serializers.EmailField()
+    code = serializers.CharField()
+    password = serializers.CharField(validators=[validate_password])
+
+    def validate(self, attrs):
+        reset_code = (
+            PasswordResetCode.objects.filter(
+                user__email__iexact=attrs["email"],
+                code=attrs["code"],
+                used_at__isnull=True,
+                verified_at__isnull=False,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if not reset_code or not reset_code.is_valid():
+            raise serializers.ValidationError("Invalid or expired code.")
+        attrs["reset_code"] = reset_code
+        return attrs
+
+    def save(self):
+        reset_code = self.validated_data["reset_code"]
+        user = reset_code.user
+        user.set_password(self.validated_data["password"])
+        user.save(update_fields=["password"])
+        reset_code.used_at = timezone.now()
+        reset_code.save(update_fields=["used_at"])
 
 
 class PendingVerificationSerializer(serializers.ModelSerializer):
