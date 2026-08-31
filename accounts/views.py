@@ -6,17 +6,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from orms_backend.emails import send_account_approved_email, send_account_rejected_email
-
 from .models import LoginSession, User, VoterVerification
 from .serializers import (
     AdminAccountSerializer,
     AdminCreateUserSerializer,
     AuditLogSerializer,
     CustomTokenObtainPairSerializer,
-    PasswordResetConfirmSerializer,
-    PasswordResetRequestSerializer,
-    PasswordResetVerifySerializer,
     PendingVerificationSerializer,
     ProfileUpdateSerializer,
     RegisterSerializer,
@@ -76,39 +71,6 @@ class MeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UserSerializer(request.user, context={"request": request}).data)
-
-
-class PasswordResetRequestView(APIView):
-    """POST /api/auth/password-reset/request/ — Forgot Password: emails a 6-digit code."""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": "A reset code has been sent to your email."})
-
-
-class PasswordResetVerifyView(APIView):
-    """POST /api/auth/password-reset/verify/ — Input Code: checks the code is valid."""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetVerifySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": "Code verified."})
-
-
-class PasswordResetConfirmView(APIView):
-    """POST /api/auth/password-reset/confirm/ — Reset Password: sets the new password."""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": "Your password has been reset."})
 
 
 class IsAdmin(permissions.BasePermission):
@@ -261,18 +223,18 @@ class AdminApproveVerificationView(APIView):
         verification.save()
         verification.user.is_verified = True
         verification.user.save(update_fields=["is_verified"])
-        send_account_approved_email(verification.user)
         return Response({"detail": "Account approved."})
 
 
 class AdminRejectVerificationView(APIView):
     """
-    POST /api/auth/admin/verifications/<id>/reject/ — requires a `reason`
-    (what was wrong, e.g. an unreadable ID photo), emails it to the
-    applicant, then deletes the pending account outright. Deleting (rather
-    than keeping a permanently-rejected row around) is what gives them
-    "another chance" — it frees up their email/username so they can just
-    sign up again once they've fixed whatever was wrong.
+    POST /api/auth/admin/verifications/<id>/reject/ — deletes the pending
+    account outright. There's no email service wired up yet to notify a
+    rejected applicant (e.g. to explain what was wrong with their ID and
+    let them resubmit under the same account), so leaving a permanently
+    unverified account around would just be a dead end that always shows
+    "under verification" at login with no way forward. Deleting frees up
+    their email/username so they can sign up again instead.
     """
     permission_classes = [IsAdmin]
 
@@ -280,14 +242,7 @@ class AdminRejectVerificationView(APIView):
         verification = get_object_or_404(
             VoterVerification, pk=pk, status=VoterVerification.Status.PENDING
         )
-        reason = (request.data.get("reason") or "").strip()
-        if not reason:
-            return Response(
-                {"detail": "Please provide a reason for rejecting this account."}, status=400
-            )
-        user = verification.user
-        send_account_rejected_email(user.get_full_name() or user.username, user.email, reason)
-        user.delete()
+        verification.user.delete()
         return Response({"detail": "Account rejected."})
 
 

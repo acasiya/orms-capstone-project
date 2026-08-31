@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.views import IsStaffOrAdmin
-from orms_backend.emails import send_report_remarks_email, send_report_resolved_email
 
 from .models import Concern, ConcernFolder, Report
 from .serializers import (
@@ -100,23 +99,9 @@ class StaffReportDetailView(APIView):
 
     def patch(self, request, pk):
         report = self.get_object(pk)
-        previous_status = report.status
-        previous_remarks = report.remarks
         serializer = StaffReportUpdateSerializer(report, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        # Only on the transition INTO Resolved (not every save while already
-        # resolved), and remarks only fire when they actually changed value —
-        # otherwise re-saving the same status/remarks would re-notify every
-        # time. If both happen in the same save (e.g. resolving with a
-        # closing remark attached), just the resolved email goes out — it
-        # already includes the remarks, see report_resolved.html.
-        if report.status == Report.Status.RESOLVED and previous_status != Report.Status.RESOLVED:
-            send_report_resolved_email(report)
-        elif report.remarks and report.remarks != previous_remarks:
-            send_report_remarks_email(report)
-
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
 

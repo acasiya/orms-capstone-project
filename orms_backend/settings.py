@@ -168,27 +168,6 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
-# --- Email -----------------------------------------------------------------
-# Gmail SMTP with an app password (see README for setup — Google Account ->
-# Security -> 2-Step Verification -> App Passwords). Sends real email when
-# EMAIL_HOST_USER is set; otherwise falls back to printing the email to the
-# console, so local dev/testing works without needing real credentials.
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-EMAIL_BACKEND = (
-    "django.core.mail.backends.smtp.EmailBackend"
-    if EMAIL_HOST_USER
-    else "django.core.mail.backends.console.EmailBackend"
-)
-EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
-
-# decouple's default= only kicks in when the key is missing entirely, not
-# when it's present-but-blank (which .env.example ships as, so people fill
-# it in) — so an explicit `or` here is what actually falls back correctly.
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER or "no-reply@orms.local"
-
 # --- CORS ----------------------------------------------------------------
 # Frontend is served from the same origin via WhiteNoise above, so CORS
 # usually isn't even hit in production. This stays enabled for local dev,

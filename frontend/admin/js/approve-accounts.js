@@ -103,59 +103,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Shared by the Approve/Reject buttons: calls the given API action for
   // the active account, then drops it from the list on success.
-  async function reviewActiveAccount(actionFn, ...args) {
-    if (!activeAccountId) return null;
+  async function reviewActiveAccount(actionFn, confirmMessage) {
+    if (!activeAccountId) return;
+    if (confirmMessage && !window.confirm(confirmMessage)) return;
+
+    approveYesBtn.disabled = true;
+    approveNoBtn.disabled = true;
     try {
-      await actionFn(activeAccountId, ...args);
+      await actionFn(activeAccountId);
       accounts = accounts.filter((a) => a.id !== activeAccountId);
       approveModal.hidden = true;
       render();
-      return true;
     } catch (err) {
       alert(err.message);
-      return false;
+    } finally {
+      approveYesBtn.disabled = false;
+      approveNoBtn.disabled = false;
     }
   }
 
   if (approveYesBtn) {
-    approveYesBtn.addEventListener("click", async () => {
-      approveYesBtn.disabled = true;
-      await reviewActiveAccount(approveVerification);
-      approveYesBtn.disabled = false;
-    });
+    approveYesBtn.addEventListener("click", () => reviewActiveAccount(approveVerification));
   }
 
-  // Reject Account popup: asks for a reason (emailed to the applicant, see
-  // AdminRejectVerificationView) instead of a plain confirm dialog.
-  const rejectReasonModal = document.getElementById("rejectReasonModal");
-  const rejectReasonForm = document.getElementById("rejectReasonForm");
-  const rejectReasonInput = document.getElementById("rejectReasonInput");
-  const rejectReasonCancel = document.getElementById("rejectReasonCancel");
-
-  if (approveNoBtn && rejectReasonModal) {
-    approveNoBtn.addEventListener("click", () => {
-      rejectReasonInput.value = "";
-      rejectReasonModal.hidden = false;
-    });
-  }
-
-  if (rejectReasonCancel) {
-    rejectReasonCancel.addEventListener("click", () => {
-      rejectReasonModal.hidden = true;
-    });
-  }
-
-  if (rejectReasonForm) {
-    rejectReasonForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const reason = rejectReasonInput.value.trim();
-      if (!reason) return;
-
-      const submitBtn = rejectReasonForm.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      const ok = await reviewActiveAccount(rejectVerification, reason);
-      submitBtn.disabled = false;
-      if (ok) rejectReasonModal.hidden = true;
-    });
+  if (approveNoBtn) {
+    approveNoBtn.addEventListener("click", () =>
+      reviewActiveAccount(
+        rejectVerification,
+        "Reject this account? This permanently deletes the pending sign-up — they'll need to sign up again."
+      )
+    );
   }
 });

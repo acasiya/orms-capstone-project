@@ -2,7 +2,6 @@ import uuid
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -65,36 +64,6 @@ class VoterVerification(models.Model):
 
     def __str__(self):
         return f"Verification for {self.user} — {self.status}"
-
-
-class PasswordResetCode(models.Model):
-    """
-    A short-lived 6-digit code emailed for Forgot Password. Numeric (rather
-    than a link/token) since the frontend flow is 3 separate pages —
-    Forgot Password -> Input Code -> Reset Password — and the code has to
-    survive being carried from the 2nd page to the 3rd.
-    """
-
-    CODE_TTL_MINUTES = 15
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_codes")
-    code = models.CharField(max_length=6)
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
-    # Set once Input Code accepts it, checked by Reset Password so a code
-    # can't be used to set a new password without going through that step.
-    verified_at = models.DateTimeField(null=True, blank=True)
-    used_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def is_valid(self):
-        return self.used_at is None and timezone.now() < self.expires_at
-
-    def __str__(self):
-        return f"Reset code for {self.user}"
 
 
 class LoginSession(models.Model):
