@@ -174,11 +174,20 @@ button {
   text-decoration: underline;
 }
 
+/* Inverted chip: navbar itself is navy, so the bell's own background flips
+   to white (with a navy icon) rather than sitting flat against the navbar. */
 .navbar__bell {
   position: relative;
-  font-size: 1.15rem;
   flex-shrink: 0;
   cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  color: var(--navy);
 }
 
 .navbar__badge {

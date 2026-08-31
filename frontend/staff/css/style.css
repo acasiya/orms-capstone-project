@@ -169,11 +169,20 @@ button {
   text-decoration: underline;
 }
 
+/* Inverted chip: the topbar itself is white, so the bell's own background
+   flips to navy (with a white icon) rather than sitting flat against it. */
 .navbar__bell {
   position: relative;
-  font-size: 1.15rem;
   flex-shrink: 0;
   cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy);
+  color: var(--white);
 }
 
 .navbar__badge {
@@ -2303,10 +2312,15 @@ button {
   font-size: 0.82rem;
 }
 
-.recent-reports-table .status-pill {
+/* Was scoped to `.recent-reports-table .status-pill`, so anywhere else this
+   class was used (report-detail's Status pill, concern-detail's) got only
+   the background/text color below with no padding or border-radius — it
+   just looked like highlighted text rather than an actual pill. */
+.status-pill {
   display: inline-block;
   padding: 5px 12px;
   border-radius: 5px;
+  border: 1px solid transparent;
   font-size: 0.76rem;
   font-weight: 700;
   white-space: nowrap;
@@ -2315,24 +2329,28 @@ button {
 /* New Submission — grey */
 .status-pill--new {
   background: #e2e2e2;
+  border-color: #b8b8b8;
   color: #4a4a4a;
 }
 
 /* Under Review — yellow */
 .status-pill--in-process {
   background: #fbf7c4;
+  border-color: #d8cf7a;
   color: #7a6f1e;
 }
 
 /* Resolved — green */
 .status-pill--resolved {
   background: #d3ecd9;
+  border-color: #a3d6b1;
   color: #226b3f;
 }
 
 /* In Action — yellow-green */
 .status-pill--remarks {
   background: #e3edb8;
+  border-color: #b9cf6c;
   color: #56671c;
 }
 
