@@ -1,4 +1,4 @@
-// O.R.M.S. — Fixed list of barangay streets for the File Report location combobox.
+// SafeSpace — Fixed list of barangay streets for the File Report location combobox.
 
 const STREETS = [
   "Aberta Street", "Acorn Loop", "Alder Lane", "Alpine Street", "Andrea Street",

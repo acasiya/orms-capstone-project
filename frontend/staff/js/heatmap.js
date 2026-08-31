@@ -1,4 +1,4 @@
-// O.R.M.S. — shared incident heatmap for the staff dashboards.
+// SafeSpace — shared incident heatmap for the staff dashboards.
 //
 // Renders a real Leaflet + OpenStreetMap map with a heat layer whose
 // intensity is the number of reports (or concerns) per street. Incident

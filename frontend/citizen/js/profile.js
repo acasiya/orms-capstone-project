@@ -1,4 +1,4 @@
-// O.R.M.S. — Citizen Profile: tab switching, real field population from the
+// SafeSpace — Citizen Profile: tab switching, real field population from the
 // API, and a real Apply Changes save (including profile picture upload) to
 // PATCH /api/auth/me/. Change Password stays a front-end-only mock — no
 // backend endpoint for that yet.

@@ -1,4 +1,4 @@
-// O.R.M.S. — Reports data, backed by the real API (GET /api/reports/staff/).
+// SafeSpace — Reports data, backed by the real API (GET /api/reports/staff/).
 // Replaces the previous randomly-generated 28-week mock dataset. The rest
 // of the dashboard/list/detail code was written assuming a synchronously-
 // available array, so this loads once per page into a cache — call

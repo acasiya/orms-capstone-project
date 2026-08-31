@@ -1,4 +1,4 @@
-// O.R.M.S. — Report detail: view a report's real info and let staff change
+// SafeSpace — Report detail: view a report's real info and let staff change
 // its status and remarks (remarks are always editable, independent of
 // status — not gated to one specific status choice). Saves go through
 // updateReportStatus (PATCH /api/reports/staff/<id>/) instead of the old
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.title = `${report.incidentType} — O.R.M.S.`;
+  document.title = `${report.incidentType} — SafeSpace`;
 
   document.getElementById("reportName").value = report.reporter;
   document.getElementById("reportContact").value = report.contactNumber || "";

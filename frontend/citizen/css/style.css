@@ -1,5 +1,5 @@
 /* ==========================================================================
-   O.R.M.S. — Ordinance Reporting and Monitoring System
+   SafeSpace — Ordinance Reporting and Monitoring System
    Shared stylesheet for all pages
    ========================================================================== */
 
@@ -7,6 +7,37 @@
   font-family: "Mate SC";
   src: url("../assets/MateSC-Regular.ttf") format("truetype");
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Brand/nav font — self-hosted (like Mate SC above) rather than linked from
+   Google Fonts, so the navbar/sidebar don't depend on an external request. */
+@font-face {
+  font-family: "Poppins";
+  src: url("../assets/Poppins-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Poppins";
+  src: url("../assets/Poppins-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Poppins";
+  src: url("../assets/Poppins-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Poppins";
+  src: url("../assets/Poppins-Bold.woff2") format("woff2");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -83,7 +114,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: "Mate SC", var(--serif);
+  font-family: "Poppins", var(--serif);
   font-weight: 400;
   font-size: 1.3rem;
   letter-spacing: 0.5px;
@@ -97,7 +128,7 @@ button {
   height: 36px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #fff url("../assets/logo.jpg") center / cover no-repeat;
+  background: url("../assets/logo.png") center / cover no-repeat;
   border: 2px solid var(--cream);
 }
 
@@ -108,7 +139,7 @@ button {
   margin: 0 0 0 auto;
   padding: 0;
   flex-wrap: wrap;
-  font-family: "Mate SC", var(--serif);
+  font-family: "Poppins", var(--serif);
   font-size: 0.85rem;
 }
 
@@ -952,7 +983,7 @@ button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #fff url("../assets/logo.jpg") center / cover no-repeat;
+  background: url("../assets/logo.png") center / cover no-repeat;
   flex-shrink: 0;
 }
 

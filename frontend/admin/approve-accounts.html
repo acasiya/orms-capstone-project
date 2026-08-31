@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>O.R.M.S. — Approve Accounts</title>
+  <title>SafeSpace — Approve Accounts</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -13,16 +13,16 @@
       <div class="admin-sidebar__brand">
         <span class="admin-sidebar__logo" aria-hidden="true"></span>
         <div class="admin-sidebar__brand-text">
-          <strong>O.R.M.S.</strong>
+          <strong>SafeSpace</strong>
           <small>Barangay Platero</small>
           <small>Admin Portal</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
-        <li><a href="manage-accounts.html">&#128101; Manage Accounts</a></li>
-        <li><a href="create-accounts.html">&#128100; Create Accounts</a></li>
-        <li><a href="approve-accounts.html" class="active">&#9989; Approve Accounts</a></li>
-        <li><a href="audit-logs.html">&#128220; View Audit Logs</a></li>
+        <li><a href="manage-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5a3.5 3.5 0 00-3.5-3.5h-5A3.5 3.5 0 005 18.5V20"/><circle cx="9.5" cy="8" r="3.25"/><path d="M16 8.2a2.7 2.7 0 010 5.3M19 20v-1.3a3 3 0 00-2.2-2.9"/></svg> Manage Accounts</a></li>
+        <li><a href="create-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.25"/><path d="M3 20v-1.5A3.5 3.5 0 016.5 15h6A3.5 3.5 0 0116 18.5V20"/><path d="M18.5 8v5.5M21.2 10.75h-5.4"/></svg> Create Accounts</a></li>
+        <li><a href="approve-accounts.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Approve Accounts</a></li>
+        <li><a href="audit-logs.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="13" height="17" rx="1.8"/><path d="M9.3 4a1.2 1.2 0 011.2-1.2h3a1.2 1.2 0 011.2 1.2v.6H9.3z"/><path d="M8.7 11h6.6M8.7 14.3h6.6M8.7 17.6h4.4"/></svg> View Audit Logs</a></li>
       </ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
@@ -127,7 +127,7 @@
         <a href="#" class="admin-table__owner-link" id="approveAccountPhotoLink">&#128247; View ID Photo</a>
 
         <div class="edit-account-card__actions" style="margin-top: 18px;">
-          <button type="button" class="edit-account-btn edit-account-btn--approve" id="approveAccountYes">&#9989; Approve Account</button>
+          <button type="button" class="edit-account-btn edit-account-btn--approve" id="approveAccountYes"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Approve Account</button>
           <button type="button" class="edit-account-btn edit-account-btn--reject" id="approveAccountNo">&#10060; Reject Account</button>
         </div>
       </div>

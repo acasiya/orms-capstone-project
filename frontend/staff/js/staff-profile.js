@@ -1,4 +1,4 @@
-// O.R.M.S. — Staff "My Profile": tab switching, real field population from
+// SafeSpace — Staff "My Profile": tab switching, real field population from
 // the API, and a real Apply Changes save (including profile picture
 // upload) to PATCH /api/auth/me/. Mirrors the Admin portal's version —
 // previously this page always showed a hardcoded "Eliseo Aurelio Jr."

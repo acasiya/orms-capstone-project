@@ -1,4 +1,4 @@
-// O.R.M.S. — approximate lat/lng for each barangay street, used by the
+// SafeSpace — approximate lat/lng for each barangay street, used by the
 // staff dashboards' incident heatmap. Generated once by geocoding the
 // STREETS list (citizen/js/streets-data.js) against OpenStreetMap /
 // Nominatim, restricted to Barangay Platero, Biñan, Laguna. These are

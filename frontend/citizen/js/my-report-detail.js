@@ -1,4 +1,4 @@
-// O.R.M.S. — My Report detail: fetch the real report by the ?id= query param.
+// SafeSpace — My Report detail: fetch the real report by the ?id= query param.
 
 const REPORT_TIMELINE_STEPS = [
   { label: "Submitted", description: "Your report has been submitted successfully." },
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.title = `${report.ordinance} — O.R.M.S.`;
+  document.title = `${report.ordinance} — SafeSpace`;
 
   document.getElementById("reportLocation").value = report.location;
   document.getElementById("reportOrdinance").append(new Option(report.ordinance, report.ordinance, true, true));

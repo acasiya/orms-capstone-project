@@ -1,4 +1,4 @@
-// O.R.M.S. — Ordinances list: filter, search, sort, paginate, render, and navigate to detail.
+// SafeSpace — Ordinances list: filter, search, sort, paginate, render, and navigate to detail.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("ordinanceRows");

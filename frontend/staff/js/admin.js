@@ -1,4 +1,4 @@
-// O.R.M.S. — shared behavior for admin pages (sidebar toggle + logout).
+// SafeSpace — shared behavior for admin pages (sidebar toggle + logout).
 
 const ADMIN_AUTH_STORAGE_KEY = "orms_auth_user";
 const ADMIN_ACCESS_TOKEN_KEY = "orms_access_token";

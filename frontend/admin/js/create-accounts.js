@@ -1,4 +1,4 @@
-// O.R.M.S. — Create Account: creates a real account (Citizen, Staff, or
+// SafeSpace — Create Account: creates a real account (Citizen, Staff, or
 // Admin) via the API. Accounts made here are pre-verified immediately —
 // no voter's ID review — since an admin is creating/vetting it directly.
 // This is separate from the Citizen portal's own Sign Up flow, which is

@@ -1,4 +1,4 @@
-// O.R.M.S. — Concern/Suggestion detail: view real info and let staff change
+// SafeSpace — Concern/Suggestion detail: view real info and let staff change
 // its status (Submitted/Resolved) and leave remarks. Saves go through
 // updateConcernStatus (PATCH /api/concerns/staff/<id>/) instead of the old
 // localStorage-only folder-assignment mock.
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.title = `Concern/Suggestion — O.R.M.S.`;
+  document.title = `Concern/Suggestion — SafeSpace`;
 
   document.getElementById("concernName").value = concern.reporter;
   document.getElementById("concernContact").value = concern.contactNumber || "";

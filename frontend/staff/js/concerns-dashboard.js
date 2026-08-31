@@ -1,4 +1,4 @@
-// O.R.M.S. — Concerns/Suggestions Dashboard: week filter, status filter,
+// SafeSpace — Concerns/Suggestions Dashboard: week filter, status filter,
 // pagination, stats, category pie, and the incident heatmap — all real,
 // driven by concerns-data.js's API-backed concerns and folders. Folders
 // (shared across every staff/admin account via the backend — see

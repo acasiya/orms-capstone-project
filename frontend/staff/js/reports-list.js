@@ -1,4 +1,4 @@
-// O.R.M.S. — Reports Management: search + filter (type/date/status) +
+// SafeSpace — Reports Management: search + filter (type/date/status) +
 // paginate across real reports from reports-data.js (GET /api/reports/staff/).
 
 document.addEventListener("DOMContentLoaded", async () => {

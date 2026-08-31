@@ -1,4 +1,4 @@
-// O.R.M.S. — My Reports: render + filter the citizen's submitted reports by status.
+// SafeSpace — My Reports: render + filter the citizen's submitted reports by status.
 // Data now comes from the real API (see my-reports-data.js) instead of a
 // hardcoded array, so this file is async where it fetches reports.
 

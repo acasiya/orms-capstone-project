@@ -1,4 +1,4 @@
-// O.R.M.S. — Submit Suggestion: submits the concern/suggestion to the real
+// SafeSpace — Submit Suggestion: submits the concern/suggestion to the real
 // API (POST /api/concerns/) instead of just showing a success modal with
 // nothing actually saved.
 

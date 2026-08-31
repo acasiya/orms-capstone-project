@@ -1,4 +1,4 @@
-// O.R.M.S. — shared front-end behavior, wired to the Django REST API.
+// SafeSpace — shared front-end behavior, wired to the Django REST API.
 
 // The API is served from the same host as this frontend (see
 // WHITENOISE_ROOT in settings.py), so a relative path works both in local

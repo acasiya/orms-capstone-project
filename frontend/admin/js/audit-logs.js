@@ -1,4 +1,4 @@
-// O.R.M.S. — View Audit Logs: render + sort + filter the login/logout history.
+// SafeSpace — View Audit Logs: render + sort + filter the login/logout history.
 // Data now comes from the real API (see audit-log-data.js) instead of a
 // hardcoded array, so this file is async where it fetches logs.
 

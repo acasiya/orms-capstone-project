@@ -1,4 +1,4 @@
-// O.R.M.S. — Approve Accounts: render + filter the pending account list, and
+// SafeSpace — Approve Accounts: render + filter the pending account list, and
 // handle the approve/reject popup + ID photo preview.
 // Data now comes from the real API (see pending-accounts-data.js) instead
 // of a hardcoded array, so this file is async where it fetches/reviews
