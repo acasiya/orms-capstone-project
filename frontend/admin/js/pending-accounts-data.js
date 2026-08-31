@@ -26,11 +26,14 @@ async function approveVerification(id) {
   return response.json();
 }
 
-// Deletes the pending account outright — see AdminRejectVerificationView's
-// docstring for why (no email service to notify/let them resubmit yet).
-async function rejectVerification(id) {
+// Emails the applicant the given reason, then deletes the pending account
+// outright — see AdminRejectVerificationView's docstring for why deleting is
+// what gives them "another chance" (frees up their email to sign up again).
+async function rejectVerification(id, reason) {
   const response = await authFetch(`${ADMIN_API_BASE}/verifications/${id}/reject/`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));

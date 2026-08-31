@@ -18,6 +18,12 @@ const REFRESH_TOKEN_KEY = "orms_refresh_token";
 // fields + photo) can be submitted as one multipart request from there.
 const SIGNUP_DRAFT_KEY = "orms_signup_draft";
 
+// Same idea, for the Forgot Password flow's 3 separate pages (Forgot
+// Password -> Input Code -> Reset Password): holds the email, and once
+// Input Code succeeds, the verified code too, so Reset Password can submit
+// both without asking for either again.
+const RESET_DRAFT_KEY = "orms_reset_draft";
+
 // Maps each backend role to the page it should land on after login, and to
 // which portal folder that role is allowed into. Keeps the redirect logic
 // in one place instead of duplicated per login form.
@@ -308,6 +314,68 @@ async function apiRegister(formData) {
     throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not create your account.");
   }
 
+  return response.json();
+}
+
+// Forgot Password step 1 — emails a 6-digit code to the account, if one
+// exists for that address.
+async function apiRequestPasswordReset(email) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/password-reset/request/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not send a reset code.");
+  }
+  return response.json();
+}
+
+// Forgot Password step 2 (Input Code) — checks the code before Reset
+// Password will accept it.
+async function apiVerifyPasswordResetCode(email, code) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/password-reset/verify/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Invalid or expired code.");
+  }
+  return response.json();
+}
+
+// Forgot Password step 3 (Reset Password) — actually sets the new password.
+async function apiConfirmPasswordReset(email, code, password) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/password-reset/confirm/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, password }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not reset your password.");
+  }
   return response.json();
 }
 
@@ -605,6 +673,102 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Forgot Password step 1 (forgot-password.html): request a reset code
+      // by email — stashes the email in sessionStorage for the next two
+      // steps, same pattern as the signup draft above.
+      if (form.dataset.forgotRequest !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = form.querySelector('[name="email"]').value.trim();
+        clearFormError(form);
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending...";
+        try {
+          await apiRequestPasswordReset(email);
+          sessionStorage.setItem(RESET_DRAFT_KEY, JSON.stringify({ email }));
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Get Code";
+        }
+        return;
+      }
+
+      // Forgot Password step 2 (verify-code.html): confirms the code before
+      // letting them set a new password.
+      if (form.dataset.forgotVerify !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const code = form.querySelector('[name="code"]').value.trim();
+        clearFormError(form);
+
+        let draft = null;
+        try {
+          draft = JSON.parse(sessionStorage.getItem(RESET_DRAFT_KEY));
+        } catch {
+          draft = null;
+        }
+        if (!draft || !draft.email) {
+          window.location.href = "forgot-password.html";
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Verifying...";
+        try {
+          await apiVerifyPasswordResetCode(draft.email, code);
+          sessionStorage.setItem(RESET_DRAFT_KEY, JSON.stringify({ email: draft.email, code }));
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Enter";
+        }
+        return;
+      }
+
+      // Forgot Password step 3 (reset-password.html): sets the new password
+      // and clears the draft — the flow is done either way after this.
+      if (form.dataset.forgotConfirm !== undefined) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const password = form.querySelector('[name="password"]');
+        const confirmPassword = form.querySelector('[name="confirmPassword"]');
+        clearFormError(form);
+
+        let draft = null;
+        try {
+          draft = JSON.parse(sessionStorage.getItem(RESET_DRAFT_KEY));
+        } catch {
+          draft = null;
+        }
+        if (!draft || !draft.email || !draft.code) {
+          window.location.href = "forgot-password.html";
+          return;
+        }
+        if (password.value !== confirmPassword.value) {
+          showFormError(form, "Passwords do not match.");
+          return;
+        }
+        const passwordError = getPasswordRequirementError(password.value, { email: draft.email });
+        if (passwordError) {
+          showFormError(form, passwordError);
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Resetting...";
+        try {
+          await apiConfirmPasswordReset(draft.email, draft.code, password.value);
+          sessionStorage.removeItem(RESET_DRAFT_KEY);
+          window.location.href = form.dataset.goto;
+        } catch (err) {
+          showFormError(form, err.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Reset Password";
+        }
+        return;
+      }
+
       // The login form hits the real API instead of just navigating.
       // (Note: "Email or Phone" field currently requires an email — phone
       // login isn't implemented on the backend yet.)
@@ -699,22 +863,156 @@ document.addEventListener("DOMContentLoaded", () => {
   // these labels reference their input through for="…"/id="…" as siblings,
   // not by wrapping it, so a selector like `.upload-drop input` (requiring
   // the input to be a descendant) would never match anything here.
+  const MAX_EVIDENCE_FILES = 5;
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
   document.querySelectorAll("label.upload-drop").forEach((label) => {
     const input = label.control;
     if (!input || input.type !== "file") return;
     const textEl = label.querySelector(".upload-drop__text");
     if (!textEl) return;
     const defaultText = textEl.textContent;
-    input.addEventListener("change", () => {
-      const files = Array.from(input.files);
-      textEl.textContent = !files.length
+
+    // Multi-file inputs (report / suggestion evidence) get an "evidence tray"
+    // below the dropzone: every chosen photo/video shows as a chip with a
+    // thumbnail, a View link (opens the file in a new tab) and a Remove
+    // button, so a resident can drop the wrong file and swap just that one
+    // instead of clearing the whole selection. `picked` is the source of
+    // truth; input.files is rebuilt from it via DataTransfer after every
+    // add/remove. Single-file inputs (Barangay ID) keep the old behavior.
+    const isMulti = input.multiple;
+    let picked = [];
+    let tray = null;
+    const objectUrls = new Set();
+
+    function releaseObjectUrls() {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      objectUrls.clear();
+    }
+
+    function syncInputFiles() {
+      const dt = new DataTransfer();
+      picked.forEach((file) => dt.items.add(file));
+      input.files = dt.files;
+    }
+
+    function updateLabelText() {
+      const count = input.files.length;
+      textEl.textContent = !count
         ? defaultText
-        : files.length === 1
-          ? files[0].name
-          : `${files.length} files selected`;
+        : count === 1
+          ? input.files[0].name
+          : `${count} files selected`;
+    }
+
+    function renderTray() {
+      if (!isMulti) return;
+      if (!tray) {
+        tray = document.createElement("ul");
+        tray.className = "evidence-list";
+        input.insertAdjacentElement("afterend", tray);
+      }
+      releaseObjectUrls();
+      tray.textContent = "";
+      tray.hidden = picked.length === 0;
+
+      if (picked.length) {
+        const caption = document.createElement("li");
+        caption.className = "evidence-list__caption";
+        caption.textContent = `${picked.length} of ${MAX_EVIDENCE_FILES} files added`;
+        tray.appendChild(caption);
+      }
+
+      picked.forEach((file, index) => {
+        const url = URL.createObjectURL(file);
+        objectUrls.add(url);
+        const isImage = file.type.startsWith("image/");
+
+        const item = document.createElement("li");
+        item.className = "evidence-list__item";
+
+        const thumb = document.createElement("span");
+        thumb.className = "evidence-list__thumb";
+        if (isImage) {
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = "";
+          thumb.appendChild(img);
+        } else {
+          thumb.textContent = "\u{1F3AC}";
+        }
+
+        const meta = document.createElement("span");
+        meta.className = "evidence-list__meta";
+        const name = document.createElement("span");
+        name.className = "evidence-list__name";
+        name.textContent = file.name;
+        const size = document.createElement("span");
+        size.className = "evidence-list__size";
+        size.textContent = formatBytes(file.size);
+        meta.append(name, size);
+
+        const view = document.createElement("a");
+        view.className = "evidence-list__view";
+        view.href = url;
+        view.target = "_blank";
+        view.rel = "noopener";
+        view.textContent = "View";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "evidence-list__remove";
+        remove.setAttribute("aria-label", `Remove ${file.name}`);
+        remove.textContent = "×";
+        remove.addEventListener("click", () => {
+          picked.splice(index, 1);
+          syncInputFiles();
+          updateLabelText();
+          renderTray();
+        });
+
+        item.append(thumb, meta, view, remove);
+        tray.appendChild(item);
+      });
+    }
+
+    function addFiles(fileList) {
+      const incoming = Array.from(fileList);
+      if (!incoming.length) return;
+      for (const file of incoming) {
+        const dupe = picked.some(
+          (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+        );
+        if (!dupe && picked.length < MAX_EVIDENCE_FILES) picked.push(file);
+      }
+      syncInputFiles();
+      updateLabelText();
+      renderTray();
+    }
+
+    input.addEventListener("change", () => {
+      if (!isMulti) {
+        updateLabelText();
+        return;
+      }
+      // A native re-pick replaces the FileList; fold it into `picked` so
+      // earlier selections aren't lost, then re-sync from `picked`.
+      addFiles(input.files);
     });
+
     if (input.form) {
       input.form.addEventListener("reset", () => {
+        picked = [];
+        releaseObjectUrls();
+        if (tray) {
+          tray.textContent = "";
+          tray.hidden = true;
+        }
         textEl.textContent = defaultText;
       });
     }
@@ -733,8 +1031,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     label.addEventListener("drop", (e) => {
       if (!e.dataTransfer || !e.dataTransfer.files.length) return;
-      input.files = e.dataTransfer.files;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (isMulti) {
+        addFiles(e.dataTransfer.files);
+      } else {
+        input.files = e.dataTransfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
     });
   });
 

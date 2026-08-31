@@ -3,7 +3,15 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import User
 from accounts.views import IsStaffOrAdmin
+from orms_backend.emails import (
+    send_report_resolved_email,
+    send_report_submitted_citizen_email,
+    send_report_submitted_staff_emails,
+    send_suggestion_submitted_citizen_email,
+    send_suggestion_submitted_staff_emails,
+)
 
 from .models import Concern, ConcernFolder, Report
 from .serializers import (
@@ -15,6 +23,10 @@ from .serializers import (
     StaffReportSerializer,
     StaffReportUpdateSerializer,
 )
+
+
+def _staff_recipients():
+    return User.objects.filter(role=User.Role.STAFF, is_active=True)
 
 
 class ReportListCreateView(generics.ListCreateAPIView):
@@ -30,6 +42,11 @@ class ReportListCreateView(generics.ListCreateAPIView):
 
     def get_serializer_context(self):
         return {"request": self.request}
+
+    def perform_create(self, serializer):
+        report = serializer.save()
+        send_report_submitted_citizen_email(report)
+        send_report_submitted_staff_emails(report, _staff_recipients())
 
 
 class ReportDetailView(generics.RetrieveAPIView):
@@ -58,6 +75,11 @@ class ConcernListCreateView(generics.ListCreateAPIView):
 
     def get_serializer_context(self):
         return {"request": self.request}
+
+    def perform_create(self, serializer):
+        concern = serializer.save()
+        send_suggestion_submitted_citizen_email(concern)
+        send_suggestion_submitted_staff_emails(concern, _staff_recipients())
 
 
 class ConcernDetailView(generics.RetrieveAPIView):
@@ -99,9 +121,19 @@ class StaffReportDetailView(APIView):
 
     def patch(self, request, pk):
         report = self.get_object(pk)
+        previous_status = report.status
         serializer = StaffReportUpdateSerializer(report, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Only on the transition INTO Resolved (the status timeline's "Final
+        # Verdict" stage), not every save while already resolved — otherwise
+        # re-saving the same status would re-notify every time. Remarks, if
+        # any were left, are included in this same email rather than a
+        # separate one (see report_resolved.html).
+        if report.status == Report.Status.RESOLVED and previous_status != Report.Status.RESOLVED:
+            send_report_resolved_email(report)
+
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
 

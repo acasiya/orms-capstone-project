@@ -369,12 +369,21 @@ button {
   margin-bottom: 4px;
 }
 
-.field--boxed input {
+.field--boxed input,
+.field--boxed textarea {
   border: none;
   padding: 4px 0;
 }
 
-.field--boxed input:focus {
+.field--boxed textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.field--boxed input:focus,
+.field--boxed textarea:focus {
   outline: none;
   box-shadow: none;
 }
