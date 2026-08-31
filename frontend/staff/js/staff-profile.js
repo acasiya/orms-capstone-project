@@ -130,8 +130,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const updated = await response.json();
 
       // Refresh the cached session so the topbar/profile popup reflect the
-      // change immediately, without needing to log in again.
-      localStorage.setItem(
+      // change immediately, without needing to log in again. Writes back to
+      // whichever bucket (session/local) the session is actually in — see
+      // adminAuthStorage() in admin.js.
+      adminAuthStorage().setItem(
         ADMIN_AUTH_STORAGE_KEY,
         JSON.stringify({
           ...(getAdminUser() || {}),

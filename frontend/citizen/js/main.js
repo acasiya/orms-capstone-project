@@ -5,13 +5,50 @@
 // dev and once deployed — no hardcoded domain to update later.
 const API_BASE = "/api/auth";
 
-// JWT tokens + basic profile info are kept in localStorage so the session
-// survives page navigation. The token is what actually authenticates
-// requests; the cached user object is just for quick UI rendering
-// (name/initials in the navbar) without a network round-trip on every page.
+// JWT tokens + basic profile info are kept in sessionStorage by default —
+// cleared automatically when the tab closes — or in localStorage when the
+// person checked "Stay signed in" at login, so it survives closing the tab.
+// The token is what actually authenticates requests; the cached user object
+// is just for quick UI rendering (name/initials in the navbar) without a
+// network round-trip on every page.
 const AUTH_STORAGE_KEY = "orms_auth_user";
 const ACCESS_TOKEN_KEY = "orms_access_token";
 const REFRESH_TOKEN_KEY = "orms_refresh_token";
+
+// Whether the current session should survive closing the tab — set at login
+// time by the "Stay signed in" checkbox. Always in localStorage (regardless
+// of which bucket the tokens themselves are in) since it just has to answer
+// "which bucket do I check", not authenticate anyone on its own.
+const REMEMBER_KEY = "orms_remember_me";
+
+// Non-"Stay signed in" sessions also get a hard cap, independent of the tab
+// staying open: logged out after 1 day even if it's never closed. A
+// remembered session skips this — it lasts until the refresh token itself
+// expires (7 days server-side, see SIMPLE_JWT in settings.py), which
+// authFetch's refresh-on-401 handling below already surfaces as a normal
+// logout when it finally fails.
+const LOGIN_AT_KEY = "orms_login_at";
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+// The single choke point every other token/user read-or-write in this file
+// goes through, so "Stay signed in" only had to be taught to this one
+// function rather than every call site individually.
+function authStorage() {
+  return localStorage.getItem(REMEMBER_KEY) === "1" ? localStorage : sessionStorage;
+}
+
+// Clears a stale (past its 1-day cap) non-remembered session before
+// anything else on the page reads it — enforcePortalAccess's existing
+// isLoggedIn() check then naturally bounces staff/admin pages to login, and
+// citizen pages naturally fall back to the guest navbar, with no extra
+// redirect logic needed here.
+function expireStaleSession() {
+  if (localStorage.getItem(REMEMBER_KEY) === "1") return;
+  const loginAt = Number(sessionStorage.getItem(LOGIN_AT_KEY));
+  if (loginAt && Date.now() - loginAt > SESSION_MAX_AGE_MS) {
+    logOut();
+  }
+}
 
 // Holds signup.html's fields in sessionStorage while the resident is on
 // verify-signup.html choosing their ID photo, so the whole signup (text
@@ -35,7 +72,7 @@ const ROLE_HOME = {
 
 function getCurrentUser() {
   try {
-    return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY));
+    return JSON.parse(authStorage().getItem(AUTH_STORAGE_KEY));
   } catch {
     return null;
   }
@@ -229,24 +266,63 @@ async function checkForOrdinanceUpdates() {
 }
 
 function getAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return authStorage().getItem(ACCESS_TOKEN_KEY);
+}
+
+function getRefreshToken() {
+  return authStorage().getItem(REFRESH_TOKEN_KEY);
 }
 
 function isLoggedIn() {
   return !!getAccessToken();
 }
 
+// Clears both buckets unconditionally (rather than just whichever
+// REMEMBER_KEY currently points at) so a leftover token from switching
+// "Stay signed in" on/off across logins can never survive a logout.
 function logOut() {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  [localStorage, sessionStorage].forEach((store) => {
+    store.removeItem(AUTH_STORAGE_KEY);
+    store.removeItem(ACCESS_TOKEN_KEY);
+    store.removeItem(REFRESH_TOKEN_KEY);
+    store.removeItem(LOGIN_AT_KEY);
+  });
+  localStorage.removeItem(REMEMBER_KEY);
+}
+
+// Silently refreshes the access token using the refresh token — called by
+// authFetch on a 401 rather than requiring every page to re-login every
+// hour (the access token's own lifetime). Returns whether it succeeded.
+async function refreshAccessToken() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  try {
+    const response = await fetch(`${API_BASE}/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+    if (!response.ok) return false;
+    const data = await response.json();
+    const store = authStorage();
+    store.setItem(ACCESS_TOKEN_KEY, data.access);
+    // ROTATE_REFRESH_TOKENS is on server-side, so a fresh refresh token
+    // comes back too — store it, or the next refresh would use a dead one.
+    if (data.refresh) store.setItem(REFRESH_TOKEN_KEY, data.refresh);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Calls the real login endpoint. On success, stores the JWT tokens and a
 // small user summary, and returns the user's role so the caller can decide
 // where to redirect. On failure, throws with a message meant to be shown
 // directly to the person (invalid credentials, network error, etc).
-async function apiLogin(email, password) {
+// remember: "Stay signed in" checkbox — false/omitted means the session
+// lives in sessionStorage (gone once the tab closes) and is capped at 1 day;
+// true means localStorage (survives closing the tab/browser).
+async function apiLogin(email, password, remember) {
   let response;
   try {
     response = await fetch(`${API_BASE}/login/`, {
@@ -267,9 +343,12 @@ async function apiLogin(email, password) {
   }
 
   const data = await response.json();
-  localStorage.setItem(ACCESS_TOKEN_KEY, data.access);
-  localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh);
-  localStorage.setItem(
+  localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
+  const store = remember ? localStorage : sessionStorage;
+  store.setItem(ACCESS_TOKEN_KEY, data.access);
+  store.setItem(REFRESH_TOKEN_KEY, data.refresh);
+  store.setItem(LOGIN_AT_KEY, String(Date.now()));
+  store.setItem(
     AUTH_STORAGE_KEY,
     JSON.stringify({
       name: data.user.name,
@@ -385,7 +464,18 @@ async function apiConfirmPasswordReset(email, code, password) {
 async function authFetch(path, options = {}) {
   const token = getAccessToken();
   const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
-  return fetch(path, { ...options, headers });
+  const response = await fetch(path, { ...options, headers });
+
+  // The access token is short-lived (1hr) by design — this is what keeps a
+  // session feeling like it lasts a day (or however long "Stay signed in"
+  // lasts) instead of silently breaking every hour. If the refresh token
+  // itself has died (expired, or none stored at all), this just falls
+  // through and returns the original 401 as-is — same as today.
+  if (response.status === 401 && (await refreshAccessToken())) {
+    const retryHeaders = { ...(options.headers || {}), Authorization: `Bearer ${getAccessToken()}` };
+    return fetch(path, { ...options, headers: retryHeaders });
+  }
+  return response;
 }
 
 // Shows an inline error message below a form's submit button (created on
@@ -494,6 +584,39 @@ function setupPasswordHints() {
   });
 }
 
+// Adds a show/hide eye button to every password field on the page (login,
+// signup, reset-password, change-password, etc. — anywhere one exists,
+// nothing page-specific to wire up). Wraps each input in a small relative-
+// positioned container rather than editing every page's HTML individually.
+const EYE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.8 10.8 0 0112 5c6.5 0 10 7 10 7a16.6 16.6 0 01-3.4 4.4M6.6 6.6C4 8.3 2 12 2 12s3.5 7 10 7c1.3 0 2.5-.2 3.6-.6"/><path d="M9.9 10.1a3 3 0 004.1 4.1"/></svg>';
+
+function setupPasswordVisibilityToggles() {
+  document.querySelectorAll('input[type="password"]').forEach((input) => {
+    if (input.dataset.toggleWired) return;
+    input.dataset.toggleWired = "1";
+
+    const wrap = document.createElement("div");
+    wrap.className = "password-toggle-wrap";
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "password-toggle-btn";
+    btn.setAttribute("aria-label", "Show password");
+    btn.innerHTML = EYE_ICON;
+    wrap.appendChild(btn);
+
+    btn.addEventListener("click", () => {
+      const nowShowing = input.type === "password";
+      input.type = nowShowing ? "text" : "password";
+      btn.innerHTML = nowShowing ? EYE_OFF_ICON : EYE_ICON;
+      btn.setAttribute("aria-label", nowShowing ? "Hide password" : "Show password");
+    });
+  });
+}
+
 // Runs on every Staff/Admin portal page except the login page itself. The
 // Citizen portal deliberately allows guest browsing (viewing ordinances
 // without an account, per the scope doc), so it's excluded here — the
@@ -527,8 +650,10 @@ function enforcePortalAccess() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  expireStaleSession();
   enforcePortalAccess();
   setupPasswordHints();
+  setupPasswordVisibilityToggles();
 
   // Sign Up's Street field: a type-to-filter combobox over the fixed
   // STREETS list (streets-data.js), same pattern as File Report's location
@@ -776,12 +901,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const submitBtn = form.querySelector('button[type="submit"]');
         const emailField = form.querySelector('[name="emailOrPhone"]');
         const passwordField = form.querySelector('[name="password"]');
+        const rememberField = form.querySelector('[name="rememberMe"]');
         clearFormError(form);
 
         submitBtn.disabled = true;
         submitBtn.textContent = "Logging in...";
         try {
-          const role = await apiLogin(emailField.value.trim(), passwordField.value);
+          const role = await apiLogin(emailField.value.trim(), passwordField.value, !!(rememberField && rememberField.checked));
           window.location.href = ROLE_HOME[role] || form.dataset.goto;
         } catch (err) {
           showFormError(form, err.message);

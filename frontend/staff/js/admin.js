@@ -4,6 +4,43 @@ const ADMIN_AUTH_STORAGE_KEY = "orms_auth_user";
 const ADMIN_ACCESS_TOKEN_KEY = "orms_access_token";
 const ADMIN_REFRESH_TOKEN_KEY = "orms_refresh_token";
 
+// Same "Stay signed in" scheme as main.js's (see that file for the full
+// explanation) — duplicated here since admin.js and main.js are never
+// loaded on the same page. Login itself (main.js, on index.html) is what
+// actually sets REMEMBER_KEY/LOGIN_AT_KEY; every other staff page just
+// needs to read the same bucket consistently, which is what this getter is for.
+const ADMIN_REMEMBER_KEY = "orms_remember_me";
+const ADMIN_LOGIN_AT_KEY = "orms_login_at";
+const ADMIN_SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function adminAuthStorage() {
+  return localStorage.getItem(ADMIN_REMEMBER_KEY) === "1" ? localStorage : sessionStorage;
+}
+
+function adminLogOut() {
+  [localStorage, sessionStorage].forEach((store) => {
+    store.removeItem(ADMIN_AUTH_STORAGE_KEY);
+    store.removeItem(ADMIN_ACCESS_TOKEN_KEY);
+    store.removeItem(ADMIN_REFRESH_TOKEN_KEY);
+    store.removeItem(ADMIN_LOGIN_AT_KEY);
+  });
+  localStorage.removeItem(ADMIN_REMEMBER_KEY);
+}
+
+// Clears a stale (past its 1-day cap) non-remembered session before
+// enforceStaffPortalAccess below checks it — a remembered session skips
+// this and instead lasts until the refresh token itself expires (7 days
+// server-side), which authFetch's refresh-on-401 handling surfaces as a
+// normal logout when it finally fails.
+function expireStaleAdminSession() {
+  if (localStorage.getItem(ADMIN_REMEMBER_KEY) === "1") return;
+  const loginAt = Number(sessionStorage.getItem(ADMIN_LOGIN_AT_KEY));
+  if (loginAt && Date.now() - loginAt > ADMIN_SESSION_MAX_AGE_MS) {
+    adminLogOut();
+  }
+}
+expireStaleAdminSession();
+
 // This script is only ever loaded by pages inside /staff/, so the portal is
 // fixed. Every page that loads admin.js is a logged-in-only page (the
 // login/forgot-password/reset pages load main.js instead), so bounce back
@@ -12,7 +49,7 @@ const ADMIN_REFRESH_TOKEN_KEY = "orms_refresh_token";
 // leftover) session could land straight on the Staff Portal unchecked.
 function getAdminUser() {
   try {
-    return JSON.parse(localStorage.getItem(ADMIN_AUTH_STORAGE_KEY));
+    return JSON.parse(adminAuthStorage().getItem(ADMIN_AUTH_STORAGE_KEY));
   } catch {
     return null;
   }
@@ -20,20 +57,52 @@ function getAdminUser() {
 
 (function enforceStaffPortalAccess() {
   const user = getAdminUser();
-  const hasToken = !!localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  const hasToken = !!adminAuthStorage().getItem(ADMIN_ACCESS_TOKEN_KEY);
   if (!hasToken || !user || user.role !== "staff") {
     window.location.href = "index.html";
   }
 })();
+
+// Silently refreshes the access token using the refresh token, same as
+// main.js's — see that file for the full explanation of why this matters
+// (without it, the 1hr access-token lifetime would make a "day-long"
+// session break every hour instead).
+async function refreshAdminAccessToken() {
+  const refreshToken = adminAuthStorage().getItem(ADMIN_REFRESH_TOKEN_KEY);
+  if (!refreshToken) return false;
+  try {
+    const response = await fetch("/api/auth/refresh/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+    if (!response.ok) return false;
+    const data = await response.json();
+    const store = adminAuthStorage();
+    store.setItem(ADMIN_ACCESS_TOKEN_KEY, data.access);
+    if (data.refresh) store.setItem(ADMIN_REFRESH_TOKEN_KEY, data.refresh);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // Attaches the stored JWT to a fetch call. Same helper as main.js's
 // authFetch (duplicated here rather than shared, since admin.js and
 // main.js are never loaded on the same page). Every authenticated staff
 // API call should go through this.
 async function authFetch(path, options = {}) {
-  const token = localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  const token = adminAuthStorage().getItem(ADMIN_ACCESS_TOKEN_KEY);
   const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
-  return fetch(path, { ...options, headers });
+  const response = await fetch(path, { ...options, headers });
+  if (response.status === 401 && (await refreshAdminAccessToken())) {
+    const retryHeaders = {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${adminAuthStorage().getItem(ADMIN_ACCESS_TOKEN_KEY)}`,
+    };
+    return fetch(path, { ...options, headers: retryHeaders });
+  }
+  return response;
 }
 
 // Shows/clears an inline error message below a form. Same pattern as main.js.
@@ -206,7 +275,40 @@ async function checkForNewConcerns() {
   setSeenIds(NOTIF_SEEN_CONCERNS_KEY, currentIds);
 }
 
+// Same show/hide eye button as main.js's — duplicated here since admin.js
+// and main.js are never loaded on the same page. Covers any password input
+// on an authenticated staff page.
+const ADMIN_EYE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ADMIN_EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.8 10.8 0 0112 5c6.5 0 10 7 10 7a16.6 16.6 0 01-3.4 4.4M6.6 6.6C4 8.3 2 12 2 12s3.5 7 10 7c1.3 0 2.5-.2 3.6-.6"/><path d="M9.9 10.1a3 3 0 004.1 4.1"/></svg>';
+
+function setupPasswordVisibilityToggles() {
+  document.querySelectorAll('input[type="password"]').forEach((input) => {
+    if (input.dataset.toggleWired) return;
+    input.dataset.toggleWired = "1";
+
+    const wrap = document.createElement("div");
+    wrap.className = "password-toggle-wrap";
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "password-toggle-btn";
+    btn.setAttribute("aria-label", "Show password");
+    btn.innerHTML = ADMIN_EYE_ICON;
+    wrap.appendChild(btn);
+
+    btn.addEventListener("click", () => {
+      const nowShowing = input.type === "password";
+      input.type = nowShowing ? "text" : "password";
+      btn.innerHTML = nowShowing ? ADMIN_EYE_OFF_ICON : ADMIN_EYE_ICON;
+      btn.setAttribute("aria-label", nowShowing ? "Hide password" : "Show password");
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  setupPasswordVisibilityToggles();
   const sidebarToggle = document.getElementById("sidebarToggle");
   const sidebar = document.querySelector(".admin-sidebar");
   const shell = document.querySelector(".admin-shell");
@@ -267,9 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch {
         // ignore — logging out locally still proceeds below
       }
-      localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
-      localStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
-      localStorage.removeItem(ADMIN_REFRESH_TOKEN_KEY);
+      adminLogOut();
       window.location.href = "index.html";
     });
   }

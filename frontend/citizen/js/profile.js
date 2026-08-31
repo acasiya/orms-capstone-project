@@ -131,8 +131,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       const updated = await response.json();
 
       // Refresh the cached session so the navbar/profile popup reflect the
-      // change immediately, without needing to log in again.
-      localStorage.setItem(
+      // change immediately, without needing to log in again. Writes back to
+      // whichever bucket (session/local) the session is actually in — see
+      // authStorage() in main.js — rather than always localStorage, or a
+      // non-"Stay signed in" session would end up with a stale cached user
+      // in sessionStorage and an orphaned copy in localStorage.
+      authStorage().setItem(
         AUTH_STORAGE_KEY,
         JSON.stringify({
           ...(getCurrentUser() || {}),

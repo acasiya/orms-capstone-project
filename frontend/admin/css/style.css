@@ -485,9 +485,54 @@ button {
 
 .form-links {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   margin: -8px 0 18px;
   font-size: 0.8rem;
+}
+
+.remember-me-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.remember-me-check input {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Show/hide eye button, added by main.js's setupPasswordVisibilityToggles
+   to every password field — wraps just the input, not its label. */
+.password-toggle-wrap {
+  position: relative;
+}
+
+.password-toggle-wrap input {
+  padding-right: 38px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text);
 }
 
 .form-links a {

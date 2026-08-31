@@ -79,7 +79,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     editType.textContent = account.type;
     editCreated.textContent = account.created;
     editUpdated.textContent = account.updated;
-    editDisableBtn.innerHTML = account.active ? "&#128683; Disable User" : "&#9989; Enable User";
+    editDisableBtn.innerHTML = account.active
+      ? `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg> Disable User`
+      : `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Enable User`;
 
     // Admins can't disable, retype, or delete their own account — see the
     // matching safeguards in AdminAccountDetailView.patch/delete. Shown as
