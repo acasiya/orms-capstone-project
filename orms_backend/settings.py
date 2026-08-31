@@ -181,6 +181,17 @@ EMAIL_BACKEND = (
     else "django.core.mail.backends.console.EmailBackend"
 )
 EMAIL_HOST = config("EMAIL_HOST", default="smtp-relay.brevo.com")
+# Some hosts (Render included) block or silently swallow outbound SMTP on
+# the standard ports — the connection just hangs instead of failing. Without
+# a timeout, that hang is unbounded: it blocks the whole request until the
+# WSGI server's OWN worker-timeout kills the process outright (a forced
+# worker-abort raises SystemExit, which deliberately isn't caught by
+# emails.py's `except Exception` — that's correct, since a bare except
+# should never swallow a real process-exit signal — so it bypasses the
+# "email failures never break the request" guarantee entirely and takes the
+# whole worker down instead of just failing the one send). This timeout is
+# what turns that hang into an ordinary, catchable exception instead.
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 
