@@ -46,9 +46,13 @@ logger = logging.getLogger(__name__)
 def send_templated_email(*, to, subject, template_name, context):
     if not to:
         return
-    html_body = render_to_string(f"emails/{template_name}.html", context)
-    text_body = strip_tags(html_body)
+    # Everything is inside the try, not just .send() — a bad template, a bad
+    # SMTP login, a network blip to Brevo, anything at all here must never
+    # crash the request that triggered it (signing up, filing a report,
+    # requesting a reset code all still need to succeed on their own).
     try:
+        html_body = render_to_string(f"emails/{template_name}.html", context)
+        text_body = strip_tags(html_body)
         message = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [to])
         message.attach_alternative(html_body, "text/html")
         message.send()
