@@ -8,7 +8,7 @@ class CustomUserAdmin(UserAdmin):
     model = User
     list_display = ["email", "username", "role", "is_verified", "is_staff"]
     fieldsets = UserAdmin.fieldsets + (
-        ("O.R.M.S. fields", {"fields": ("role", "contact_number", "address", "is_verified")}),
+        ("SafeSpace fields", {"fields": ("role", "contact_number", "address", "is_verified")}),
     )
 
 

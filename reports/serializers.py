@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Concern, ConcernAttachment, ConcernFolder, Report, ReportAttachment
+from .models import FAQ, Concern, ConcernAttachment, ConcernFolder, Question, Report, ReportAttachment
 
 MAX_ATTACHMENTS = 5
 MAX_TOTAL_ATTACHMENT_BYTES = 50 * 1024 * 1024
@@ -188,3 +188,71 @@ class StaffConcernUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Concern
         fields = ["status", "remarks", "folder"]
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    """Backs the citizen FAQs page: POST a new question, GET the citizen's own (with any answer)."""
+
+    is_answered = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ["id", "question", "answer", "is_answered", "created_at", "answered_at"]
+        read_only_fields = ["id", "answer", "created_at", "answered_at"]
+
+    def create(self, validated_data):
+        validated_data["citizen"] = self.context["request"].user
+        return Question.objects.create(**validated_data)
+
+
+class StaffQuestionSerializer(serializers.ModelSerializer):
+    """Read side for Staff/Admin's Questions page — adds who asked it, same idea as StaffReportSerializer."""
+
+    asker = serializers.SerializerMethodField()
+    asker_email = serializers.CharField(source="citizen.email", read_only=True)
+    is_answered = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Question
+        fields = [
+            "id", "asker", "asker_email", "question", "answer",
+            "is_answered", "created_at", "answered_at",
+        ]
+
+    def get_asker(self, obj):
+        return obj.citizen.get_full_name() or obj.citizen.username
+
+
+class StaffQuestionAnswerSerializer(serializers.ModelSerializer):
+    """PATCH-only — answering a question is the only thing Staff/Admin do to one."""
+
+    class Meta:
+        model = Question
+        fields = ["answer"]
+
+    def validate_answer(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Answer can't be empty.")
+        return value
+
+
+class FAQSerializer(serializers.ModelSerializer):
+    """Public FAQ list (citizen FAQs page, read-only there) — full CRUD for Admin."""
+
+    class Meta:
+        model = FAQ
+        fields = ["id", "question", "answer", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+    def validate_question(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Question can't be empty.")
+        return value
+
+    def validate_answer(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Answer can't be empty.")
+        return value

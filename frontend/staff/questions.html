@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Ordinances</title>
+  <title>SafeSpace — Questions</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -23,9 +23,9 @@
         <li><a href="reports.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h6.5L18 7.5V20a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M13.5 3v4.5H18"/><path d="M8.5 12.5h7M8.5 16h7M8.5 9h3"/></svg> Reports</a></li>
         <li><a href="concerns-dashboard.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12c0-4.4 3.9-8 8.5-8s8.5 3.6 8.5 8-3.9 8-8.5 8a10 10 0 01-2.9-.4L4 21l1.1-3.8A7.6 7.6 0 013.5 12z"/></svg> Concerns/Suggestions Dashboard</a></li>
         <li><a href="concerns.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5H5.5a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V12"/><path d="M18.4 3.6a2.1 2.1 0 013 3L11 17l-4 1 1-4z"/></svg> Concerns/Suggestions</a></li>
-        <li><a href="ordinances.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4 4.5 4v14c3.5 0 6 1 7.5 2.5"/><path d="M12 6.5C13.5 5 16 4 19.5 4v14c-3.5 0-6 1-7.5 2.5V6.5z"/></svg> Ordinance</a></li>
-              <li><a href="questions.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
-</ul>
+        <li><a href="ordinances.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4 4.5 4v14c3.5 0 6 1 7.5 2.5"/><path d="M12 6.5C13.5 5 16 4 19.5 4v14c-3.5 0-6 1-7.5 2.5V6.5z"/></svg> Ordinance</a></li>
+        <li><a href="questions.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
+      </ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
 
@@ -54,95 +54,22 @@
       </header>
 
       <div class="admin-content">
-        <div class="page-shell page-shell--nested">
-          <div class="ordinances-toolbar">
-            <select id="sortField" class="sort-select">
-              <option value="none">- All -</option>
-              <option value="title" selected>Title</option>
-              <option value="author">Author</option>
-              <option value="numberSort">No.</option>
-              <option value="dateSort">Date Approved</option>
-            </select>
-            <form class="ordinances-search" id="ordinanceSearchForm">
-              <input type="text" id="ordinanceSearch" placeholder="Search..." />
-              <button type="submit">Search</button>
-            </form>
-            <button type="button" class="btn" id="uploadOrdinanceBtn">+ Upload Ordinance</button>
-          </div>
-
-          <div class="ordinances-table-wrap">
-            <table class="ordinances-table">
-              <thead>
-                <tr>
-                  <th>Ordinance Name</th>
-                  <th>Author</th>
-                  <th>Ordinance No.</th>
-                  <th>Date Approved</th>
-                </tr>
-              </thead>
-              <tbody id="ordinanceRows"></tbody>
-            </table>
-          </div>
-
-          <div class="pagination-bar">
-            <span id="paginationInfo"></span>
-            <div class="pagination-controls">
-              <button type="button" id="paginationPrev" aria-label="Previous page">&#8249;</button>
-              <button type="button" id="paginationNext" aria-label="Next page">&#8250;</button>
-            </div>
-          </div>
+        <div class="reports-filters-row">
+          <select id="statusFilter" class="reports-filter">
+            <option value="all">All Questions</option>
+            <option value="pending">Pending</option>
+            <option value="answered">Answered</option>
+          </select>
         </div>
+
+        <div class="concerns-card" id="questionsList"></div>
       </div>
     </div>
   </div>
 
-  <script src="js/ordinances-data.js"></script>
-  <script src="js/ordinances-list.js"></script>
+  <script src="js/questions-data.js"></script>
+  <script src="js/questions-list.js"></script>
   <script src="js/admin.js"></script>
-
-  <!-- Upload ordinance -->
-  <div class="modal-overlay" id="uploadOrdinanceModal" hidden>
-    <div class="modal-card">
-      <h2>Upload Ordinance</h2>
-      <div class="field">
-        <label for="ordNumberInput">Ordinance No.</label>
-        <input type="text" id="ordNumberInput" placeholder="e.g. No. 31-(2026)" />
-      </div>
-      <div class="field">
-        <label for="ordTitleInput">Title</label>
-        <input type="text" id="ordTitleInput" placeholder="Ordinance title" />
-      </div>
-      <div class="field">
-        <label for="ordAuthorInput">Authored by</label>
-        <input type="text" id="ordAuthorInput" placeholder="e.g. Hon. Juan Dela Cruz" />
-      </div>
-      <div class="field">
-        <label for="ordCategoryInput">Category</label>
-        <input type="text" id="ordCategoryInput" placeholder="e.g. Public Safety" />
-      </div>
-      <div class="field">
-        <label for="ordDateInput">Date Approved</label>
-        <input type="date" id="ordDateInput" />
-      </div>
-      <div class="field">
-        <label for="ordDescriptionInput">Description</label>
-        <textarea id="ordDescriptionInput" placeholder="Full ordinance text/summary..."></textarea>
-      </div>
-      <div class="field">
-        <label class="upload-drop upload-drop--compact" for="ordPdfInput" id="ordPdfLabel">
-          <span class="upload-drop__icon"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 15v3.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V15"/></svg></span>
-          <span class="upload-drop__text" id="ordPdfLabelText">Click to browse for the ordinance PDF</span>
-          <span class="upload-drop__formats">PDF only.</span>
-        </label>
-        <input type="file" id="ordPdfInput" accept="application/pdf" hidden />
-      </div>
-      <p class="form-error" id="uploadOrdinanceError" hidden></p>
-      <div class="btn-row">
-        <button type="button" class="btn" id="uploadOrdinanceConfirm">Upload</button>
-        <button type="button" class="btn btn-danger" id="uploadOrdinanceCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>

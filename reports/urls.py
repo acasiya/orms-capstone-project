@@ -13,4 +13,10 @@ urlpatterns = [
     path("concerns/folders/<uuid:pk>/", views.ConcernFolderDetailView.as_view(), name="concern_folder_detail"),
     path("concerns/", views.ConcernListCreateView.as_view(), name="concern_list_create"),
     path("concerns/<uuid:pk>/", views.ConcernDetailView.as_view(), name="concern_detail"),
+    path("questions/staff/", views.StaffQuestionListView.as_view(), name="staff_question_list"),
+    path("questions/staff/<uuid:pk>/", views.StaffQuestionAnswerView.as_view(), name="staff_question_answer"),
+    path("questions/", views.QuestionListCreateView.as_view(), name="question_list_create"),
+    path("faqs/admin/", views.AdminFAQListCreateView.as_view(), name="admin_faq_list_create"),
+    path("faqs/admin/<uuid:pk>/", views.AdminFAQDetailView.as_view(), name="admin_faq_detail"),
+    path("faqs/", views.FAQListView.as_view(), name="faq_list"),
 ]

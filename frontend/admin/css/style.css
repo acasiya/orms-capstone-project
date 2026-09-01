@@ -1407,6 +1407,188 @@ button {
   justify-self: start;
 }
 
+/* ---------- Questions page layout (Admin only — Staff/Admin's Concerns
+   page equivalents lived only in staff's CSS until now, since Admin never
+   had a two-column dashboard-style page before this one) ---------- */
+
+.reports-filters-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.reports-filters-row .reports-filter {
+  min-width: 170px;
+}
+
+.dash-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+}
+
+.concerns-page-layout {
+  display: grid;
+  grid-template-columns: 2.3fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.concerns-page-main {
+  min-width: 0;
+}
+
+.folders-card__title {
+  margin: 0 0 16px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.folder-add-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  background: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.folder-add-btn:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+@media (max-width: 860px) {
+  .concerns-page-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Questions (FAQs page's "Ask a Question", Staff/Admin side) ---------- */
+
+.question-row {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.question-row:last-child {
+  border-bottom: none;
+}
+
+.question-row__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.question-row__text {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.question-row__meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.question-row .status-badge {
+  width: auto;
+  flex-shrink: 0;
+  padding: 5px 14px;
+}
+
+.question-row__answer {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--plain-bg, #e9e5dc);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.question-row__answer-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+}
+
+.question-row__respond {
+  margin-top: 12px;
+}
+
+.question-row__respond textarea {
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.question-row__respond .btn {
+  width: auto;
+  margin-top: 8px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+}
+
+/* ---------- FAQ management (Admin's Questions page side card) ---------- */
+
+.faq-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.faq-manage-item:last-child {
+  border-bottom: none;
+}
+
+.faq-manage-item__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.faq-manage-item__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.faq-manage-item__actions button {
+  background: none;
+  border: none;
+  padding: 4px;
+  display: flex;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.faq-manage-item__actions button:hover {
+  color: var(--text);
+}
+
 .status-badge {
   display: block;
   padding: 8px 18px;

@@ -1346,6 +1346,80 @@ button {
   justify-self: start;
 }
 
+/* ---------- Questions (FAQs page's "Ask a Question", Staff/Admin side) ---------- */
+
+.question-row {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.question-row:last-child {
+  border-bottom: none;
+}
+
+.question-row__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.question-row__text {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.question-row__meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.question-row .status-badge {
+  width: auto;
+  flex-shrink: 0;
+  padding: 5px 14px;
+}
+
+.question-row__answer {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--plain-bg);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.question-row__answer-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+}
+
+.question-row__respond {
+  margin-top: 12px;
+}
+
+.question-row__respond textarea {
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.question-row__respond .btn {
+  width: auto;
+  margin-top: 8px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+}
+
 .status-badge {
   display: block;
   padding: 8px 18px;

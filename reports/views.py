@@ -1,11 +1,13 @@
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User
-from accounts.views import IsStaffOrAdmin
+from accounts.views import IsAdmin, IsStaffOrAdmin
 from orms_backend.emails import (
+    send_question_answered_email,
     send_report_resolved_email,
     send_report_submitted_citizen_email,
     send_report_submitted_staff_emails,
@@ -13,13 +15,17 @@ from orms_backend.emails import (
     send_suggestion_submitted_staff_emails,
 )
 
-from .models import Concern, ConcernFolder, Report
+from .models import FAQ, Concern, ConcernFolder, Question, Report
 from .serializers import (
+    FAQSerializer,
     ConcernFolderSerializer,
     ConcernSerializer,
+    QuestionSerializer,
     ReportSerializer,
     StaffConcernSerializer,
     StaffConcernUpdateSerializer,
+    StaffQuestionAnswerSerializer,
+    StaffQuestionSerializer,
     StaffReportSerializer,
     StaffReportUpdateSerializer,
 )
@@ -187,3 +193,69 @@ class ConcernFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ConcernFolder.objects.all()
     serializer_class = ConcernFolderSerializer
     permission_classes = [IsStaffOrAdmin]
+
+
+class QuestionListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/questions/ — the logged-in citizen's own asked questions, with
+    any answer (FAQs page's "My Questions").
+    POST /api/questions/ — ask a new one (FAQs page's "Ask a Question").
+    """
+    serializer_class = QuestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Question.objects.filter(citizen=self.request.user)
+
+
+class FAQListView(generics.ListAPIView):
+    """GET /api/faqs/ — the public, curated FAQ list (FAQs page). Open to guests, like Ordinances."""
+    queryset = FAQ.objects.all()
+    serializer_class = FAQSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class StaffQuestionListView(generics.ListAPIView):
+    """GET /api/questions/staff/ — every citizen's asked question (Staff/Admin Questions page)."""
+    queryset = Question.objects.select_related("citizen").all()
+    serializer_class = StaffQuestionSerializer
+    permission_classes = [IsStaffOrAdmin]
+
+
+class StaffQuestionAnswerView(APIView):
+    """
+    PATCH /api/questions/staff/<id>/ — answers a question. Stays visible
+    (not deleted/hidden) afterward — see Question's docstring — so it keeps
+    showing here, just marked answered, for Admin to spot a pattern worth
+    promoting into a real FAQ (see AdminFAQListCreateView).
+    """
+    permission_classes = [IsStaffOrAdmin]
+
+    def patch(self, request, pk):
+        question = get_object_or_404(Question, pk=pk)
+        serializer = StaffQuestionAnswerSerializer(question, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(answered_by=request.user, answered_at=timezone.now())
+        send_question_answered_email(question)
+        return Response(StaffQuestionSerializer(question).data)
+
+
+class AdminFAQListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/faqs/admin/ — every FAQ, for the Admin Questions page's "Manage
+    FAQs" section.
+    POST /api/faqs/admin/ — add a new one — either from scratch, or an admin
+    promoting a citizen question that keeps coming up (see Question).
+    Admin-only — Staff can view/answer citizen questions but doesn't curate
+    the public FAQ list.
+    """
+    queryset = FAQ.objects.all()
+    serializer_class = FAQSerializer
+    permission_classes = [IsAdmin]
+
+
+class AdminFAQDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """PATCH/DELETE /api/faqs/admin/<id>/ — edit or remove an existing FAQ."""
+    queryset = FAQ.objects.all()
+    serializer_class = FAQSerializer
+    permission_classes = [IsAdmin]

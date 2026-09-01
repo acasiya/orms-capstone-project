@@ -1,5 +1,5 @@
 """
-O.R.M.S. — transactional email sending, shared by accounts/ and reports/.
+SafeSpace — transactional email sending, shared by accounts/ and reports/.
 
 Every "why the system sends an email" case goes through send_templated_email()
 below:
@@ -12,6 +12,7 @@ below:
     - their report reaches a final verdict (Resolved — remarks included if any)
     - their account is rejected (with the admin's reason, and another chance
       to sign up again with the same email)
+    - a question they asked on the FAQs page is answered
   Staff gets emailed when...
     - a report is submitted (needs review)
     - a suggestion is submitted (needs review)
@@ -71,7 +72,7 @@ def _send_to_each(users, **kwargs):
 def send_password_reset_email(user, code, expires_minutes):
     send_templated_email(
         to=user.email,
-        subject="O.R.M.S. — Your password reset code",
+        subject="SafeSpace — Your password reset code",
         template_name="password_reset_code",
         context={"user": user, "code": code, "expires_minutes": expires_minutes},
     )
@@ -80,7 +81,7 @@ def send_password_reset_email(user, code, expires_minutes):
 def send_account_approved_email(user):
     send_templated_email(
         to=user.email,
-        subject="O.R.M.S. — Your account has been approved",
+        subject="SafeSpace — Your account has been approved",
         template_name="account_approved",
         context={"user": user},
     )
@@ -89,7 +90,7 @@ def send_account_approved_email(user):
 def send_account_rejected_email(name, email, reason):
     send_templated_email(
         to=email,
-        subject="O.R.M.S. — Update on your account sign-up",
+        subject="SafeSpace — Update on your account sign-up",
         template_name="account_rejected",
         context={"name": name, "reason": reason},
     )
@@ -98,7 +99,7 @@ def send_account_rejected_email(name, email, reason):
 def send_report_submitted_citizen_email(report):
     send_templated_email(
         to=report.citizen.email,
-        subject="O.R.M.S. — Your report has been submitted",
+        subject="SafeSpace — Your report has been submitted",
         template_name="report_submitted_citizen",
         context={"report": report},
     )
@@ -107,7 +108,7 @@ def send_report_submitted_citizen_email(report):
 def send_suggestion_submitted_citizen_email(concern):
     send_templated_email(
         to=concern.citizen.email,
-        subject="O.R.M.S. — Your suggestion has been submitted",
+        subject="SafeSpace — Your suggestion has been submitted",
         template_name="suggestion_submitted_citizen",
         context={"concern": concern},
     )
@@ -119,9 +120,18 @@ def send_report_resolved_email(report):
     # separate email.
     send_templated_email(
         to=report.citizen.email,
-        subject="O.R.M.S. — Your report has reached a final verdict",
+        subject="SafeSpace — Your report has reached a final verdict",
         template_name="report_resolved",
         context={"report": report},
+    )
+
+
+def send_question_answered_email(question):
+    send_templated_email(
+        to=question.citizen.email,
+        subject="SafeSpace — Your question has been answered",
+        template_name="question_answered",
+        context={"question": question},
     )
 
 
@@ -131,7 +141,7 @@ def send_report_resolved_email(report):
 def send_report_submitted_staff_emails(report, staff_users):
     _send_to_each(
         staff_users,
-        subject="O.R.M.S. — A new report needs review",
+        subject="SafeSpace — A new report needs review",
         template_name="report_submitted_staff",
         context={"report": report},
     )
@@ -140,7 +150,7 @@ def send_report_submitted_staff_emails(report, staff_users):
 def send_suggestion_submitted_staff_emails(concern, staff_users):
     _send_to_each(
         staff_users,
-        subject="O.R.M.S. — A new suggestion needs review",
+        subject="SafeSpace — A new suggestion needs review",
         template_name="suggestion_submitted_staff",
         context={"concern": concern},
     )
@@ -152,7 +162,7 @@ def send_suggestion_submitted_staff_emails(concern, staff_users):
 def send_account_created_admin_emails(user, admin_users):
     _send_to_each(
         admin_users,
-        subject="O.R.M.S. — A new account is pending approval",
+        subject="SafeSpace — A new account is pending approval",
         template_name="account_created_admin",
         context={"user": user},
     )

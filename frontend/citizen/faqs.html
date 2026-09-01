@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Input Code</title>
+  <title>SafeSpace — FAQs</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -19,7 +19,7 @@
       <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit Suggestion</a></li>
       <li data-auth-only><a href="my-reports.html">My Reports</a></li>
       <li data-auth-only><a href="my-concerns.html">My Concerns/Suggestions</a></li>
-      <li><a href="faqs.html">FAQs</a></li>
+      <li><a href="faqs.html" class="active">FAQs</a></li>
     </ul>
     <span class="navbar__bell" data-auth-only role="button" tabindex="0" id="notifBell">
       <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5 5 0 00-5 5v3.5c0 .8-.3 1.6-.9 2.2L5 16h14l-1.1-1.3a3.2 3.2 0 01-.9-2.2V9a5 5 0 00-5-5z"/><path d="M10 19a2.2 2.2 0 004 0"/></svg><span class="navbar__badge" id="notifBadge" hidden></span>
@@ -34,46 +34,36 @@
     <div class="navbar__profile" role="button" tabindex="0"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></div>
   </nav>
 
-  <section class="plain-hero">
-    <div class="auth-card auth-card--outline auth-card--narrow">
-      <h1 class="auth-card__title">Input Code</h1>
-      <form data-goto="reset-password.html" data-forgot-verify novalidate>
-        <div class="field field--boxed field--code">
-          <label for="code">Code</label>
-          <input type="text" id="code" name="code" inputmode="numeric" placeholder="XXXXXX" maxlength="6" required />
+  <div class="plain-page">
+    <div class="plain-page__inner">
+      <h1 class="page-heading">Frequently Asked Questions</h1>
+      <div class="faq-card" id="faqList">
+        <div class="ordinances-empty">Loading...</div>
+      </div>
+
+      <h1 class="page-heading" style="margin-top:36px;">Ask a Question</h1>
+      <div class="report-card">
+        <p class="auth-card__subtitle" style="margin-top:-8px;">Don't see your question above? Ask it directly — a Barangay Official will get back to you.</p>
+        <form id="askQuestionForm">
+          <div class="field">
+            <label for="questionInput">Your Question</label>
+            <textarea id="questionInput" placeholder="Type your question here..." required></textarea>
+          </div>
+          <button type="submit" class="btn">Submit Question</button>
+        </form>
+      </div>
+
+      <div data-auth-only style="margin-top:36px;">
+        <h1 class="page-heading">My Questions</h1>
+        <div class="faq-card" id="myQuestionsList">
+          <div class="ordinances-empty">Loading...</div>
         </div>
-        <button type="submit" class="btn">Enter</button>
-      </form>
-      <a class="form-back" href="index.html">Back to Log In</a>
-    </div>
-  </section>
-
-  <section class="info-section">
-    <div class="info-grid">
-      <div class="info-card">
-        <h3>Barangay Platero</h3>
-        <p>Ordinance Reporting and Management System</p>
-      </div>
-      <div class="info-card">
-        <h3>What is SafeSpace?</h3>
-        <p>
-          Ordinance Reporting and Management System, or SafeSpace for short, is a
-          web-based system that is designed to help Barangay Citizens to report
-          ordinance violations, as well as submit concerns and suggestions in
-          order to promote collaborative and safe communities.
-        </p>
-      </div>
-      <div class="info-card">
-        <h3>Our Mission</h3>
-        <p>
-          SafeSpace gives the Barangay Citizen to check what happens to their
-          reports and concerns and suggestions. It also helps promote Local
-          Government Accountability and Action.
-        </p>
       </div>
     </div>
-  </section>
+  </div>
 
+  <script src="js/faqs-data.js"></script>
+  <script src="js/faqs.js"></script>
   <script src="js/main.js"></script>
 
   <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->
