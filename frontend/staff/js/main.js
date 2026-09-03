@@ -949,6 +949,36 @@ document.addEventListener("DOMContentLoaded", () => {
         const rememberField = form.querySelector('[name="rememberMe"]');
         clearFormError(form);
 
+        // Staff Portal only: a Staff/Administrator account an admin created
+        // (see accounts/serializers.py's AdminCreateUserSerializer) has no
+        // password yet, so its first login is just the email — leaving
+        // Password blank and clicking Login Now is how that gets triggered,
+        // rather than a separate discoverable link. A normal login (password
+        // filled in) skips this entirely.
+        if (window.location.pathname.startsWith("/staff/") && !passwordField.value) {
+          const email = emailField.value.trim();
+          if (!email) {
+            showFormError(form, "Enter your email, then leave Password blank to set up a new account, or fill it in to log in.");
+            return;
+          }
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Checking...";
+          try {
+            const status = await apiCheckStaffSetupStatus(email);
+            if (status.needs_setup) {
+              window.location.href = `account-setup.html?email=${encodeURIComponent(email)}`;
+            } else {
+              showFormError(form, "Enter your password to log in.");
+            }
+          } catch (err) {
+            showFormError(form, err.message);
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Login Now";
+          }
+          return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.textContent = "Logging in...";
         try {
@@ -975,23 +1005,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const staffSetupDetailsForm = document.getElementById("staffSetupDetailsForm");
   if (staffSetupEmailForm && staffSetupDetailsForm) {
     let setupEmail = "";
+    const setupEmailField = document.getElementById("setupEmail");
 
-    staffSetupEmailForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const emailField = document.getElementById("setupEmail");
+    async function checkAndAdvance(email) {
       const submitBtn = staffSetupEmailForm.querySelector('button[type="submit"]');
       clearFormError(staffSetupEmailForm);
 
       submitBtn.disabled = true;
       submitBtn.textContent = "Checking...";
       try {
-        const status = await apiCheckStaffSetupStatus(emailField.value.trim());
+        const status = await apiCheckStaffSetupStatus(email);
         if (!status.exists) {
           showFormError(staffSetupEmailForm, "No staff account was found with that email.");
         } else if (!status.needs_setup) {
           showFormError(staffSetupEmailForm, "This account is already set up — please log in normally.");
         } else {
-          setupEmail = emailField.value.trim();
+          setupEmail = email;
           staffSetupEmailForm.hidden = true;
           staffSetupDetailsForm.hidden = false;
         }
@@ -1001,6 +1030,20 @@ document.addEventListener("DOMContentLoaded", () => {
         submitBtn.disabled = false;
         submitBtn.textContent = "Continue";
       }
+    }
+
+    // Coming from the Staff Portal's own login form (Password left blank —
+    // see main.js's login handler above) skips retyping the email: it's
+    // passed along in the URL and checked automatically.
+    const emailFromQuery = new URLSearchParams(window.location.search).get("email");
+    if (emailFromQuery) {
+      setupEmailField.value = emailFromQuery;
+      checkAndAdvance(emailFromQuery);
+    }
+
+    staffSetupEmailForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      checkAndAdvance(setupEmailField.value.trim());
     });
 
     staffSetupDetailsForm.addEventListener("submit", async (e) => {
