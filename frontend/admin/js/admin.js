@@ -73,8 +73,18 @@ function renderAvatar(container, user) {
 (function enforceAdminPortalAccess() {
   const user = getAdminUser();
   const hasToken = !!adminAuthStorage().getItem(ADMIN_ACCESS_TOKEN_KEY);
-  if (!hasToken || !user || user.role !== "admin") {
-    window.location.href = "index.html";
+  // There's no separate Admin login anymore — Administrator is a Barangay
+  // Staff role, not its own account type (see accounts/serializers.py's
+  // STAFF_ROLE_CHOICES), so the single login page lives under /staff/.
+  // Not logged in at all -> straight to that login page; logged in but not
+  // an Administrator -> back to their own Staff portal home rather than a
+  // login prompt they'd just bounce off of again.
+  if (!hasToken || !user) {
+    window.location.href = "/staff/index.html";
+    return;
+  }
+  if (user.role !== "admin") {
+    window.location.href = "/staff/reports-dashboard.html";
   }
 })();
 
@@ -427,7 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // ignore — logging out locally still proceeds below
       }
       adminLogOut();
-      window.location.href = "index.html";
+      window.location.href = "/staff/index.html";
     });
   }
   if (logoutNo) {

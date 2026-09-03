@@ -55,67 +55,92 @@
       <div class="admin-content">
         <h1 class="admin-page-title">Create Account</h1>
 
-        <form id="createAccountForm" class="create-account-grid" novalidate>
+        <div class="create-account-type-field field">
+          <label for="caAccountType">Account Type</label>
+          <select id="caAccountType" class="admin-select admin-select--block">
+            <option value="staff">Barangay Staff</option>
+            <option value="citizen">Barangay Citizen</option>
+          </select>
+        </div>
+
+        <!-- Barangay Staff/Administrator: just an email + role — the staff
+             member finishes setting up their own name/phone/password on
+             first login (see frontend/staff/account-setup.html). -->
+        <form id="createStaffAccountForm" class="create-account-grid create-account-grid--single" novalidate>
           <div class="create-account-card">
-            <div class="form-row">
-              <div class="field">
-                <label for="caAccountType">Account Type</label>
-                <select id="caAccountType" class="admin-select admin-select--block">
-                  <option value="admin">- Admin -</option>
-                  <option value="staff">- Barangay Official -</option>
-                  <option value="citizen">- Citizen -</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="caRole">Role</label>
-                <input type="text" id="caRole" name="role" placeholder="e.g. Secretary" disabled />
-              </div>
-            </div>
-            <div class="field">
-              <label for="caLastName">Last Name</label>
-              <input type="text" id="caLastName" name="last_name" placeholder="lastname" required />
-            </div>
-            <div class="field">
-              <label for="caFirstName">Given Name</label>
-              <input type="text" id="caFirstName" name="first_name" placeholder="given name" required />
-            </div>
-            <div class="field">
-              <label for="caPhone">Phone</label>
-              <input type="tel" id="caPhone" name="phone" placeholder="09XXXXXXXXX" required />
-            </div>
+            <p class="create-account-card__intro">
+              Create a Barangay Staff account with just an email and a role. The
+              staff member finishes setting up their own name, phone number, and
+              password the first time they log in.
+            </p>
             <div class="field">
               <label for="caEmail">Email</label>
-              <input type="email" id="caEmail" name="email" placeholder="balamia@gmail.com" required />
+              <input type="email" id="caEmail" name="email" placeholder="name@example.com" required />
             </div>
             <div class="field">
-              <label for="caStreet">Street</label>
-              <div class="combobox" id="caStreetCombobox">
-                <input type="text" id="caStreet" placeholder="Type to search streets..." autocomplete="off" required />
-                <ul class="combobox__list" id="caStreetList" hidden></ul>
+              <label for="caRole">Role</label>
+              <select id="caRole" name="staff_role" class="admin-select admin-select--block" required>
+                <option value="" selected disabled>Select a role</option>
+                <option value="Kapitan">Kapitan</option>
+                <option value="Secretary">Secretary</option>
+                <option value="Investigator">Investigator</option>
+                <option value="Administrator">Administrator</option>
+              </select>
+              <p class="field__hint">Kapitan and Secretary can only be held by one active account at a time. Administrator gets access to the Admin Portal.</p>
+            </div>
+            <button type="submit" class="btn">Create Account</button>
+          </div>
+        </form>
+
+        <!-- Barangay Citizen: full details, created (and pre-verified) right
+             away — no first-login setup step, unlike Staff above. -->
+        <form id="createCitizenAccountForm" class="create-account-grid" novalidate hidden>
+          <div class="create-account-card">
+            <div class="field">
+              <label for="ccLastName">Last Name</label>
+              <input type="text" id="ccLastName" name="last_name" placeholder="lastname" required />
+            </div>
+            <div class="field">
+              <label for="ccFirstName">Given Name</label>
+              <input type="text" id="ccFirstName" name="first_name" placeholder="given name" required />
+            </div>
+            <div class="field">
+              <label for="ccPhone">Phone</label>
+              <input type="tel" id="ccPhone" name="phone" placeholder="09XXXXXXXXX" required />
+            </div>
+            <div class="field">
+              <label for="ccEmail">Email</label>
+              <input type="email" id="ccEmail" name="email" placeholder="balamia@gmail.com" required />
+            </div>
+            <div class="field">
+              <label for="ccStreet">Street</label>
+              <div class="combobox" id="ccStreetCombobox">
+                <input type="text" id="ccStreet" placeholder="Type to search streets..." autocomplete="off" required />
+                <ul class="combobox__list" id="ccStreetList" hidden></ul>
               </div>
             </div>
             <div class="field">
-              <label for="caBlockLot">Block, Lot, etc.</label>
-              <input type="text" id="caBlockLot" placeholder="e.g. Block 1, Lot 2" required />
+              <label for="ccBlockLot">Block, Lot, etc.</label>
+              <input type="text" id="ccBlockLot" placeholder="e.g. Block 1, Lot 2" required />
             </div>
           </div>
 
           <div class="create-account-card">
             <div class="field field--upload">
-              <label for="caIdPhoto">Identification</label>
-              <label class="upload-drop" for="caIdPhoto">
+              <label for="ccIdPhoto">Identification</label>
+              <label class="upload-drop" for="ccIdPhoto">
                 <span class="upload-drop__icon">&#8593;</span>
-                <span class="upload-drop__text" id="caUploadFileName">Upload Barangay ID for Verification</span>
+                <span class="upload-drop__text" id="ccUploadFileName">Upload Barangay ID for Verification</span>
               </label>
-              <input type="file" id="caIdPhoto" name="idPhoto" accept="image/*" required hidden />
+              <input type="file" id="ccIdPhoto" name="idPhoto" accept="image/*" required hidden />
             </div>
             <div class="field">
-              <label for="caPassword">Password</label>
-              <input type="password" id="caPassword" name="password" placeholder="Enter your password" required />
+              <label for="ccPassword">Password</label>
+              <input type="password" id="ccPassword" name="password" placeholder="Enter your password" required />
             </div>
             <div class="field">
-              <label for="caConfirmPassword">Confirm Password</label>
-              <input type="password" id="caConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
+              <label for="ccConfirmPassword">Confirm Password</label>
+              <input type="password" id="ccConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
             </div>
             <ul class="password-hint">
               <li data-rule="length"><input type="checkbox" disabled tabindex="-1" /> At least 8 characters</li>
@@ -150,6 +175,7 @@
   <div class="modal-overlay" id="accountCreatedModal" hidden>
     <div class="modal-card">
       <h2>Account Created!</h2>
+      <p id="accountCreatedMessage"></p>
       <button type="button" class="btn" id="accountCreatedConfirm">Confirm</button>
     </div>
   </div>

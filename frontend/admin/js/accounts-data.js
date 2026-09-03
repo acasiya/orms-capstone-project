@@ -20,7 +20,7 @@ async function getAllAccounts() {
   return response.json();
 }
 
-// Used by the "Disable/Enable User" button and "Update User Type" popup —
+// Used by the "Disable/Enable User" button and "Update Role" popup —
 // PATCHes just the changed fields for one account.
 async function updateAccount(id, changes) {
   const response = await authFetch(`${ADMIN_API_BASE}/users/${id}/`, {
@@ -59,10 +59,28 @@ async function deleteAccount(id) {
   }
 }
 
-// Used by the Create Account form — creates a Staff or Admin account.
-// (Citizens self-register through the Citizen portal, not this form.)
-async function createAccount({ email, password, firstName, lastName, contactNumber, address, role, position }) {
+// Used by the Create Account form's "Barangay Staff" account type — creates
+// a Staff/Administrator account with just an email + role (see
+// accounts/serializers.py's AdminCreateUserSerializer).
+async function createAccount({ email, staffRole }) {
   const response = await authFetch(`${ADMIN_API_BASE}/create-user/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, staff_role: staffRole }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not create this account.");
+  }
+  return response.json();
+}
+
+// Used by the Create Account form's "Barangay Citizen" account type —
+// creates a full, pre-verified citizen account right away (see
+// accounts/serializers.py's AdminCreateCitizenSerializer).
+async function createCitizenAccount({ email, password, firstName, lastName, contactNumber, address }) {
+  const response = await authFetch(`${ADMIN_API_BASE}/create-citizen/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -72,8 +90,6 @@ async function createAccount({ email, password, firstName, lastName, contactNumb
       last_name: lastName,
       contact_number: contactNumber,
       address,
-      role,
-      position,
     }),
   });
   if (!response.ok) {

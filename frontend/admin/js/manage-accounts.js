@@ -45,7 +45,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
           <td>${a.type}</td>
-          <td>${a.active ? '<span class="status-active">Online</span>' : '<span class="status-inactive">Offline</span>'}</td>
+          <td>${
+            a.setupPending
+              ? '<span class="status-pending">Setup Pending</span>'
+              : a.active
+                ? '<span class="status-active">Online</span>'
+                : '<span class="status-inactive">Offline</span>'
+          }</td>
         </tr>`
       )
       .join("");
@@ -83,16 +89,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg> Disable User`
       : `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Enable User`;
 
-    // Admins can't disable, retype, or delete their own account — see the
+    // Admins can't disable, re-role, or delete their own account — see the
     // matching safeguards in AdminAccountDetailView.patch/delete. Shown as
     // disabled buttons here so it's clear upfront, not just after a failed click.
     const isSelf = account.id === (getAdminUser() || {}).id;
     editDisableBtn.disabled = isSelf && account.active;
     editDisableBtn.title = isSelf && account.active ? "You can't disable your own account." : "";
-    editTypeBtn.disabled = isSelf;
-    editTypeBtn.title = isSelf ? "You can't change your own account type." : "";
     editDeleteBtn.disabled = isSelf;
     editDeleteBtn.title = isSelf ? "You can't delete your own account." : "";
+
+    // Update Role only applies to Barangay Staff/Administrator accounts —
+    // a Citizen's account type isn't something Manage Accounts changes
+    // anymore (see accounts/views.py's AdminAccountDetailView.patch).
+    const isCitizen = account.type === "Barangay Citizen";
+    editTypeBtn.hidden = isCitizen;
+    editTypeBtn.disabled = isSelf;
+    editTypeBtn.title = isSelf ? "You can't change your own role." : "";
   }
 
   tbody.addEventListener("click", (e) => {
@@ -129,26 +141,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Update User Type popup
+  // Update Role popup — one of the 4 Barangay Staff roles (see
+  // accounts/serializers.py's STAFF_ROLE_CHOICES); picking Administrator is
+  // what grants Admin Portal access, not a separate account type anymore.
   const updateTypeModal = document.getElementById("updateTypeModal");
   const updateTypeSelect = document.getElementById("updateTypeSelect");
   const updateTypeSave = document.getElementById("updateTypeSave");
-
-  // Maps the dropdown's display labels (exactly the 3 account types this
-  // popup allows — see updateTypeSelect's options) to the backend's role.
-  // Always clears position: a specific job title (e.g. "Secretary") is only
-  // ever set via Create Accounts, so switching type here shouldn't leave a
-  // stale one behind making the type display as something other than one
-  // of these 3 labels.
-  function labelToRoleAndPosition(label) {
-    if (label === "Administrator") return { role: "admin", position: "" };
-    if (label === "Barangay Citizen") return { role: "citizen", position: "" };
-    return { role: "staff", position: "" };
-  }
+  const STAFF_ROLES = ["Kapitan", "Secretary", "Investigator", "Administrator"];
 
   editTypeBtn.addEventListener("click", () => {
     if (!activeAccount) return;
-    updateTypeSelect.value = activeAccount.type;
+    updateTypeSelect.value = STAFF_ROLES.includes(activeAccount.position) ? activeAccount.position : STAFF_ROLES[0];
     editModal.hidden = true;
     updateTypeModal.hidden = false;
   });
@@ -157,7 +160,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!activeAccount) return;
     updateTypeSave.disabled = true;
     try {
-      const updated = await updateAccount(activeAccount.id, labelToRoleAndPosition(updateTypeSelect.value));
+      const updated = await updateAccount(activeAccount.id, { staff_role: updateTypeSelect.value });
       Object.assign(activeAccount, updated);
       updateTypeModal.hidden = true;
       populateEditModal(activeAccount);

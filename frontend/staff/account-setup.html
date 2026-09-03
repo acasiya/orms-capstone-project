@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeSpace — Complete Account Setup</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <span class="navbar__logo" aria-hidden="true"></span>
+      SafeSpace
+    </div>
+    <span class="navbar__portal-label">Barangay Staff Portal</span>
+  </nav>
+
+  <section class="hero">
+    <div class="auth-card">
+      <h1 class="auth-card__title">Complete Account Setup</h1>
+
+      <form id="staffSetupEmailForm" novalidate>
+        <p class="auth-card__subtitle">An Administrator created an account for you. Enter the email it was created with to continue.</p>
+        <div class="field">
+          <label for="setupEmail">Email</label>
+          <input type="email" id="setupEmail" name="email" placeholder="name@example.com" required />
+        </div>
+        <button type="submit" class="btn">Continue</button>
+      </form>
+
+      <form id="staffSetupDetailsForm" novalidate hidden>
+        <p class="auth-card__subtitle">Welcome! Finish setting up your account.</p>
+        <div class="field">
+          <label for="setupLastName">Last Name</label>
+          <input type="text" id="setupLastName" name="last_name" placeholder="lastname" required />
+        </div>
+        <div class="field">
+          <label for="setupFirstName">Given Name</label>
+          <input type="text" id="setupFirstName" name="first_name" placeholder="given name" required />
+        </div>
+        <div class="field">
+          <label for="setupPhone">Phone Number</label>
+          <input type="tel" id="setupPhone" name="phone" placeholder="09XXXXXXXXX" required />
+        </div>
+        <div class="field">
+          <label for="setupPassword">Password</label>
+          <input type="password" id="setupPassword" name="password" placeholder="Enter your password" required />
+        </div>
+        <div class="field">
+          <label for="setupConfirmPassword">Confirm Password</label>
+          <input type="password" id="setupConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
+        </div>
+        <ul class="password-hint">
+          <li data-rule="length"><input type="checkbox" disabled tabindex="-1" /> At least 8 characters</li>
+          <li data-rule="numeric"><input type="checkbox" disabled tabindex="-1" /> Not entirely numbers</li>
+          <li data-rule="common"><input type="checkbox" disabled tabindex="-1" /> Not a commonly used password</li>
+          <li data-rule="similar"><input type="checkbox" disabled tabindex="-1" /> Not too similar to the account's name or email</li>
+        </ul>
+        <button type="submit" class="btn">Complete Setup</button>
+      </form>
+
+      <p class="auth-card__subtitle"><a href="index.html">Back to Login</a></p>
+    </div>
+  </section>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

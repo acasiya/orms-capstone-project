@@ -50,31 +50,138 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+
+# Barangay Staff no longer has a free-text job title — every staff (and,
+# now, Administrator) account picks exactly one of these 4 at creation time
+# (AdminCreateUserSerializer) or later (AdminAccountDetailView.patch's
+# "Update Role"). Administrator isn't a separate account type anymore —
+# picking it here just sets role=ADMIN alongside the rest of the position
+# labels, which is what actually grants access to the Admin portal (see
+# frontend/staff/js/main.js's ROLE_HOME + admin/js/admin.js's
+# enforceAdminPortalAccess). Kapitan and Secretary are limited to one
+# active holder at a time — see the uniqueness checks below and in
+# AdminAccountDetailView.patch.
+STAFF_ROLE_CHOICES = ["Kapitan", "Secretary", "Investigator", "Administrator"]
+STAFF_ROLE_TO_ROLE_FIELD = {
+    "Kapitan": User.Role.STAFF,
+    "Secretary": User.Role.STAFF,
+    "Investigator": User.Role.STAFF,
+    "Administrator": User.Role.ADMIN,
+}
+UNIQUE_STAFF_ROLES = {"Kapitan", "Secretary"}
+
+
+def validate_staff_role_uniqueness(staff_role, exclude_user=None):
+    """Shared by account creation and Update Role — one active Kapitan/Secretary at a time."""
+    if staff_role not in UNIQUE_STAFF_ROLES:
+        return
+    clash = User.objects.filter(position__iexact=staff_role, is_active=True)
+    if exclude_user is not None:
+        clash = clash.exclude(pk=exclude_user.pk)
+    if clash.exists():
+        raise serializers.ValidationError(
+            f"There's already an active {staff_role}. Only one is allowed at a time."
+        )
+
+
 class AdminCreateUserSerializer(serializers.ModelSerializer):
     """
-    Used by Administrators to create any account directly — Citizen, Staff,
-    or Admin — pre-verified (no voter's ID review needed, since an admin is
-    vetting/entering it directly rather than the person self-registering).
+    Used by Administrators to create a Barangay Staff (or Administrator)
+    account — just an email and a role. No name, phone, or password yet:
+    the account starts with no usable password (see
+    StaffAccountSetupView) until the staff member finishes setting it up
+    themselves on their first login. Pre-verified immediately either way —
+    no voter's ID review needed, since an admin is vetting/entering it
+    directly rather than the person self-registering.
+    """
+
+    staff_role = serializers.ChoiceField(choices=STAFF_ROLE_CHOICES, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "staff_role"]
+        read_only_fields = ["id"]
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value
+
+    def validate_staff_role(self, value):
+        validate_staff_role_uniqueness(value)
+        return value
+
+    def create(self, validated_data):
+        staff_role = validated_data.pop("staff_role")
+        validated_data["username"] = validated_data["email"]
+        validated_data["role"] = STAFF_ROLE_TO_ROLE_FIELD[staff_role]
+        validated_data["position"] = staff_role
+        validated_data["is_verified"] = True
+        user = User(**validated_data)
+        user.set_unusable_password()
+        user.save()
+        return user
+
+
+class AdminCreateCitizenSerializer(serializers.ModelSerializer):
+    """
+    Used by Administrators to create a Barangay Citizen account directly,
+    full details and password included — unlike AdminCreateUserSerializer
+    above (Staff/Administrator), there's no first-login setup step here:
+    the admin is entering everything themselves right away. Pre-verified
+    immediately too — no voter's ID review needed, since an admin is
+    vetting/entering it directly rather than the resident self-registering
+    (see RegisterSerializer for that path).
     """
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
 
     class Meta:
         model = User
-        fields = [
-            "id", "email", "password", "first_name", "last_name",
-            "contact_number", "address", "role", "position",
-        ]
+        fields = ["id", "email", "password", "first_name", "last_name", "contact_number", "address"]
         read_only_fields = ["id"]
 
     def create(self, validated_data):
         password = validated_data.pop("password")
         validated_data["username"] = validated_data["email"]
+        validated_data["role"] = User.Role.CITIZEN
         validated_data["is_verified"] = True
         user = User(**validated_data)
         user.set_password(password)
         user.save()
         return user
+
+
+class StaffAccountSetupSerializer(serializers.ModelSerializer):
+    """
+    Completes a Barangay Staff/Administrator account an admin created with
+    just an email+role (see AdminCreateUserSerializer above) — the staff
+    member supplies their own name, phone, and password on first login.
+    Only ever called on an account that still has no usable password (see
+    StaffAccountSetupView) — role/position/email are set already and stay
+    untouched here.
+    """
+
+    # first_name/last_name/contact_number are blank=True at the model level
+    # (Django's AbstractUser default), which DRF would otherwise read as
+    # "optional" — declared explicitly here since this step is exactly what
+    # collects them, unlike ProfileUpdateSerializer where they're already set.
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    contact_number = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "contact_number", "password"]
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password")
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.set_password(password)
+        instance.save()
+        return instance
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -142,13 +249,24 @@ class AdminAccountSerializer(serializers.ModelSerializer):
     created = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(source="date_joined", read_only=True)
     updated = serializers.SerializerMethodField()
+    # True for a Staff/Administrator account an admin created (see
+    # AdminCreateUserSerializer) that hasn't gone through first-login setup
+    # (see StaffAccountSetupView) yet — Manage Accounts shows this instead
+    # of Online/Offline so a still-pending account doesn't misleadingly
+    # read as "Online" just because is_active defaults to True.
+    setupPending = serializers.SerializerMethodField()
+    position = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
         fields = [
-            "id", "owner", "email", "type", "active",
+            "id", "owner", "email", "type", "active", "position",
             "lastActiveLabel", "activityMinutes", "created", "createdAt", "updated",
+            "setupPending",
         ]
+
+    def get_setupPending(self, obj):
+        return not obj.has_usable_password()
 
     def get_owner(self, obj):
         return obj.get_full_name() or obj.username

@@ -1,9 +1,9 @@
-// SafeSpace — Create Account: creates a real account (Citizen, Staff, or
-// Admin) via the API. Accounts made here are pre-verified immediately —
-// no voter's ID review — since an admin is creating/vetting it directly.
-// This is separate from the Citizen portal's own Sign Up flow, which is
-// still how residents self-register (and still goes through Approve
-// Accounts for ID verification).
+// SafeSpace — Create Account: Account Type picks which form shows —
+// "Barangay Staff" (just an email + role, see AdminCreateUserSerializer)
+// or "Barangay Citizen" (full details + password, created and pre-verified
+// right away, see AdminCreateCitizenSerializer). Citizens can still
+// self-register through the Citizen portal's own Sign Up flow too — this
+// is just the admin-direct path for either.
 
 // Same client-checkable password rules as Citizen Sign Up (frontend/citizen/js/main.js) —
 // kept here too since this page loads admin.js rather than main.js.
@@ -44,81 +44,107 @@ function getPasswordRequirementError(pw, attrs = {}) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("createAccountForm");
-
-  // "Role" only applies to Barangay Officials (e.g. Secretary, Investigator) —
-  // stays disabled and empty for Admin/Citizen account types.
   const accountType = document.getElementById("caAccountType");
-  const role = document.getElementById("caRole");
+  const staffForm = document.getElementById("createStaffAccountForm");
+  const citizenForm = document.getElementById("createCitizenAccountForm");
+  const createdModal = document.getElementById("accountCreatedModal");
+  const createdMessage = document.getElementById("accountCreatedMessage");
+  const createdConfirm = document.getElementById("accountCreatedConfirm");
 
-  function syncRoleField() {
-    const isStaff = accountType.value === "staff";
-    role.disabled = !isStaff;
-    role.required = isStaff;
-    if (!isStaff) role.value = "";
+  function syncFormVisibility() {
+    const isCitizen = accountType.value === "citizen";
+    staffForm.hidden = isCitizen;
+    citizenForm.hidden = !isCitizen;
   }
+  accountType.addEventListener("change", syncFormVisibility);
+  syncFormVisibility();
 
-  accountType.addEventListener("change", syncRoleField);
-  syncRoleField();
+  // ---- Barangay Staff form ----
+  const email = document.getElementById("caEmail");
+  const role = document.getElementById("caRole");
+  const staffSubmitBtn = staffForm.querySelector('button[type="submit"]');
+
+  staffForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!staffForm.reportValidity()) return;
+
+    clearFormError(staffForm);
+    staffSubmitBtn.disabled = true;
+    staffSubmitBtn.textContent = "Creating...";
+
+    try {
+      const created = await createAccount({ email: email.value.trim(), staffRole: role.value });
+
+      addAdminNotification(`New account created: ${created.email} (${role.value})`, "manage-accounts.html");
+
+      createdMessage.textContent = "They can finish setting up their account the first time they log in on the Staff Portal.";
+      createdModal.hidden = false;
+      staffForm.reset();
+      syncFormVisibility();
+    } catch (err) {
+      showFormError(staffForm, err.message);
+    } finally {
+      staffSubmitBtn.disabled = false;
+      staffSubmitBtn.textContent = "Create Account";
+    }
+  });
+
+  // ---- Barangay Citizen form ----
+  const ccLastName = document.getElementById("ccLastName");
+  const ccFirstName = document.getElementById("ccFirstName");
+  const ccPhone = document.getElementById("ccPhone");
+  const ccEmail = document.getElementById("ccEmail");
+  const ccStreet = document.getElementById("ccStreet");
+  const ccStreetList = document.getElementById("ccStreetList");
+  const ccBlockLot = document.getElementById("ccBlockLot");
+  const ccPassword = document.getElementById("ccPassword");
+  const ccConfirmPassword = document.getElementById("ccConfirmPassword");
+  const citizenSubmitBtn = citizenForm.querySelector('button[type="submit"]');
 
   // Upload dropzone label text: shows the selected filename.
   // (Voter's ID upload isn't wired to the backend yet — evidence/file
   // storage is a separate piece of work — so this stays display-only.)
-  const idInput = document.getElementById("caIdPhoto");
-  const uploadText = document.getElementById("caUploadFileName");
+  const idInput = document.getElementById("ccIdPhoto");
+  const uploadText = document.getElementById("ccUploadFileName");
   const defaultUploadText = uploadText.textContent;
   idInput.addEventListener("change", () => {
     const file = idInput.files[0];
     uploadText.textContent = file ? file.name : defaultUploadText;
   });
 
-  const lastName = document.getElementById("caLastName");
-  const firstName = document.getElementById("caFirstName");
-  const phone = document.getElementById("caPhone");
-  const email = document.getElementById("caEmail");
-  const street = document.getElementById("caStreet");
-  const streetList = document.getElementById("caStreetList");
-  const blockLot = document.getElementById("caBlockLot");
-  const password = document.getElementById("caPassword");
-  const confirmPassword = document.getElementById("caConfirmPassword");
-
-  const createdModal = document.getElementById("accountCreatedModal");
-  const createdConfirm = document.getElementById("accountCreatedConfirm");
-  const submitBtn = form.querySelector('button[type="submit"]');
-
   // ---- Street: type-to-filter combobox over the fixed STREETS list ----
   function renderStreetOptions() {
-    const query = street.value.trim().toLowerCase();
+    const query = ccStreet.value.trim().toLowerCase();
     const matches = query ? STREETS.filter((s) => s.toLowerCase().includes(query)) : STREETS;
-    streetList.innerHTML = matches.length
+    ccStreetList.innerHTML = matches.length
       ? matches.map((s) => `<li data-value="${s}">${s}</li>`).join("")
       : `<li class="combobox__empty">No matching street</li>`;
-    streetList.hidden = false;
+    ccStreetList.hidden = false;
   }
-  street.addEventListener("focus", renderStreetOptions);
-  street.addEventListener("input", renderStreetOptions);
-  streetList.addEventListener("click", (e) => {
+  ccStreet.addEventListener("focus", renderStreetOptions);
+  ccStreet.addEventListener("input", renderStreetOptions);
+  ccStreetList.addEventListener("click", (e) => {
     const option = e.target.closest("li[data-value]");
     if (!option) return;
-    street.value = option.dataset.value;
-    streetList.hidden = true;
+    ccStreet.value = option.dataset.value;
+    ccStreetList.hidden = true;
   });
   document.addEventListener("click", (e) => {
-    if (!street.contains(e.target) && !streetList.contains(e.target)) {
-      streetList.hidden = true;
+    if (!ccStreet.contains(e.target) && !ccStreetList.contains(e.target)) {
+      ccStreetList.hidden = true;
     }
   });
-  street.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") streetList.hidden = true;
+  ccStreet.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") ccStreetList.hidden = true;
   });
 
   // ---- Password requirements: live checkbox feedback ----
-  const passwordHint = form.querySelector(".password-hint");
+  const passwordHint = citizenForm.querySelector(".password-hint");
   function updatePasswordHint() {
-    const status = getPasswordRuleStatus(password.value, {
-      firstName: firstName.value,
-      lastName: lastName.value,
-      email: email.value,
+    const status = getPasswordRuleStatus(ccPassword.value, {
+      firstName: ccFirstName.value,
+      lastName: ccLastName.value,
+      email: ccEmail.value,
     });
     passwordHint.querySelectorAll("li[data-rule]").forEach((li) => {
       const satisfied = !!status[li.dataset.rule];
@@ -127,63 +153,62 @@ document.addEventListener("DOMContentLoaded", () => {
       if (checkbox) checkbox.checked = satisfied;
     });
   }
-  [password, firstName, lastName, email].forEach((field) => field.addEventListener("input", updatePasswordHint));
+  [ccPassword, ccFirstName, ccLastName, ccEmail].forEach((field) => field.addEventListener("input", updatePasswordHint));
   updatePasswordHint();
 
-  form.addEventListener("submit", async (e) => {
+  citizenForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!form.reportValidity()) return;
+    if (!citizenForm.reportValidity()) return;
 
-    if (password.value !== confirmPassword.value) {
-      confirmPassword.setCustomValidity("Passwords don't match");
-      confirmPassword.reportValidity();
+    if (ccPassword.value !== ccConfirmPassword.value) {
+      ccConfirmPassword.setCustomValidity("Passwords don't match");
+      ccConfirmPassword.reportValidity();
       return;
     }
-    confirmPassword.setCustomValidity("");
+    ccConfirmPassword.setCustomValidity("");
 
-    clearFormError(form);
+    clearFormError(citizenForm);
 
-    const passwordError = getPasswordRequirementError(password.value, {
-      firstName: firstName.value,
-      lastName: lastName.value,
-      email: email.value,
+    const passwordError = getPasswordRequirementError(ccPassword.value, {
+      firstName: ccFirstName.value,
+      lastName: ccLastName.value,
+      email: ccEmail.value,
     });
     if (passwordError) {
-      showFormError(form, passwordError);
+      showFormError(citizenForm, passwordError);
       return;
     }
 
-    if (!STREETS.includes(street.value.trim())) {
-      showFormError(form, "Please select a street from the list.");
+    if (!STREETS.includes(ccStreet.value.trim())) {
+      showFormError(citizenForm, "Please select a street from the list.");
       return;
     }
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Creating...";
+    citizenSubmitBtn.disabled = true;
+    citizenSubmitBtn.textContent = "Creating...";
 
     try {
-      const created = await createAccount({
-        email: email.value.trim(),
-        password: password.value,
-        firstName: firstName.value.trim(),
-        lastName: lastName.value.trim(),
-        contactNumber: phone.value.trim(),
-        address: `${blockLot.value.trim()}, ${street.value.trim()}`,
-        role: accountType.value,
-        position: role.value.trim(),
+      const created = await createCitizenAccount({
+        email: ccEmail.value.trim(),
+        password: ccPassword.value,
+        firstName: ccFirstName.value.trim(),
+        lastName: ccLastName.value.trim(),
+        contactNumber: ccPhone.value.trim(),
+        address: `${ccBlockLot.value.trim()}, ${ccStreet.value.trim()}`,
       });
 
-      addAdminNotification(
-        `New account created: ${created.first_name} ${created.last_name} (${created.role})`,
-        "manage-accounts.html"
-      );
+      addAdminNotification(`New account created: ${created.first_name} ${created.last_name} (Barangay Citizen)`, "manage-accounts.html");
 
+      createdMessage.textContent = "The account is ready to log in on the Citizen Portal right away.";
       createdModal.hidden = false;
+      citizenForm.reset();
+      uploadText.textContent = defaultUploadText;
+      updatePasswordHint();
     } catch (err) {
-      showFormError(form, err.message);
+      showFormError(citizenForm, err.message);
     } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Create Account";
+      citizenSubmitBtn.disabled = false;
+      citizenSubmitBtn.textContent = "Create Account";
     }
   });
 

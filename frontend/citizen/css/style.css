@@ -55,7 +55,7 @@
   --heart: #e63946;
   --radius: 10px;
   --shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
-  --max-width: 1180px;
+  --max-width: 1360px;
   --serif: Georgia, "Times New Roman", Times, serif;
   --plain-bg: #e9e5dc;
 }
@@ -1134,6 +1134,66 @@ button {
 
 .plain-page__inner--wide {
   max-width: var(--max-width);
+}
+
+/* Two-column treatment for single-form pages (File Report, Submit
+   Suggestion, FAQs) — pairs the form with a contextual side panel instead
+   of leaving a plain 720px-wide column stranded in the middle of a much
+   wider viewport. */
+.plain-page__inner--split {
+  max-width: 1060px;
+}
+
+.plain-page__layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.info-panel {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 26px 24px;
+  position: sticky;
+  top: 24px;
+}
+
+.info-panel__title {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.info-panel ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.info-panel li {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.info-panel__note {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .plain-page__layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .page-heading {

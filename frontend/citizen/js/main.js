@@ -315,34 +315,13 @@ async function refreshAccessToken() {
   }
 }
 
-// Calls the real login endpoint. On success, stores the JWT tokens and a
-// small user summary, and returns the user's role so the caller can decide
-// where to redirect. On failure, throws with a message meant to be shown
-// directly to the person (invalid credentials, network error, etc).
+// Shared by apiLogin and apiCompleteStaffSetup below — both endpoints
+// return the same {access, refresh, user} shape, so both just hand their
+// response here to actually persist the session.
 // remember: "Stay signed in" checkbox — false/omitted means the session
 // lives in sessionStorage (gone once the tab closes) and is capped at 1 day;
 // true means localStorage (survives closing the tab/browser).
-async function apiLogin(email, password, remember) {
-  let response;
-  try {
-    response = await fetch(`${API_BASE}/login/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-  } catch {
-    throw new Error("Could not reach the server. Check your connection and try again.");
-  }
-
-  if (!response.ok) {
-    // Surfaces the backend's actual reason (e.g. "still under verification")
-    // instead of a generic message, so an unverified/pending account gets a
-    // meaningfully different prompt than a wrong password.
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.detail || "Incorrect email or password.");
-  }
-
-  const data = await response.json();
+function storeAuthSession(data, remember) {
   localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
   const store = remember ? localStorage : sessionStorage;
   store.setItem(ACCESS_TOKEN_KEY, data.access);
@@ -370,6 +349,71 @@ async function apiLogin(email, password, remember) {
     })
   );
   return data.user.role;
+}
+
+// Calls the real login endpoint. On success, stores the JWT tokens and a
+// small user summary, and returns the user's role so the caller can decide
+// where to redirect. On failure, throws with a message meant to be shown
+// directly to the person (invalid credentials, network error, etc).
+async function apiLogin(email, password, remember) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/login/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+
+  if (!response.ok) {
+    // Surfaces the backend's actual reason (e.g. "still under verification")
+    // instead of a generic message, so an unverified/pending account gets a
+    // meaningfully different prompt than a wrong password.
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Incorrect email or password.");
+  }
+
+  return storeAuthSession(await response.json(), remember);
+}
+
+// Staff account setup (Barangay Staff/Administrator accounts an admin
+// created with just an email + role — see accounts/serializers.py's
+// AdminCreateUserSerializer) — frontend/staff/account-setup.html's flow.
+
+// Step 1: does this email belong to an account still waiting on setup?
+async function apiCheckStaffSetupStatus(email) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/staff-setup/status/?email=${encodeURIComponent(email)}`);
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) throw new Error("Could not check this email. Please try again.");
+  return response.json();
+}
+
+// Step 2: supplies name/phone/password, and logs the account straight in —
+// same session-storing behavior as apiLogin, since the response is shaped
+// identically (see StaffAccountSetupView).
+async function apiCompleteStaffSetup(email, details) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/staff-setup/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, ...details }),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(data.detail || (Array.isArray(firstError) ? firstError[0] : "Could not complete account setup."));
+  }
+  return storeAuthSession(await response.json(), false);
 }
 
 // Public citizen self-registration. Takes a FormData (text fields + the
@@ -631,6 +675,7 @@ const PUBLIC_PORTAL_PAGES = [
   "verify-code.html",
   "reset-password.html",
   "reset-success.html",
+  "account-setup.html",
 ];
 
 function enforcePortalAccess() {
@@ -920,6 +965,85 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = form.dataset.goto;
     });
   });
+
+  // ---- Staff account setup (frontend/staff/account-setup.html) ----
+  // Step 1: email only -> checks whether it's a Staff/Administrator account
+  // still waiting on setup. Step 2 (revealed only if so): name/phone/
+  // password, then logs the account straight in. Guarded on both forms
+  // existing since this only ever runs on account-setup.html.
+  const staffSetupEmailForm = document.getElementById("staffSetupEmailForm");
+  const staffSetupDetailsForm = document.getElementById("staffSetupDetailsForm");
+  if (staffSetupEmailForm && staffSetupDetailsForm) {
+    let setupEmail = "";
+
+    staffSetupEmailForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const emailField = document.getElementById("setupEmail");
+      const submitBtn = staffSetupEmailForm.querySelector('button[type="submit"]');
+      clearFormError(staffSetupEmailForm);
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Checking...";
+      try {
+        const status = await apiCheckStaffSetupStatus(emailField.value.trim());
+        if (!status.exists) {
+          showFormError(staffSetupEmailForm, "No staff account was found with that email.");
+        } else if (!status.needs_setup) {
+          showFormError(staffSetupEmailForm, "This account is already set up — please log in normally.");
+        } else {
+          setupEmail = emailField.value.trim();
+          staffSetupEmailForm.hidden = true;
+          staffSetupDetailsForm.hidden = false;
+        }
+      } catch (err) {
+        showFormError(staffSetupEmailForm, err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Continue";
+      }
+    });
+
+    staffSetupDetailsForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const lastName = document.getElementById("setupLastName");
+      const firstName = document.getElementById("setupFirstName");
+      const phone = document.getElementById("setupPhone");
+      const password = document.getElementById("setupPassword");
+      const confirmPassword = document.getElementById("setupConfirmPassword");
+      const submitBtn = staffSetupDetailsForm.querySelector('button[type="submit"]');
+      clearFormError(staffSetupDetailsForm);
+
+      if (password.value !== confirmPassword.value) {
+        showFormError(staffSetupDetailsForm, "Passwords do not match.");
+        return;
+      }
+      const passwordError = getPasswordRequirementError(password.value, {
+        firstName: firstName.value,
+        lastName: lastName.value,
+        email: setupEmail,
+      });
+      if (passwordError) {
+        showFormError(staffSetupDetailsForm, passwordError);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Setting up...";
+      try {
+        const role = await apiCompleteStaffSetup(setupEmail, {
+          first_name: firstName.value.trim(),
+          last_name: lastName.value.trim(),
+          contact_number: phone.value.trim(),
+          password: password.value,
+        });
+        window.location.href = ROLE_HOME[role] || "index.html";
+      } catch (err) {
+        showFormError(staffSetupDetailsForm, err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Complete Setup";
+      }
+    });
+  }
 
   // Confirm-password validation
   const pw = document.querySelector('[name="password"]');

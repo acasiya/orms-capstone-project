@@ -2318,6 +2318,11 @@ button {
   font-weight: 600;
 }
 
+.status-pending {
+  color: #b8860b;
+  font-weight: 600;
+}
+
 @media (max-width: 860px) {
   .admin-topbar__name {
     display: none;
@@ -2502,6 +2507,35 @@ button {
 
 .create-account-card .btn {
   margin-top: 4px;
+}
+
+/* Account Type dropdown that picks between the Staff (single narrow card)
+   and Citizen (full 2-column) forms below it — see create-accounts.js. */
+.create-account-type-field {
+  max-width: 300px;
+  margin-bottom: 22px;
+}
+
+/* Barangay Staff only ever collects an email + role (see
+   frontend/admin/js/create-accounts.js) — a single narrower card reads
+   better than the 2-column layout the Citizen form still uses. */
+.create-account-grid--single {
+  display: block;
+  max-width: 460px;
+}
+
+.create-account-card__intro {
+  margin: 0 0 20px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.field__hint {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 .admin-select--block {
