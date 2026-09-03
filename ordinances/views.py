@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
 from accounts.models import log_action
-from accounts.views import IsStaffOrAdmin
+from accounts.views import IsSecretaryOrAdmin
 
 from .models import Ordinance
 from .serializers import OrdinanceCreateSerializer, OrdinanceSerializer, OrdinanceUpdateSerializer
@@ -12,13 +12,15 @@ class OrdinanceListCreateView(generics.ListCreateAPIView):
     """
     GET /api/ordinances/ — every ordinance (public; citizens can browse
     without an account, same as the old hardcoded placeholder list).
-    POST /api/ordinances/ — upload a new ordinance (Staff/Admin only).
+    POST /api/ordinances/ — upload a new ordinance. Secretary/Admin only —
+    Ordinances is a full-edit section for Secretary; Barangay Captain only
+    gets a read-only view of it (see accounts.views.IsSecretaryOrAdmin).
     """
     queryset = Ordinance.objects.all()
 
     def get_permissions(self):
         if self.request.method == "POST":
-            return [IsStaffOrAdmin()]
+            return [IsSecretaryOrAdmin()]
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
@@ -41,13 +43,13 @@ class OrdinanceListCreateView(generics.ListCreateAPIView):
 class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
     """
     GET /api/ordinances/<id>/ — one ordinance (public).
-    PATCH /api/ordinances/<id>/ — edit it, optionally replacing the PDF (Staff/Admin only).
+    PATCH /api/ordinances/<id>/ — edit it, optionally replacing the PDF. Secretary/Admin only.
     """
     queryset = Ordinance.objects.all()
 
     def get_permissions(self):
         if self.request.method in ("PATCH", "PUT"):
-            return [IsStaffOrAdmin()]
+            return [IsSecretaryOrAdmin()]
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):

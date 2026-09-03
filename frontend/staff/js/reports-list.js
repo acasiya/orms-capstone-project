@@ -1,5 +1,13 @@
 // SafeSpace — Reports Management: search + filter (type/date/status) +
 // paginate across real reports from reports-data.js (GET /api/reports/staff/).
+// Reports is the Investigator's claimable work queue — see reports-data.js's
+// claimReport/forfeitReport.
+
+function escapeReportHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 8;
@@ -83,19 +91,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     const start = (page - 1) * PAGE_SIZE;
     const pageRows = rows.slice(start, start + PAGE_SIZE);
 
+    const currentUser = getAdminUser();
+
     list.innerHTML = pageRows.length
       ? pageRows
-          .map(
-            (r) => `
-        <div class="concern-row">
-          <span class="concern-row__title">${r.incidentType}</span>
-          <span class="concern-row__date">${formatReportDate(r.dateSubmitted)}</span>
-          <a class="concern-row__link" href="report-detail.html?id=${encodeURIComponent(r.id)}">View Details</a>
-          <span class="status-badge ${badgeClass[r.status]}">${r.status}</span>
-        </div>`
-          )
+          .map((r) => {
+            const isMine = r.assignedInvestigatorId && currentUser && r.assignedInvestigatorId === currentUser.id;
+            const claimLabel = r.assignedInvestigator
+              ? `Claimed by ${isMine ? "you" : escapeReportHtml(r.assignedInvestigator)}`
+              : "Unclaimed";
+            const claimAction =
+              !r.assignedInvestigator
+                ? `<button type="button" class="btn report-row__claim-btn" data-claim="${r.id}">Claim</button>`
+                : isMine
+                  ? `<button type="button" class="btn btn-muted report-row__claim-btn" data-forfeit="${r.id}">Forfeit</button>`
+                  : "";
+            return `
+        <div class="report-row">
+          <div class="report-row__top">
+            <span class="concern-row__title">${r.incidentType}</span>
+            <span class="concern-row__date">${formatReportDate(r.dateSubmitted)}</span>
+            <a class="concern-row__link" href="report-detail.html?id=${encodeURIComponent(r.id)}">View Details</a>
+            <span class="status-badge ${badgeClass[r.status]}">${r.status}</span>
+          </div>
+          <div class="report-row__claim">
+            <span>${claimLabel}</span>
+            ${claimAction}
+          </div>
+        </div>`;
+          })
           .join("")
       : `<div class="ordinances-empty">${liveReports().length ? "No reports match your search or filters." : "No reports submitted yet."}</div>`;
+
+    list.querySelectorAll("[data-claim]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          await claimReport(btn.dataset.claim);
+          render();
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+        }
+      });
+    });
+    list.querySelectorAll("[data-forfeit]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          await forfeitReport(btn.dataset.forfeit);
+          render();
+        } catch (err) {
+          alert(err.message);
+          btn.disabled = false;
+        }
+      });
+    });
 
     const pages = buildPageList(page, totalPages);
     let html = `<button type="button" data-page="prev" ${page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;

@@ -63,6 +63,52 @@ function getAdminUser() {
   }
 })();
 
+// ---- Role-based section access ----
+// Each Barangay Staff role sees a different slice of the Staff Portal:
+// Barangay Captain gets read-only dashboards + Ordinances + Questions,
+// Secretary gets Concerns/Suggestions + Ordinances + Questions, Investigator
+// gets Reports (claim/work reports — see reports-list.js) + Questions.
+// Detail pages reached by navigating from an allowed page (report-detail.html
+// etc.) aren't restricted here — what changes per role there is only which
+// edit controls show (see report-detail.js/concern-detail.js/
+// ordinance-detail.js's own role checks), not access to the page itself.
+const STAFF_NAV_ACCESS = {
+  "reports-dashboard.html": ["Barangay Captain"],
+  "reports.html": ["Investigator"],
+  "concerns-dashboard.html": ["Barangay Captain"],
+  "concerns.html": ["Secretary"],
+  "ordinances.html": ["Barangay Captain", "Secretary"],
+  "questions.html": ["Barangay Captain", "Secretary", "Investigator"],
+};
+
+(function enforceStaffSectionAccess() {
+  const user = getAdminUser();
+  if (!user) return; // enforceStaffPortalAccess above already redirects away in this case
+
+  const allowedPages = Object.keys(STAFF_NAV_ACCESS).filter((page) =>
+    STAFF_NAV_ACCESS[page].includes(user.position)
+  );
+
+  document.querySelectorAll(".admin-sidebar__nav a[href]").forEach((link) => {
+    const page = link.getAttribute("href");
+    if (Object.prototype.hasOwnProperty.call(STAFF_NAV_ACCESS, page) && !allowedPages.includes(page)) {
+      const item = link.closest("li");
+      if (item) item.hidden = true;
+    }
+  });
+
+  const currentPage = window.location.pathname.split("/").pop();
+  if (Object.prototype.hasOwnProperty.call(STAFF_NAV_ACCESS, currentPage) && !allowedPages.includes(currentPage)) {
+    // questions.html is every recognized role's fallback, since all 3 can
+    // see it — but an account with no position set (or one that doesn't
+    // match Barangay Captain/Secretary/Investigator) has an empty
+    // allowedPages too, which would make this redirect target itself and
+    // loop forever. Guard against that rather than assuming a valid role.
+    const target = allowedPages[0] || "questions.html";
+    if (target !== currentPage) window.location.href = target;
+  }
+})();
+
 // Silently refreshes the access token using the refresh token, same as
 // main.js's — see that file for the full explanation of why this matters
 // (without it, the 1hr access-token lifetime would make a "day-long"

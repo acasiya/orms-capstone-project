@@ -76,6 +76,15 @@
 
       <div class="report-detail-side">
         <div class="dash-card">
+          <div class="status-edit-row">
+            <span class="status-edit-label">Investigator:</span>
+            <span id="claimLabel"></span>
+          </div>
+          <button type="button" class="btn report-row__claim-btn" id="claimBtn" hidden>Claim Report</button>
+          <button type="button" class="btn btn-muted report-row__claim-btn" id="forfeitBtn" hidden>Forfeit Report</button>
+        </div>
+
+        <div class="dash-card">
           <h2 class="status-timeline__title">Status Timeline</h2>
           <div id="timelineItems"></div>
           <div class="status-timeline__notice">

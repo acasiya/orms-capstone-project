@@ -1,11 +1,9 @@
 // SafeSpace — Concerns/Suggestions Dashboard: week filter, status filter,
-// pagination, stats, category pie, and the incident heatmap — all real,
-// driven by concerns-data.js's API-backed concerns and folders. Folders
-// (shared across every staff/admin account via the backend — see
+// pagination, stats, and the category pie — all real, driven by
+// concerns-data.js's API-backed concerns and folders. Folders (shared
+// across every staff/admin account via the backend — see
 // /api/concerns/folders/) stand in for "category" here, the same role
-// Report.ordinance plays for Reports. The heatmap is a Leaflet +
-// OpenStreetMap density map keyed on each concern's street — see
-// js/heatmap.js (shared with the Reports dashboard).
+// Report.ordinance plays for Reports.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
@@ -21,7 +19,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusFilter: "all",
     page: 1,
     categoryPeriod: "week",
-    heatmapPeriod: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -218,14 +215,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${c.id.slice(0, 8).toUpperCase()}</td>
           <td>${c.folderName || "Unfoldered"}</td>
           <td>${c.location || "—"}</td>
-          <td>${c.reporter}</td>
           <td><span class="status-pill ${statusPillClass(c.status)}">${c.status}</span></td>
           <td>${c.dateSubmitted.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, ${c.dateSubmitted.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</td>
           <td><a class="recent-reports-table__action" href="concern-detail.html?id=${encodeURIComponent(c.id)}" aria-label="View concern">&#8594;</a></td>
         </tr>`
           )
           .join("")
-      : `<tr><td colspan="7" class="ordinances-empty">No concerns/suggestions for this selection.</td></tr>`;
+      : `<tr><td colspan="6" class="ordinances-empty">No concerns/suggestions for this selection.</td></tr>`;
 
     const pages = buildPageList(state.page, totalPages);
     let html = `<button type="button" data-page="prev" ${state.page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;
@@ -317,112 +313,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  // ---- Concerns/Suggestions heatmap (real Leaflet + OpenStreetMap density
-  // map, keyed on each concern's street — see js/heatmap.js, shared with the
-  // Reports dashboard). Concerns filed without a location just don't appear. ----
-
-  const heatmapCanvasEl = document.getElementById("heatmapCanvas");
-  const heatmapModal = document.getElementById("heatmapModal");
-  const heatmapCanvasModalEl = document.getElementById("heatmapCanvasModal");
-  const heatmapPeriodMenu = document.getElementById("heatmapPeriodMenu");
-  const heatmapPeriodLabel = document.getElementById("heatmapPeriodLabel");
-  const heatmapModalPeriodMenu = document.getElementById("heatmapModalPeriodMenu");
-  const heatmapModalPeriodLabel = document.getElementById("heatmapModalPeriodLabel");
-
-  // No-op unless setupHeatmap() succeeds — a failed map init (Leaflet or the
-  // tile host unreachable) then just leaves an empty heatmap card instead of
-  // taking down the stats, table, and pie with it.
-  let renderHeatmaps = () => {};
-
-  function setupHeatmap() {
-    if (typeof L === "undefined" || typeof createIncidentHeatmap !== "function") {
-      throw new Error("Leaflet / heatmap.js not loaded");
-    }
-
-    const cardHeatmap = createIncidentHeatmap(heatmapCanvasEl, {
-      interactive: false,
-      emptyMessage: "No located concerns in this period",
-    });
-    let modalHeatmap = null;
-
-    const heatmapCounts = () => countByLocation(getConcernsForPeriod(state.heatmapPeriod));
-
-    renderHeatmaps = () => {
-      const counts = heatmapCounts();
-      const unmapped = cardHeatmap.render(counts) || [];
-      if (modalHeatmap) modalHeatmap.render(counts);
-      if (unmapped.length) {
-        console.warn("[heatmap] concerns on streets with no known coordinates:", unmapped);
-      }
-    };
-
-    // Card and modal each have their own period dropdown; both drive
-    // state.heatmapPeriod and are rebuilt together so their active row and
-    // button label stay in sync.
-    function renderHeatmapMenus() {
-      const opts = buildPeriodOptions();
-      [
-        [heatmapPeriodMenu, heatmapPeriodLabel],
-        [heatmapModalPeriodMenu, heatmapModalPeriodLabel],
-      ].forEach(([menu, label]) => {
-        if (!menu) return;
-        menu.innerHTML = opts
-          .map((o) => `<li data-value="${o.value}" class="${o.value === state.heatmapPeriod ? "active" : ""}">${o.label}</li>`)
-          .join("");
-        const cur = opts.find((o) => o.value === state.heatmapPeriod) || opts[0];
-        if (label) label.textContent = cur.label;
-        menu.querySelectorAll("li").forEach((li) => {
-          li.addEventListener("click", () => {
-            state.heatmapPeriod = li.dataset.value;
-            renderHeatmapMenus();
-            renderHeatmaps();
-          });
-        });
-      });
-    }
-
-    function openHeatmapModal() {
-      heatmapModal.hidden = false;
-      if (!modalHeatmap) {
-        modalHeatmap = createIncidentHeatmap(heatmapCanvasModalEl, {
-          interactive: true,
-          emptyMessage: "No located concerns in this period",
-        });
-      }
-      // The modal container was display:none until now — Leaflet sized it as
-      // 0×0. Wait two frames for the browser to lay the shown modal out, then
-      // recalc size, repaint the heat, and frame it to the concern spread.
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          modalHeatmap.invalidate();
-          modalHeatmap.render(heatmapCounts());
-          modalHeatmap.fit();
-        })
-      );
-    }
-
-    heatmapCanvasEl.addEventListener("click", openHeatmapModal);
-    heatmapCanvasEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        openHeatmapModal();
-      }
-    });
-
-    window.addEventListener("resize", () => {
-      cardHeatmap.invalidate();
-      if (modalHeatmap) modalHeatmap.invalidate();
-    });
-
-    renderHeatmapMenus();
-    // Defer the first paint: during DOMContentLoaded the card hasn't been
-    // laid out yet, so Leaflet would measure it at 0×0 and mis-fit the view.
-    requestAnimationFrame(() => {
-      cardHeatmap.invalidate();
-      renderHeatmaps();
-    });
-  }
-
   // ---- Wire up period dropdowns ----
 
   renderPeriodMenu(
@@ -432,14 +322,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     (v) => (state.categoryPeriod = v),
     renderCategoryPie
   );
-
-  try {
-    setupHeatmap();
-  } catch (err) {
-    console.error("[heatmap] disabled:", err);
-    heatmapCanvasEl.classList.remove("heatmap-canvas");
-    heatmapCanvasEl.innerHTML = `<div class="ordinances-empty">Map unavailable</div>`;
-  }
 
   // ---- Wire up ----
 

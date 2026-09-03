@@ -63,12 +63,34 @@ const RESET_DRAFT_KEY = "orms_reset_draft";
 
 // Maps each backend role to the page it should land on after login, and to
 // which portal folder that role is allowed into. Keeps the redirect logic
-// in one place instead of duplicated per login form.
+// in one place instead of duplicated per login form. `staff` is a fallback
+// only — a real Staff account always has a position, so STAFF_POSITION_HOME
+// below is what actually decides where they land (see loginHome()).
 const ROLE_HOME = {
   citizen: "/citizen/ordinances.html",
   staff: "/staff/reports-dashboard.html",
   admin: "/admin/manage-accounts.html",
 };
+
+// Each Barangay Staff role sees a different slice of the Staff Portal (see
+// frontend/staff/js/admin.js's STAFF_NAV_ACCESS for the full breakdown) —
+// this is just where they land right after logging in/finishing setup.
+const STAFF_POSITION_HOME = {
+  "Barangay Captain": "/staff/reports-dashboard.html",
+  Secretary: "/staff/concerns.html",
+  Investigator: "/staff/reports.html",
+};
+
+// Works out where to send someone right after apiLogin/apiCompleteStaffSetup
+// resolves — reads the just-stored user (see storeAuthSession) rather than
+// needing role/position passed around separately.
+function loginHome(role) {
+  if (role === "staff") {
+    const user = getCurrentUser();
+    return (user && STAFF_POSITION_HOME[user.position]) || ROLE_HOME.staff;
+  }
+  return ROLE_HOME[role];
+}
 
 function getCurrentUser() {
   try {
@@ -983,7 +1005,7 @@ document.addEventListener("DOMContentLoaded", () => {
         submitBtn.textContent = "Logging in...";
         try {
           const role = await apiLogin(emailField.value.trim(), passwordField.value, !!(rememberField && rememberField.checked));
-          window.location.href = ROLE_HOME[role] || form.dataset.goto;
+          window.location.href = loginHome(role) || form.dataset.goto;
         } catch (err) {
           showFormError(form, err.message);
           submitBtn.disabled = false;
@@ -1079,7 +1101,7 @@ document.addEventListener("DOMContentLoaded", () => {
           contact_number: phone.value.trim(),
           password: password.value,
         });
-        window.location.href = ROLE_HOME[role] || "index.html";
+        window.location.href = loginHome(role) || "index.html";
       } catch (err) {
         showFormError(staffSetupDetailsForm, err.message);
         submitBtn.disabled = false;

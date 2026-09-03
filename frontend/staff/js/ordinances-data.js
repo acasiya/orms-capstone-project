@@ -6,6 +6,18 @@
 
 let _ordinancesCache = null;
 
+// Mobile Chrome (and most mobile browsers) has no built-in PDF plugin for
+// <iframe src="some.pdf">, so it just shows a bare "Open" fallback instead
+// of rendering the PDF — desktop Chrome's built-in viewer hid this on every
+// platform this was tested on until then. Routing through Google's PDF
+// viewer (a normal HTML page that rasterizes the PDF itself) renders
+// consistently everywhere instead of depending on the browser's own PDF
+// support. Needs an absolute, publicly-fetchable URL — pdf_url already is
+// one (see ordinances/serializers.py's get_pdf_url).
+function pdfViewerUrl(pdfUrl) {
+  return `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(pdfUrl)}`;
+}
+
 function mapOrdinance(o) {
   const numberMatch = o.number.match(/\d+/);
   return {

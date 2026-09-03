@@ -58,21 +58,23 @@ class RegisterSerializer(serializers.ModelSerializer):
 # picking it here just sets role=ADMIN alongside the rest of the position
 # labels, which is what actually grants access to the Admin portal (see
 # frontend/staff/js/main.js's ROLE_HOME + admin/js/admin.js's
-# enforceAdminPortalAccess). Kapitan and Secretary are limited to one
-# active holder at a time — see the uniqueness checks below and in
-# AdminAccountDetailView.patch.
-STAFF_ROLE_CHOICES = ["Kapitan", "Secretary", "Investigator", "Administrator"]
+# enforceAdminPortalAccess). Barangay Captain and Secretary are limited to
+# one active holder at a time — see the uniqueness checks below and in
+# AdminAccountDetailView.patch. Each role also determines which sections of
+# the Staff Portal that account can see — see
+# frontend/staff/js/admin.js's STAFF_NAV_ACCESS.
+STAFF_ROLE_CHOICES = ["Barangay Captain", "Secretary", "Investigator", "Administrator"]
 STAFF_ROLE_TO_ROLE_FIELD = {
-    "Kapitan": User.Role.STAFF,
+    "Barangay Captain": User.Role.STAFF,
     "Secretary": User.Role.STAFF,
     "Investigator": User.Role.STAFF,
     "Administrator": User.Role.ADMIN,
 }
-UNIQUE_STAFF_ROLES = {"Kapitan", "Secretary"}
+UNIQUE_STAFF_ROLES = {"Barangay Captain", "Secretary"}
 
 
 def validate_staff_role_uniqueness(staff_role, exclude_user=None):
-    """Shared by account creation and Update Role — one active Kapitan/Secretary at a time."""
+    """Shared by account creation and Update Role — one active Barangay Captain/Secretary at a time."""
     if staff_role not in UNIQUE_STAFF_ROLES:
         return
     clash = User.objects.filter(position__iexact=staff_role, is_active=True)

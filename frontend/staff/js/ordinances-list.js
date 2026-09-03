@@ -125,8 +125,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   render();
 
   // ---- Upload Ordinance modal ----
+  // Ordinances is a full-edit section for the Secretary — Barangay Captain
+  // (the only other role with nav access to this page) only gets to view it
+  // (see OrdinanceListCreateView's IsSecretaryOrAdmin check on POST).
+  const currentUser = getAdminUser();
+  const isSecretary = currentUser && currentUser.position === "Secretary";
 
   const uploadBtn = document.getElementById("uploadOrdinanceBtn");
+  uploadBtn.hidden = !isSecretary;
   const uploadModal = document.getElementById("uploadOrdinanceModal");
   const numberInput = document.getElementById("ordNumberInput");
   const titleInput = document.getElementById("ordTitleInput");

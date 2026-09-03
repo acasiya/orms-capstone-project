@@ -47,7 +47,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
           ${
             q.is_answered
-              ? `<div class="question-row__answer"><p class="question-row__answer-label">Answer</p>${escapeHtml(q.answer)}</div>`
+              ? `<div class="question-row__answer">
+                   <p class="question-row__answer-label">Answer${q.answered_by_name ? ` — ${escapeHtml(q.answered_by_name)} (${escapeHtml(q.answered_by_role || "")})` : ""}</p>
+                   ${escapeHtml(q.answer)}
+                 </div>`
               : `<div class="question-row__respond">
                   <textarea placeholder="Type your answer..." data-answer-input></textarea>
                   <button type="button" class="btn" data-send-answer>Send Answer</button>

@@ -199,6 +199,35 @@ class IsStaffOrAdmin(permissions.BasePermission):
         )
 
 
+class IsInvestigatorOrAdmin(permissions.BasePermission):
+    """
+    Reports is the Investigator's section of the Staff Portal (claim/work a
+    report, change its status) — Barangay Captain and Secretary only get a
+    read-only Reports Dashboard, so their write attempts on a report are
+    rejected here rather than just hidden client-side.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        return user.role == User.Role.ADMIN or (user.role == User.Role.STAFF and user.position == "Investigator")
+
+
+class IsSecretaryOrAdmin(permissions.BasePermission):
+    """
+    Concerns/Suggestions and Ordinances are the Secretary's sections of the
+    Staff Portal — Barangay Captain only gets read-only dashboards/views of
+    both, so their write attempts are rejected here too.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        return user.role == User.Role.ADMIN or (user.role == User.Role.STAFF and user.position == "Secretary")
+
+
 class AdminCreateUserView(generics.CreateAPIView):
     """
     POST /api/auth/admin/create-user/ — Administrator-only endpoint for
@@ -272,7 +301,7 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         # Update Role — only ever offered for existing Barangay Staff/
         # Administrator accounts (see manage-accounts.js), never Citizens,
-        # and only ever one of the 4 staff roles (Kapitan/Secretary/
+        # and only ever one of the 4 staff roles (Barangay Captain/Secretary/
         # Investigator/Administrator — see STAFF_ROLE_CHOICES).
         if "staff_role" in request.data:
             staff_role = request.data["staff_role"]

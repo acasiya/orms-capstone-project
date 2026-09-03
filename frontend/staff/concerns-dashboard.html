@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SafeSpace — Concerns/Suggestions Dashboard</title>
-  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -88,7 +87,6 @@
                     <th>ID</th>
                     <th>Folder</th>
                     <th>Location</th>
-                    <th>Reporter</th>
                     <th>Status</th>
                     <th>Date Submitted</th>
                     <th>Actions</th>
@@ -137,29 +135,7 @@
           </div>
         </div>
 
-        <div class="dash-row-bottom">
-          <div class="dash-card heatmap-card">
-            <div class="dash-card__header">
-              <h2>Concerns/Suggestions Heatmap</h2>
-              <div class="dash-dropdown" id="heatmapPeriodDropdown">
-                <button type="button" class="dash-dropdown__btn" id="heatmapPeriodBtn">
-                  <span id="heatmapPeriodLabel">This Week</span> <span class="dash-dropdown__chevron">&#9662;</span>
-                </button>
-                <ul class="dash-dropdown-menu" id="heatmapPeriodMenu" hidden></ul>
-              </div>
-            </div>
-            <div class="heatmap-canvas" id="heatmapCanvas" role="button" tabindex="0" aria-label="Enlarge concerns/suggestions heatmap">
-              <span class="heatmap-canvas__label">Barangay Platero</span>
-              <span class="heatmap-canvas__expand" aria-hidden="true">&#10530;</span>
-            </div>
-            <div class="heatmap-legend">
-              <span><i class="legend-dot legend-dot--low"></i>Low</span>
-              <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
-              <span><i class="legend-dot legend-dot--high"></i>High</span>
-              <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
-            </div>
-          </div>
-
+        <div class="dash-row-single">
           <div class="dash-card category-card">
             <div class="dash-card__header">
               <h2>Concerns/Suggestions by Category</h2>
@@ -180,38 +156,9 @@
     </div>
   </div>
 
-  <script src="vendor/leaflet/leaflet.js"></script>
-  <script src="vendor/leaflet/leaflet-heat.js"></script>
-  <script src="js/street-coordinates.js"></script>
-  <script src="js/heatmap.js"></script>
   <script src="js/concerns-data.js"></script>
   <script src="js/concerns-dashboard.js"></script>
   <script src="js/admin.js"></script>
-
-  <!-- Enlarged concerns/suggestions heatmap -->
-  <div class="modal-overlay" id="heatmapModal" hidden>
-    <div class="modal-card heatmap-modal-card">
-      <div class="dash-card__header">
-        <h2>Concerns/Suggestions Heatmap</h2>
-        <div class="dash-dropdown" id="heatmapModalPeriodDropdown">
-          <button type="button" class="dash-dropdown__btn" id="heatmapModalPeriodBtn">
-            <span id="heatmapModalPeriodLabel">This Week</span> <span class="dash-dropdown__chevron">&#9662;</span>
-          </button>
-          <ul class="dash-dropdown-menu" id="heatmapModalPeriodMenu" hidden></ul>
-        </div>
-      </div>
-      <div class="heatmap-canvas heatmap-canvas--large" id="heatmapCanvasModal">
-        <span class="heatmap-canvas__label">Barangay Platero</span>
-      </div>
-      <div class="heatmap-legend">
-        <span><i class="legend-dot legend-dot--low"></i>Low</span>
-        <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
-        <span><i class="legend-dot legend-dot--high"></i>High</span>
-        <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
-      </div>
-      <button type="button" class="btn heatmap-modal-back" data-close-modal>Go Back</button>
-    </div>
-  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>

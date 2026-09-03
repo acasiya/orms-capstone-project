@@ -90,7 +90,7 @@
                     <th>ID</th>
                     <th>Incident Type</th>
                     <th>Location</th>
-                    <th>Reporter</th>
+                    <th>Investigator</th>
                     <th>Status</th>
                     <th>Date Submitted</th>
                     <th>Actions</th>
@@ -201,6 +201,19 @@
               </div>
             </div>
             <div class="status-bar-chart" id="statusBarChart"></div>
+          </div>
+
+          <div class="dash-card status-chart-card">
+            <div class="dash-card__header">
+              <h2>Investigator Performance</h2>
+              <div class="dash-dropdown" id="investigatorPeriodDropdown">
+                <button type="button" class="dash-dropdown__btn" id="investigatorPeriodBtn">
+                  <span id="investigatorPeriodLabel">This Week</span> <span class="dash-dropdown__chevron">&#9662;</span>
+                </button>
+                <ul class="dash-dropdown-menu" id="investigatorPeriodMenu" hidden></ul>
+              </div>
+            </div>
+            <div class="status-bar-chart" id="investigatorBarChart"></div>
           </div>
         </div>
       </div>

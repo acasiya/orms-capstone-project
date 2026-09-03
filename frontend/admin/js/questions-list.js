@@ -66,7 +66,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
           ${
             q.is_answered
-              ? `<div class="question-row__answer"><p class="question-row__answer-label">Answer</p>${escapeHtml(q.answer)}</div>
+              ? `<div class="question-row__answer">
+                   <p class="question-row__answer-label">Answer${q.answered_by_name ? ` — ${escapeHtml(q.answered_by_name)} (${escapeHtml(q.answered_by_role || "")})` : ""}</p>
+                   ${escapeHtml(q.answer)}
+                 </div>
                  <div class="question-row__respond">
                    <button type="button" class="btn btn-muted" data-add-to-faq="${q.id}">Add to FAQs</button>
                  </div>`

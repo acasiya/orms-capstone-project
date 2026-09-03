@@ -101,6 +101,57 @@ document.addEventListener("DOMContentLoaded", async () => {
   const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
   const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
 
+  // ---- Claim / Forfeit (Investigator only — Reports is their section, see
+  // frontend/staff/js/admin.js's STAFF_NAV_ACCESS). Barangay Captain/
+  // Secretary reaching this page (e.g. Captain's dashboard "View Details")
+  // just see who's on it, read-only. ----
+  const claimLabel = document.getElementById("claimLabel");
+  const claimBtn = document.getElementById("claimBtn");
+  const forfeitBtn = document.getElementById("forfeitBtn");
+  const currentUser = getAdminUser();
+  const isInvestigator = currentUser && currentUser.position === "Investigator";
+
+  function renderClaim() {
+    const isMine = report.assignedInvestigatorId && currentUser && report.assignedInvestigatorId === currentUser.id;
+    claimLabel.textContent = report.assignedInvestigator
+      ? `${report.assignedInvestigator}${isMine ? " (you)" : ""}`
+      : "Unclaimed";
+    claimBtn.hidden = !isInvestigator || !!report.assignedInvestigator;
+    forfeitBtn.hidden = !isInvestigator || !isMine;
+  }
+  renderClaim();
+
+  claimBtn.addEventListener("click", async () => {
+    claimBtn.disabled = true;
+    try {
+      report = await claimReport(report.id);
+      renderClaim();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      claimBtn.disabled = false;
+    }
+  });
+  forfeitBtn.addEventListener("click", async () => {
+    forfeitBtn.disabled = true;
+    try {
+      report = await forfeitReport(report.id);
+      renderClaim();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      forfeitBtn.disabled = false;
+    }
+  });
+
+  // Status/remarks editing is Investigator-only too (see
+  // StaffReportDetailView.patch) — Barangay Captain gets a read-only view.
+  if (!isInvestigator) {
+    statusEditBtn.hidden = true;
+    remarksInput.disabled = true;
+    saveBtn.hidden = true;
+  }
+
   STATUSES_ORDERED.forEach((s) => statusSelect.append(new Option(s, s)));
 
   let currentStatus = report.status;

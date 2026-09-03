@@ -32,6 +32,15 @@ class Report(models.Model):
     nature_of_violation = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     remarks = models.TextField(blank=True)
+    # The Investigator working this report — Reports is a shared claimable
+    # queue (see StaffReportClaimView/StaffReportForfeitView) rather than
+    # pre-assigned, so this starts blank and any Investigator can claim an
+    # unclaimed report. Visible to every Barangay Staff role (Barangay
+    # Captain's Reports Dashboard shows a per-investigator breakdown from
+    # this field too — see reports-dashboard.js's investigator chart).
+    assigned_investigator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="claimed_reports"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

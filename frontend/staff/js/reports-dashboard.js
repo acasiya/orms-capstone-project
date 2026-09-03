@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     categoryPeriod: "week",
     heatmapPeriod: "week",
     statusChartPeriod: "week",
+    investigatorPeriod: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -225,7 +226,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${r.id.slice(0, 8).toUpperCase()}</td>
           <td>${r.incidentType}</td>
           <td>${r.location}</td>
-          <td>${r.reporter}</td>
+          <td>${r.assignedInvestigator || "Unclaimed"}</td>
           <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
           <td>${r.dateSubmitted.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, ${r.dateSubmitted.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</td>
           <td><a class="recent-reports-table__action" href="report-detail.html?id=${encodeURIComponent(r.id)}" aria-label="View report">&#8594;</a></td>
@@ -376,6 +377,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderStatusChart
   );
 
+  // ---- Investigator Performance bar chart (Barangay Captain only — this
+  // whole dashboard is Captain-only, see admin.js's STAFF_NAV_ACCESS) ----
+  // Counts how many reports each Investigator currently has claimed (see
+  // reports-data.js's assignedInvestigator) within the selected period —
+  // built from whichever Investigators show up claiming a report, since
+  // there's no separate "list every Investigator" endpoint available here.
+
+  const investigatorPeriodMenu = document.getElementById("investigatorPeriodMenu");
+  const investigatorPeriodLabel = document.getElementById("investigatorPeriodLabel");
+  const investigatorBarChart = document.getElementById("investigatorBarChart");
+  const INVESTIGATOR_BAR_COLORS = [
+    "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
+    "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
+  ];
+
+  function renderInvestigatorChart() {
+    const reports = getReportsForPeriod(state.investigatorPeriod).filter((r) => r.assignedInvestigator);
+    const counts = {};
+    reports.forEach((r) => {
+      counts[r.assignedInvestigator] = (counts[r.assignedInvestigator] || 0) + 1;
+    });
+    const names = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+    if (!names.length) {
+      investigatorBarChart.innerHTML = `<div class="status-bar-chart__empty">No claimed reports for this period.</div>`;
+      return;
+    }
+
+    const maxCount = Math.max(...names.map((n) => counts[n]), 1);
+    investigatorBarChart.innerHTML = names
+      .map((name, i) => {
+        const count = counts[name];
+        const height = Math.max(Math.round((count / maxCount) * MAX_BAR_HEIGHT), 6);
+        const color = INVESTIGATOR_BAR_COLORS[i % INVESTIGATOR_BAR_COLORS.length];
+        return `
+        <div class="status-bar-chart__col">
+          <span class="status-bar-chart__count">${count}</span>
+          <div class="status-bar-chart__bar" style="height:${height}px;background:${color}"></div>
+          <span class="status-bar-chart__label">${name}</span>
+        </div>`;
+      })
+      .join("");
+  }
+
+  renderPeriodMenu(
+    investigatorPeriodMenu,
+    investigatorPeriodLabel,
+    () => state.investigatorPeriod,
+    (v) => (state.investigatorPeriod = v),
+    renderInvestigatorChart
+  );
+
   // ---- Incident heatmap (real Leaflet + OpenStreetMap density map) ----
   //
   // Intensity = number of reports per street for the selected period, placed
@@ -498,4 +551,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderAll();
   renderCategoryPie();
   renderStatusChart();
+  renderInvestigatorChart();
 });

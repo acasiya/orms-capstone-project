@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (ordinance.pdf) {
-      pdfPreviewFrame.src = ordinance.pdf;
+      pdfPreviewFrame.src = pdfViewerUrl(ordinance.pdf);
       detailDocPreview.hidden = false;
       pdfPreviewNote.hidden = false;
       detailDownload.href = ordinance.pdf;
@@ -61,9 +61,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderDisplay();
 
-  // ---- Edit mode ----
+  // ---- Edit mode (Secretary only — see ordinances-list.js) ----
+
+  const currentUser = getAdminUser();
+  const isSecretary = currentUser && currentUser.position === "Secretary";
 
   const editBtn = document.getElementById("editOrdinanceBtn");
+  editBtn.hidden = !isSecretary;
+  if (!isSecretary) return;
+
   const editForm = document.getElementById("editOrdinanceForm");
   const numberInput = document.getElementById("editNumberInput");
   const titleInput = document.getElementById("editTitleInput");

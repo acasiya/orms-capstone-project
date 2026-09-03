@@ -89,12 +89,17 @@ class StaffReportSerializer(serializers.ModelSerializer):
     """
     Read side for Staff/Admin (View Reports / Reports Dashboard) — adds who
     filed it, since the citizen-facing ReportSerializer has no reason to
-    expose that about its own owner.
+    expose that about its own owner. assignedInvestigator/Id show who's
+    claimed this report (see StaffReportClaimView/StaffReportForfeitView) —
+    visible to every Staff role, not just Investigators, so Barangay
+    Captain/Secretary can see who's working a report too.
     """
 
     reporter = serializers.SerializerMethodField()
     contact_number = serializers.CharField(source="citizen.contact_number", read_only=True)
     attachments = serializers.SerializerMethodField()
+    assignedInvestigator = serializers.SerializerMethodField()
+    assignedInvestigatorId = serializers.UUIDField(source="assigned_investigator_id", read_only=True)
 
     class Meta:
         model = Report
@@ -102,10 +107,16 @@ class StaffReportSerializer(serializers.ModelSerializer):
             "id", "reporter", "contact_number", "location", "ordinance",
             "incident_date", "incident_time", "nature_of_violation",
             "status", "remarks", "created_at", "updated_at", "attachments",
+            "assignedInvestigator", "assignedInvestigatorId",
         ]
 
     def get_reporter(self, obj):
         return obj.citizen.get_full_name() or obj.citizen.username
+
+    def get_assignedInvestigator(self, obj):
+        if not obj.assigned_investigator:
+            return None
+        return obj.assigned_investigator.get_full_name() or obj.assigned_investigator.username
 
     def get_attachments(self, obj):
         request = self.context.get("request")
@@ -190,15 +201,35 @@ class StaffConcernUpdateSerializer(serializers.ModelSerializer):
         fields = ["status", "remarks", "folder"]
 
 
+def _staff_role_label(user):
+    """Human label for who answered a question — same idea as AdminAccountSerializer.get_type."""
+    if not user:
+        return None
+    if user.role == user.Role.ADMIN:
+        return "Administrator"
+    return user.position or "Barangay Staff"
+
+
 class QuestionSerializer(serializers.ModelSerializer):
     """Backs the citizen FAQs page: POST a new question, GET the citizen's own (with any answer)."""
 
     is_answered = serializers.BooleanField(read_only=True)
+    answered_by_name = serializers.SerializerMethodField()
+    answered_by_role = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ["id", "question", "answer", "is_answered", "created_at", "answered_at"]
+        fields = [
+            "id", "question", "answer", "is_answered", "created_at", "answered_at",
+            "answered_by_name", "answered_by_role",
+        ]
         read_only_fields = ["id", "answer", "created_at", "answered_at"]
+
+    def get_answered_by_name(self, obj):
+        return obj.answered_by.get_full_name() or obj.answered_by.username if obj.answered_by else None
+
+    def get_answered_by_role(self, obj):
+        return _staff_role_label(obj.answered_by)
 
     def create(self, validated_data):
         validated_data["citizen"] = self.context["request"].user
@@ -206,21 +237,35 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class StaffQuestionSerializer(serializers.ModelSerializer):
-    """Read side for Staff/Admin's Questions page — adds who asked it, same idea as StaffReportSerializer."""
+    """
+    Read side for every Barangay Staff role's Questions page — adds who
+    asked it, same idea as StaffReportSerializer, plus who answered it
+    (name + role) so any staff member can see that, not just whoever
+    answered.
+    """
 
     asker = serializers.SerializerMethodField()
     asker_email = serializers.CharField(source="citizen.email", read_only=True)
     is_answered = serializers.BooleanField(read_only=True)
+    answered_by_name = serializers.SerializerMethodField()
+    answered_by_role = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = [
             "id", "asker", "asker_email", "question", "answer",
             "is_answered", "created_at", "answered_at",
+            "answered_by_name", "answered_by_role",
         ]
 
     def get_asker(self, obj):
         return obj.citizen.get_full_name() or obj.citizen.username
+
+    def get_answered_by_name(self, obj):
+        return obj.answered_by.get_full_name() or obj.answered_by.username if obj.answered_by else None
+
+    def get_answered_by_role(self, obj):
+        return _staff_role_label(obj.answered_by)
 
 
 class StaffQuestionAnswerSerializer(serializers.ModelSerializer):

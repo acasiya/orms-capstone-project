@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User, log_action
-from accounts.views import IsAdmin, IsStaffOrAdmin
+from accounts.views import IsAdmin, IsInvestigatorOrAdmin, IsSecretaryOrAdmin, IsStaffOrAdmin
 from orms_backend.emails import (
     send_question_answered_email,
     send_report_resolved_email,
@@ -114,20 +114,29 @@ class StaffReportListView(generics.ListAPIView):
 
 class StaffReportDetailView(APIView):
     """
-    GET /api/reports/staff/<id>/ — full detail of any citizen's report.
+    GET /api/reports/staff/<id>/ — full detail of any citizen's report; open
+    to every Staff role, since Barangay Captain's Reports Dashboard and
+    Secretary both need to at least view a report.
     PATCH /api/reports/staff/<id>/ — updates status/remarks only (see
     StaffReportUpdateSerializer for why nothing else is writable here).
+    Investigator/Admin only — Reports is the Investigator's section (see
+    IsInvestigatorOrAdmin); Captain's dashboard is read-only.
     """
     permission_classes = [IsStaffOrAdmin]
 
     def get_object(self, pk):
-        return get_object_or_404(Report.objects.select_related("citizen"), pk=pk)
+        return get_object_or_404(Report.objects.select_related("citizen", "assigned_investigator"), pk=pk)
 
     def get(self, request, pk):
         report = self.get_object(pk)
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
     def patch(self, request, pk):
+        if not IsInvestigatorOrAdmin().has_permission(request, self):
+            return Response(
+                {"detail": "Only an Investigator can update a report's status."}, status=403
+            )
+
         report = self.get_object(pk)
         previous_status = report.status
         serializer = StaffReportUpdateSerializer(report, data=request.data, partial=True)
@@ -150,6 +159,48 @@ class StaffReportDetailView(APIView):
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
 
+class StaffReportClaimView(APIView):
+    """
+    POST /api/reports/staff/<id>/claim/ — an Investigator claims an
+    unclaimed report, putting their name on it so other Investigators and
+    Barangay Captain can see who's working it (see
+    StaffReportSerializer.assignedInvestigator). Rejects claiming one
+    someone else already has — see StaffReportForfeitView for giving it up.
+    """
+    permission_classes = [IsInvestigatorOrAdmin]
+
+    def post(self, request, pk):
+        report = get_object_or_404(Report.objects.select_related("citizen", "assigned_investigator"), pk=pk)
+        if report.assigned_investigator_id and report.assigned_investigator_id != request.user.id:
+            return Response(
+                {"detail": f"This report is already claimed by {report.assigned_investigator.get_full_name() or report.assigned_investigator.username}."},
+                status=400,
+            )
+        report.assigned_investigator = request.user
+        report.save(update_fields=["assigned_investigator"])
+        log_action(request.user, f"Claimed a report — {report.ordinance}")
+        return Response(StaffReportSerializer(report, context={"request": request}).data)
+
+
+class StaffReportForfeitView(APIView):
+    """
+    POST /api/reports/staff/<id>/forfeit/ — the Investigator who claimed a
+    report gives it up, freeing it for anyone else to claim. Only the
+    Investigator who actually holds the claim can forfeit it (Admin can
+    too, as a way to free up a report on someone's behalf).
+    """
+    permission_classes = [IsInvestigatorOrAdmin]
+
+    def post(self, request, pk):
+        report = get_object_or_404(Report.objects.select_related("citizen", "assigned_investigator"), pk=pk)
+        if report.assigned_investigator_id and report.assigned_investigator_id != request.user.id and request.user.role != User.Role.ADMIN:
+            return Response({"detail": "You can only forfeit a report you've claimed yourself."}, status=403)
+        report.assigned_investigator = None
+        report.save(update_fields=["assigned_investigator"])
+        log_action(request.user, f"Forfeited a report — {report.ordinance}")
+        return Response(StaffReportSerializer(report, context={"request": request}).data)
+
+
 class StaffConcernListView(generics.ListAPIView):
     """GET /api/concerns/staff/ — every citizen's submitted concerns/suggestions (Staff/Admin Dashboard)."""
     queryset = Concern.objects.select_related("citizen", "folder").all()
@@ -162,8 +213,12 @@ class StaffConcernListView(generics.ListAPIView):
 
 class StaffConcernDetailView(APIView):
     """
-    GET /api/concerns/staff/<id>/ — full detail of any citizen's concern/suggestion.
+    GET /api/concerns/staff/<id>/ — full detail of any citizen's concern/
+    suggestion; open to every Staff role (Barangay Captain's dashboard
+    needs to at least view one).
     PATCH /api/concerns/staff/<id>/ — updates status/remarks/folder only.
+    Secretary/Admin only — Concerns/Suggestions is the Secretary's section
+    (see IsSecretaryOrAdmin); Captain's dashboard is read-only.
     """
     permission_classes = [IsStaffOrAdmin]
 
@@ -175,6 +230,11 @@ class StaffConcernDetailView(APIView):
         return Response(StaffConcernSerializer(concern, context={"request": request}).data)
 
     def patch(self, request, pk):
+        if not IsSecretaryOrAdmin().has_permission(request, self):
+            return Response(
+                {"detail": "Only the Secretary can update a concern/suggestion."}, status=403
+            )
+
         concern = self.get_object(pk)
         previous_status = concern.status
         serializer = StaffConcernUpdateSerializer(concern, data=request.data, partial=True)
@@ -193,12 +253,18 @@ class StaffConcernDetailView(APIView):
 
 class ConcernFolderListCreateView(generics.ListCreateAPIView):
     """
-    GET /api/concerns/folders/ — every folder, with how many concerns are in it.
-    POST /api/concerns/folders/ — create a new folder (Concerns/Suggestions sidebar).
+    GET /api/concerns/folders/ — every folder, with how many concerns are in
+    it; open to every Staff role.
+    POST /api/concerns/folders/ — create a new folder (Concerns/Suggestions
+    sidebar) — Secretary/Admin only, same as everything else on that page.
     """
     queryset = ConcernFolder.objects.all()
     serializer_class = ConcernFolderSerializer
-    permission_classes = [IsStaffOrAdmin]
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsSecretaryOrAdmin()]
+        return [IsStaffOrAdmin()]
 
     def perform_create(self, serializer):
         folder = serializer.save()
@@ -207,12 +273,18 @@ class ConcernFolderListCreateView(generics.ListCreateAPIView):
 
 class ConcernFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
+    GET open to every Staff role.
     PATCH /api/concerns/folders/<id>/ — rename a folder.
-    DELETE /api/concerns/folders/<id>/ — delete a folder; its concerns fall back to unfoldered (see Concern.folder).
+    DELETE /api/concerns/folders/<id>/ — delete a folder; its concerns fall
+    back to unfoldered (see Concern.folder). Both Secretary/Admin only.
     """
     queryset = ConcernFolder.objects.all()
     serializer_class = ConcernFolderSerializer
-    permission_classes = [IsStaffOrAdmin]
+
+    def get_permissions(self):
+        if self.request.method in ("PATCH", "PUT", "DELETE"):
+            return [IsSecretaryOrAdmin()]
+        return [IsStaffOrAdmin()]
 
     def perform_update(self, serializer):
         folder = serializer.save()

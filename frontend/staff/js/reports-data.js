@@ -69,6 +69,10 @@ function mapReport(r) {
     incidentDate: r.incident_date,
     incidentTimeRaw: r.incident_time,
     attachments: r.attachments,
+    // Who's claimed this report (Investigator only — see
+    // StaffReportClaimView/StaffReportForfeitView), null if unclaimed.
+    assignedInvestigator: r.assignedInvestigator,
+    assignedInvestigatorId: r.assignedInvestigatorId,
   };
 }
 
@@ -120,6 +124,39 @@ async function updateReportStatus(id, patch) {
     throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not update this report.");
   }
   return refreshReportInCache(id);
+}
+
+// Investigator claims an unclaimed report (or takes over their own claim,
+// idempotently) — see StaffReportClaimView. Throws with the backend's
+// message (e.g. "already claimed by X") on conflict.
+async function claimReport(id) {
+  const response = await authFetch(`/api/reports/staff/${encodeURIComponent(id)}/claim/`, { method: "POST" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not claim this report.");
+  }
+  const updated = mapReport(await response.json());
+  if (_reportsCache) {
+    const idx = _reportsCache.findIndex((r) => r.id === id);
+    if (idx !== -1) _reportsCache[idx] = updated;
+  }
+  return updated;
+}
+
+// Investigator gives up a report they'd claimed, freeing it for anyone else
+// to claim — see StaffReportForfeitView.
+async function forfeitReport(id) {
+  const response = await authFetch(`/api/reports/staff/${encodeURIComponent(id)}/forfeit/`, { method: "POST" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not forfeit this report.");
+  }
+  const updated = mapReport(await response.json());
+  if (_reportsCache) {
+    const idx = _reportsCache.findIndex((r) => r.id === id);
+    if (idx !== -1) _reportsCache[idx] = updated;
+  }
+  return updated;
 }
 
 // ---- Date/period helpers — kept from the old mock generator, since

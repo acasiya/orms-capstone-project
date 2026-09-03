@@ -94,11 +94,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
   const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
 
+  // Concerns/Suggestions is the Secretary's section (see
+  // frontend/staff/js/admin.js's STAFF_NAV_ACCESS + StaffConcernDetailView.
+  // patch's IsSecretaryOrAdmin check) — Barangay Captain reaching this page
+  // from their read-only dashboard just sees it, no editing.
+  const currentUser = getAdminUser();
+  const isSecretary = currentUser && currentUser.position === "Secretary";
+  if (!isSecretary) {
+    statusEditBtn.hidden = true;
+    saveBtn.hidden = true;
+  }
+
   STATUSES_ORDERED.forEach((s) => statusSelect.append(new Option(s, s)));
 
   let currentStatus = concern.status;
   remarksInput.value = concern.remarks || "";
-  remarksInput.disabled = false;
+  remarksInput.disabled = !isSecretary;
 
   let savedStatus = currentStatus;
   let savedRemarks = remarksInput.value.trim();
@@ -128,9 +139,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       folderAssigned.hidden = false;
       assignFolderBtn.hidden = true;
       folderChip.innerHTML = `<svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 014.5 5h4.4a1.5 1.5 0 011.1.5l1.3 1.4a1.5 1.5 0 001.1.5H19.5A1.5 1.5 0 0121 9v8.5A1.5 1.5 0 0119.5 19h-15A1.5 1.5 0 013 17.5z"/></svg> ${concern.folderName}`;
+      // Only the Secretary can remove a folder assignment — Barangay
+      // Captain sees the same chip, read-only.
+      folderUnassignBtn.hidden = !isSecretary;
     } else {
       folderAssigned.hidden = true;
-      assignFolderBtn.hidden = false;
+      assignFolderBtn.hidden = !isSecretary;
     }
   }
   renderFolderAssignment();
