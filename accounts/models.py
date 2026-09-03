@@ -115,3 +115,38 @@ class LoginSession(models.Model):
 
     def __str__(self):
         return f"{self.user} @ {self.logged_in_at}"
+
+
+class AuditLog(models.Model):
+    """
+    One row per notable action taken by (or on behalf of) a user — backs the
+    Administrator Module's View Audit Logs page. Deliberately just
+    (user, action, timestamp): a free-text, human-readable action description
+    rather than a structured type, since the page only ever needs to show a
+    readable "who did what when" feed, not drive any logic off of it. `user`
+    is nullable so a log entry survives even if that account is later deleted.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="audit_logs")
+    action = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user}: {self.action}"
+
+
+def log_action(user, action):
+    """
+    Best-effort audit log write, called from all over the codebase right
+    after the action it's describing succeeds — wrapped in try/except so a
+    logging hiccup can never turn into a 500 for the actual request (same
+    reasoning as send_templated_email's try/except in orms_backend/emails.py).
+    """
+    try:
+        AuditLog.objects.create(user=user, action=action)
+    except Exception:
+        pass

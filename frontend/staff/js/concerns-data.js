@@ -14,6 +14,21 @@ const CONCERN_LABEL_TO_STATUS = {
   Resolved: "resolved",
 };
 
+// Newest-first within each status, Submitted before Resolved — same idea as
+// reports-data.js's REPORT_STATUS_RANK, just with Concern's 2-stage status.
+const CONCERN_STATUS_RANK = {
+  Submitted: 0,
+  Resolved: 1,
+};
+
+function sortConcernsByStatusThenDate(concerns) {
+  return concerns.slice().sort((a, b) => {
+    const rankDiff = (CONCERN_STATUS_RANK[a.status] ?? 99) - (CONCERN_STATUS_RANK[b.status] ?? 99);
+    if (rankDiff !== 0) return rankDiff;
+    return b.dateSubmitted - a.dateSubmitted;
+  });
+}
+
 let _concernsCache = null;
 let _foldersCache = null;
 
@@ -38,7 +53,7 @@ async function ensureConcernsLoaded() {
   const response = await authFetch("/api/concerns/staff/");
   if (!response.ok) throw new Error("Could not load concerns/suggestions.");
   const data = await response.json();
-  _concernsCache = data.map(mapConcern);
+  _concernsCache = sortConcernsByStatusThenDate(data.map(mapConcern));
   return _concernsCache;
 }
 
@@ -57,6 +72,7 @@ async function refreshConcernInCache(id) {
   if (_concernsCache) {
     const idx = _concernsCache.findIndex((c) => c.id === id);
     if (idx !== -1) _concernsCache[idx] = updated;
+    _concernsCache = sortConcernsByStatusThenDate(_concernsCache);
   }
   return updated;
 }

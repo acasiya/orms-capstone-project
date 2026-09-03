@@ -10,7 +10,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from orms_backend.emails import send_password_reset_email
 
-from .models import LoginSession, PasswordResetCode, VoterVerification
+from .models import AuditLog, LoginSession, PasswordResetCode, VoterVerification, log_action
 
 User = get_user_model()
 
@@ -215,9 +215,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 code="account_unverified",
             )
 
-        # Backs the Administrator Module's View Audit Logs page — one row
-        # per login, closed out by LogoutView when they explicitly log out.
+        # LoginSession tracks the open/closed session itself (see LogoutView);
+        # log_action is the separate "Logged in" row shown on View Audit Logs.
         LoginSession.objects.create(user=self.user)
+        log_action(self.user, "Logged in")
 
         data["user"] = UserSerializer(self.user, context=self.context).data
         return data
@@ -345,35 +346,35 @@ class PendingVerificationSerializer(serializers.ModelSerializer):
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
-    """Shapes a LoginSession for the admin View Audit Logs page."""
+    """Shapes an AuditLog row for the admin View Audit Logs page."""
 
+    accountId = serializers.SerializerMethodField()
     owner = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
-    loggedOnAt = serializers.DateTimeField(source="logged_in_at", read_only=True)
-    loggedOnLabel = serializers.SerializerMethodField()
-    loggedOffAt = serializers.DateTimeField(source="logged_out_at", read_only=True)
-    loggedOffLabel = serializers.SerializerMethodField()
+    timeAt = serializers.DateTimeField(source="created_at", read_only=True)
+    timeLabel = serializers.SerializerMethodField()
 
     class Meta:
-        model = LoginSession
-        fields = ["id", "owner", "type", "loggedOnAt", "loggedOnLabel", "loggedOffAt", "loggedOffLabel"]
+        model = AuditLog
+        fields = ["id", "accountId", "owner", "type", "timeAt", "timeLabel", "action"]
+
+    def get_accountId(self, obj):
+        return str(obj.user_id) if obj.user_id else "—"
 
     def get_owner(self, obj):
+        if not obj.user:
+            return "Deleted account"
         return obj.user.get_full_name() or obj.user.username
 
     def get_type(self, obj):
+        if not obj.user:
+            return "—"
         if obj.user.role == User.Role.ADMIN:
             return "Administrator"
         if obj.user.role == User.Role.CITIZEN:
             return "Barangay Citizen"
         return obj.user.position or "Barangay Staff"
 
-    def _format(self, moment):
+    def get_timeLabel(self, obj):
         from django.utils import timezone
-        return timezone.localtime(moment).strftime("%H:%M:%S %m/%d/%Y")
-
-    def get_loggedOnLabel(self, obj):
-        return self._format(obj.logged_in_at)
-
-    def get_loggedOffLabel(self, obj):
-        return self._format(obj.logged_out_at) if obj.logged_out_at else "Still logged in"
+        return timezone.localtime(obj.created_at).strftime("%H:%M:%S %m/%d/%Y")

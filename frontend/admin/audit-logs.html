@@ -53,12 +53,16 @@
       </header>
 
       <div class="admin-content">
+        <form class="reports-search-row" id="auditSearchForm">
+          <input type="text" id="auditSearchInput" class="reports-search-input" placeholder="Search by name, date, time, or action..." />
+          <button type="submit" class="btn reports-search-btn">Search</button>
+        </form>
+
         <div class="admin-toolbar">
           <select id="sortSelect" class="admin-select">
-            <option value="id">Account ID</option>
+            <option value="time">Most Recent</option>
             <option value="owner">Owner Name</option>
-            <option value="loggedOn">Most Recent Logged On</option>
-            <option value="loggedOff">Most Recent Logged Off</option>
+            <option value="id">Account ID</option>
           </select>
           <select id="typeFilter" class="admin-select">
             <option value="all">All</option>
@@ -75,8 +79,8 @@
                 <th>Account ID:</th>
                 <th>Account Owner:</th>
                 <th>Account Type:</th>
-                <th>Logged On:</th>
-                <th>Logged Off:</th>
+                <th>Time/Date:</th>
+                <th>Action:</th>
               </tr>
             </thead>
             <tbody id="auditTableBody"></tbody>

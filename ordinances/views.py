@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
+from accounts.models import log_action
 from accounts.views import IsStaffOrAdmin
 
 from .models import Ordinance
@@ -30,6 +31,7 @@ class OrdinanceListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         ordinance = serializer.save()
+        log_action(request.user, f"Uploaded ordinance {ordinance.number} — {ordinance.title}")
         return Response(
             OrdinanceSerializer(ordinance, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
@@ -60,4 +62,5 @@ class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         ordinance = serializer.save()
+        log_action(request.user, f"Updated ordinance {ordinance.number} — {ordinance.title}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)

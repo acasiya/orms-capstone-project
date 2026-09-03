@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     page: 1,
     categoryPeriod: "week",
     heatmapPeriod: "week",
+    statusChartPeriod: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -332,6 +333,49 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCategoryPie
   );
 
+  // ---- Reports by Status bar chart ----
+
+  const statusChartPeriodMenu = document.getElementById("statusChartPeriodMenu");
+  const statusChartPeriodLabel = document.getElementById("statusChartPeriodLabel");
+  const statusBarChart = document.getElementById("statusBarChart");
+
+  const STATUS_BAR_DEFS = [
+    { key: "new", label: "New Submission", modifier: "new" },
+    { key: "process", label: "Under Review", modifier: "process" },
+    { key: "remarks", label: "In Action", modifier: "remarks" },
+    { key: "resolved", label: "Resolved", modifier: "resolved" },
+  ];
+  const MAX_BAR_HEIGHT = 168; // px — leaves room for the count label above it
+
+  function renderStatusChart() {
+    const stats = computeStats(getReportsForPeriod(state.statusChartPeriod));
+    const maxCount = Math.max(stats.new, stats.process, stats.remarks, stats.resolved, 1);
+
+    if (!stats.total) {
+      statusBarChart.innerHTML = `<div class="status-bar-chart__empty">No reports for this period.</div>`;
+      return;
+    }
+
+    statusBarChart.innerHTML = STATUS_BAR_DEFS.map(({ key, label, modifier }) => {
+      const count = stats[key];
+      const height = Math.max(Math.round((count / maxCount) * MAX_BAR_HEIGHT), count > 0 ? 6 : 2);
+      return `
+        <div class="status-bar-chart__col">
+          <span class="status-bar-chart__count">${count}</span>
+          <div class="status-bar-chart__bar status-bar-chart__bar--${modifier}" style="height:${height}px"></div>
+          <span class="status-bar-chart__label">${label}</span>
+        </div>`;
+    }).join("");
+  }
+
+  renderPeriodMenu(
+    statusChartPeriodMenu,
+    statusChartPeriodLabel,
+    () => state.statusChartPeriod,
+    (v) => (state.statusChartPeriod = v),
+    renderStatusChart
+  );
+
   // ---- Incident heatmap (real Leaflet + OpenStreetMap density map) ----
   //
   // Intensity = number of reports per street for the selected period, placed
@@ -453,4 +497,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderAll();
   renderCategoryPie();
+  renderStatusChart();
 });

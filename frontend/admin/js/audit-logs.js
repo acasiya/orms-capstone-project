@@ -1,11 +1,13 @@
-// SafeSpace — View Audit Logs: render + sort + filter the login/logout history.
-// Data now comes from the real API (see audit-log-data.js) instead of a
-// hardcoded array, so this file is async where it fetches logs.
+// SafeSpace — View Audit Logs: render + search + sort + filter every logged
+// action (not just login/logout — see AuditLog/log_action on the backend).
+// Data comes from the real API (see audit-log-data.js).
 
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("auditTableBody");
   const sortSelect = document.getElementById("sortSelect");
   const typeFilter = document.getElementById("typeFilter");
+  const searchForm = document.getElementById("auditSearchForm");
+  const searchInput = document.getElementById("auditSearchInput");
 
   let logs = [];
 
@@ -23,11 +25,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     const filterValue = typeFilter.value;
     let rows = logs.filter((a) => filterValue === "all" || accountTypeGroup(a.type) === filterValue);
 
+    const query = searchInput.value.trim().toLowerCase();
+    if (query) {
+      rows = rows.filter(
+        (a) =>
+          a.owner.toLowerCase().includes(query) ||
+          a.action.toLowerCase().includes(query) ||
+          a.timeLabel.toLowerCase().includes(query) ||
+          a.type.toLowerCase().includes(query)
+      );
+    }
+
     const sortValue = sortSelect.value;
     rows = rows.slice().sort((a, b) => {
       if (sortValue === "owner") return a.owner.localeCompare(b.owner);
-      if (sortValue === "loggedOff") return new Date(b.loggedOffAt || 0) - new Date(a.loggedOffAt || 0);
-      return new Date(b.loggedOnAt) - new Date(a.loggedOnAt);
+      if (sortValue === "id") return a.accountId.localeCompare(b.accountId);
+      return new Date(b.timeAt) - new Date(a.timeAt);
     });
 
     if (!rows.length) {
@@ -39,11 +52,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       .map(
         (a) => `
         <tr>
-          <td>${a.id}</td>
+          <td>${a.accountId}</td>
           <td>${a.owner}</td>
           <td>${a.type}</td>
-          <td>${a.loggedOnLabel}</td>
-          <td>${a.loggedOffLabel}</td>
+          <td>${a.timeLabel}</td>
+          <td>${a.action}</td>
         </tr>`
       )
       .join("");
@@ -51,5 +64,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   sortSelect.addEventListener("change", render);
   typeFilter.addEventListener("change", render);
+  searchInput.addEventListener("input", render);
+  searchForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    render();
+  });
+
   await loadLogs();
 });

@@ -1422,6 +1422,44 @@ button {
   min-width: 170px;
 }
 
+.reports-search-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.reports-search-input {
+  flex: 1;
+  padding: 13px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.92rem;
+  background: var(--white);
+  color: var(--text);
+}
+
+.reports-search-input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+}
+
+.reports-search-btn {
+  width: auto;
+  padding: 13px 44px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .reports-search-row {
+    flex-direction: column;
+  }
+
+  .reports-search-btn {
+    width: 100%;
+  }
+}
+
 .dash-card {
   background: var(--white);
   border-radius: var(--radius);
@@ -2276,7 +2314,8 @@ button {
 }
 
 .status-inactive {
-  color: var(--text-muted);
+  color: #e63946;
+  font-weight: 600;
 }
 
 @media (max-width: 860px) {

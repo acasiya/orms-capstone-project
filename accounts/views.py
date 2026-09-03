@@ -12,7 +12,7 @@ from orms_backend.emails import (
     send_account_rejected_email,
 )
 
-from .models import LoginSession, User, VoterVerification
+from .models import AuditLog, LoginSession, User, VoterVerification, log_action
 from .serializers import (
     AdminAccountSerializer,
     AdminCreateUserSerializer,
@@ -98,6 +98,7 @@ class LogoutView(APIView):
             from django.utils import timezone
             session.logged_out_at = timezone.now()
             session.save(update_fields=["logged_out_at"])
+        log_action(request.user, "Logged out")
         return Response({"detail": "Logged out."})
 
 
@@ -149,6 +150,13 @@ class AdminCreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = AdminCreateUserSerializer
     permission_classes = [IsAdmin]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        log_action(
+            self.request.user,
+            f"Created a {user.get_role_display()} account for {user.get_full_name() or user.username}",
+        )
 
 
 class AdminListUsersView(generics.ListAPIView):
@@ -220,6 +228,13 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
             user.position = request.data["position"]
 
         user.save()
+
+        name = user.get_full_name() or user.username
+        if "active" in request.data:
+            log_action(request.user, f"{'Enabled' if user.is_active else 'Disabled'} {name}'s account")
+        if "role" in request.data:
+            log_action(request.user, f"Changed {name}'s account type to {user.get_role_display()}")
+
         return Response(AdminAccountSerializer(user).data)
 
     def delete(self, request, *args, **kwargs):
@@ -230,6 +245,9 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         if user.role == User.Role.ADMIN and User.objects.filter(role=User.Role.ADMIN).count() <= 1:
             return Response({"detail": "Can't remove the last remaining Administrator."}, status=400)
+
+        name = user.get_full_name() or user.username
+        log_action(request.user, f"Deleted {name}'s account")
 
         user.delete()
         return Response(status=204)
@@ -271,6 +289,8 @@ class AdminApproveVerificationView(APIView):
         verification.user.is_verified = True
         verification.user.save(update_fields=["is_verified"])
         send_account_approved_email(verification.user)
+        name = verification.user.get_full_name() or verification.user.username
+        log_action(request.user, f"Approved {name}'s account")
         return Response({"detail": "Account approved."})
 
 
@@ -295,14 +315,16 @@ class AdminRejectVerificationView(APIView):
                 {"detail": "Please provide a reason for rejecting this account."}, status=400
             )
         user = verification.user
-        send_account_rejected_email(user.get_full_name() or user.username, user.email, reason)
+        name = user.get_full_name() or user.username
+        send_account_rejected_email(name, user.email, reason)
         user.delete()
+        log_action(request.user, f"Rejected {name}'s account (reason: {reason})")
         return Response({"detail": "Account rejected."})
 
 
 class AdminListAuditLogsView(generics.ListAPIView):
     """GET /api/auth/admin/audit-logs/ — Administrator Module: View Audit Logs."""
-    queryset = LoginSession.objects.select_related("user").order_by("-logged_in_at")
+    queryset = AuditLog.objects.select_related("user").order_by("-created_at")
     serializer_class = AuditLogSerializer
     permission_classes = [IsAdmin]
 
@@ -319,6 +341,7 @@ class AdminResetPasswordView(APIView):
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         token = default_token_generator.make_token(user)
+        log_action(request.user, f"Reset password for {user.get_full_name() or user.username}")
         return Response({
             "detail": f"Password reset token generated for {user.email}.",
             "token": token,

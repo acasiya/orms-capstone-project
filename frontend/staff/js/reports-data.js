@@ -17,6 +17,25 @@ const REPORT_LABEL_TO_STATUS = {
   Resolved: "resolved",
 };
 
+// Newest-first within each status, with statuses themselves ordered by
+// where they sit in the timeline (New Submission -> ... -> Resolved last) —
+// so the list reads as "what needs attention" at a glance rather than pure
+// chronological order.
+const REPORT_STATUS_RANK = {
+  "New Submission": 0,
+  "Under Review": 1,
+  "In Action": 2,
+  Resolved: 3,
+};
+
+function sortReportsByStatusThenDate(reports) {
+  return reports.slice().sort((a, b) => {
+    const rankDiff = (REPORT_STATUS_RANK[a.status] ?? 99) - (REPORT_STATUS_RANK[b.status] ?? 99);
+    if (rankDiff !== 0) return rankDiff;
+    return b.dateSubmitted - a.dateSubmitted;
+  });
+}
+
 let _reportsCache = null;
 
 // Reports store the exact ordinance text the citizen picked (see
@@ -58,7 +77,7 @@ async function ensureReportsLoaded() {
   const response = await authFetch("/api/reports/staff/");
   if (!response.ok) throw new Error("Could not load reports.");
   const data = await response.json();
-  _reportsCache = data.map(mapReport);
+  _reportsCache = sortReportsByStatusThenDate(data.map(mapReport));
   return _reportsCache;
 }
 
@@ -79,6 +98,7 @@ async function refreshReportInCache(id) {
   if (_reportsCache) {
     const idx = _reportsCache.findIndex((r) => r.id === id);
     if (idx !== -1) _reportsCache[idx] = updated;
+    _reportsCache = sortReportsByStatusThenDate(_reportsCache);
   }
   return updated;
 }

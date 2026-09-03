@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
           <td>${a.type}</td>
-          <td>${a.active ? '<span class="status-active">Active</span>' : '<span class="status-inactive">Disabled</span>'}</td>
+          <td>${a.active ? '<span class="status-active">Online</span>' : '<span class="status-inactive">Offline</span>'}</td>
         </tr>`
       )
       .join("");

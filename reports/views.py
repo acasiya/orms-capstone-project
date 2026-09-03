@@ -4,7 +4,7 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.models import User
+from accounts.models import User, log_action
 from accounts.views import IsAdmin, IsStaffOrAdmin
 from orms_backend.emails import (
     send_question_answered_email,
@@ -51,6 +51,7 @@ class ReportListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         report = serializer.save()
+        log_action(self.request.user, f"Submitted a report — {report.ordinance}")
         send_report_submitted_citizen_email(report)
         send_report_submitted_staff_emails(report, _staff_recipients())
 
@@ -84,6 +85,7 @@ class ConcernListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         concern = serializer.save()
+        log_action(self.request.user, "Submitted a suggestion")
         send_suggestion_submitted_citizen_email(concern)
         send_suggestion_submitted_staff_emails(concern, _staff_recipients())
 
@@ -132,6 +134,11 @@ class StaffReportDetailView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        if "status" in request.data and report.status != previous_status:
+            log_action(request.user, f"Updated a report's status to {report.get_status_display()}")
+        if "remarks" in request.data:
+            log_action(request.user, "Updated a report's remarks")
+
         # Only on the transition INTO Resolved (the status timeline's "Final
         # Verdict" stage), not every save while already resolved — otherwise
         # re-saving the same status would re-notify every time. Remarks, if
@@ -169,9 +176,18 @@ class StaffConcernDetailView(APIView):
 
     def patch(self, request, pk):
         concern = self.get_object(pk)
+        previous_status = concern.status
         serializer = StaffConcernUpdateSerializer(concern, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        if "status" in request.data and concern.status != previous_status:
+            log_action(request.user, f"Updated a concern/suggestion's status to {concern.get_status_display()}")
+        if "remarks" in request.data:
+            log_action(request.user, "Updated a concern/suggestion's remarks")
+        if "folder" in request.data:
+            log_action(request.user, "Moved a concern/suggestion to a different folder")
+
         return Response(StaffConcernSerializer(concern, context={"request": request}).data)
 
 
@@ -184,6 +200,10 @@ class ConcernFolderListCreateView(generics.ListCreateAPIView):
     serializer_class = ConcernFolderSerializer
     permission_classes = [IsStaffOrAdmin]
 
+    def perform_create(self, serializer):
+        folder = serializer.save()
+        log_action(self.request.user, f"Created folder '{folder.name}'")
+
 
 class ConcernFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -193,6 +213,15 @@ class ConcernFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ConcernFolder.objects.all()
     serializer_class = ConcernFolderSerializer
     permission_classes = [IsStaffOrAdmin]
+
+    def perform_update(self, serializer):
+        folder = serializer.save()
+        log_action(self.request.user, f"Renamed a folder to '{folder.name}'")
+
+    def perform_destroy(self, instance):
+        name = instance.name
+        instance.delete()
+        log_action(self.request.user, f"Deleted folder '{name}'")
 
 
 class QuestionListCreateView(generics.ListCreateAPIView):
@@ -236,6 +265,7 @@ class StaffQuestionAnswerView(APIView):
         serializer = StaffQuestionAnswerSerializer(question, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(answered_by=request.user, answered_at=timezone.now())
+        log_action(request.user, "Answered a citizen's question")
         send_question_answered_email(question)
         return Response(StaffQuestionSerializer(question).data)
 
@@ -253,9 +283,22 @@ class AdminFAQListCreateView(generics.ListCreateAPIView):
     serializer_class = FAQSerializer
     permission_classes = [IsAdmin]
 
+    def perform_create(self, serializer):
+        faq = serializer.save()
+        log_action(self.request.user, f"Added an FAQ: {faq.question[:60]}")
+
 
 class AdminFAQDetailView(generics.RetrieveUpdateDestroyAPIView):
     """PATCH/DELETE /api/faqs/admin/<id>/ — edit or remove an existing FAQ."""
     queryset = FAQ.objects.all()
     serializer_class = FAQSerializer
     permission_classes = [IsAdmin]
+
+    def perform_update(self, serializer):
+        faq = serializer.save()
+        log_action(self.request.user, f"Updated an FAQ: {faq.question[:60]}")
+
+    def perform_destroy(self, instance):
+        question = instance.question[:60]
+        instance.delete()
+        log_action(self.request.user, f"Deleted an FAQ: {question}")
