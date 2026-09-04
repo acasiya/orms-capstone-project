@@ -145,6 +145,16 @@ STORAGES = {
     },
 }
 
+# Django rejects any multipart request (including file uploads — the PDF
+# content counts against this, not just the form fields) over this size with
+# a 400 before it ever reaches a view. The default is 2.5MB, which a real
+# scanned multi-page ordinance resolution PDF blows past easily — that 400
+# is exactly what was showing up as "Could not upload this ordinance." in
+# the UI (see ordinances-data.js's readFirstError, fixed to surface this
+# response's actual detail message instead of a generic fallback).
+DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024  # 25MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Django REST Framework + JWT ----------------------------------------

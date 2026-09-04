@@ -139,6 +139,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       editError.hidden = false;
       return;
     }
+    if (fields.pdfFile && fields.pdfFile.size > MAX_ORDINANCE_PDF_MB * 1024 * 1024) {
+      editError.textContent = `That PDF is too large — please use one under ${MAX_ORDINANCE_PDF_MB}MB.`;
+      editError.hidden = false;
+      return;
+    }
 
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving...";

@@ -188,6 +188,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       uploadError.hidden = false;
       return;
     }
+    if (fields.pdfFile.size > MAX_ORDINANCE_PDF_MB * 1024 * 1024) {
+      uploadError.textContent = `That PDF is too large — please use one under ${MAX_ORDINANCE_PDF_MB}MB.`;
+      uploadError.hidden = false;
+      return;
+    }
 
     uploadConfirm.disabled = true;
     uploadConfirm.textContent = "Uploading...";

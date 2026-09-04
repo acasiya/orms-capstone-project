@@ -69,10 +69,23 @@ async function refreshOrdinanceInCache(id) {
   return updated;
 }
 
+// DRF's own errors — permission denied, request-too-large, throttling,
+// malformed multipart — come back as {"detail": "..."} (a string), not the
+// {field: ["msg"]} shape field-validation errors use. The old version here
+// only ever unwrapped the array shape, so any of those cases silently fell
+// through to `fallback` with no indication of what actually went wrong
+// (e.g. a PDF over DATA_UPLOAD_MAX_MEMORY_SIZE always read as a generic
+// "Could not upload this ordinance."). A non-JSON body (a raw 500 page,
+// most likely) still falls back, but now says which HTTP status it was.
 async function readFirstError(response, fallback) {
-  const data = await response.json().catch(() => ({}));
-  const firstError = Object.values(data)[0];
-  throw new Error(Array.isArray(firstError) ? firstError[0] : fallback);
+  const data = await response.json().catch(() => null);
+  if (data) {
+    if (typeof data.detail === "string") throw new Error(data.detail);
+    const firstError = Object.values(data)[0];
+    if (Array.isArray(firstError)) throw new Error(firstError[0]);
+    if (typeof firstError === "string") throw new Error(firstError);
+  }
+  throw new Error(`${fallback} (server responded ${response.status})`);
 }
 
 // fields: { number, title, author, category, dateApproved (YYYY-MM-DD), description, pdfFile }

@@ -196,6 +196,20 @@ button {
   border: 1.5px solid var(--navy);
 }
 
+/* Plays once when a report/concern notification pops the dropdown open on
+   its own (see admin.js's flashNotifBell) — catches the eye even if the
+   topbar isn't where a staffer is currently looking. */
+@keyframes navbar-bell-flash {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.22); }
+  50% { transform: scale(0.92); }
+  75% { transform: scale(1.12); }
+}
+
+.navbar__bell--flash {
+  animation: navbar-bell-flash 0.5s ease-in-out 2;
+}
+
 .navbar__profile {
   width: 34px;
   height: 34px;
@@ -1055,6 +1069,13 @@ button {
   text-align: center;
   max-width: 360px;
   width: 100%;
+  /* Longer forms (Upload/Edit Ordinance: 6 fields + file picker) can be
+     taller than the viewport, especially on laptop-height screens — without
+     this, .modal-overlay's vertical centering just pushes the excess off
+     the top AND bottom of the screen with no way to reach it. Scroll inside
+     the card instead of the whole page so the overlay backdrop stays fixed. */
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 .modal-card h2 {

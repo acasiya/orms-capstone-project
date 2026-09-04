@@ -272,53 +272,55 @@ const NOTIF_SEEN_REPORTS_KEY = "orms_staff_seen_report_ids";
 const NOTIF_SEEN_CONCERNS_KEY = "orms_staff_seen_concern_ids";
 
 // Polls GET /api/reports/staff/ and raises a notification for any report
-// that wasn't there last time this ran.
+// that wasn't there last time this ran. Returns how many were new, so the
+// caller can pop the dropdown open for a submission that just came in
+// instead of only flipping the badge on (see wiring below).
 async function checkForNewReports() {
   let list;
   try {
     const res = await authFetch("/api/reports/staff/");
-    if (!res.ok) return;
+    if (!res.ok) return 0;
     list = await res.json();
   } catch {
-    return;
+    return 0;
   }
 
   const currentIds = list.map((r) => r.id);
   const seen = getSeenIds(NOTIF_SEEN_REPORTS_KEY);
   if (seen === null) {
     setSeenIds(NOTIF_SEEN_REPORTS_KEY, currentIds);
-    return;
+    return 0;
   }
 
-  list
-    .filter((r) => !seen.includes(r.id))
-    .forEach((r) => addStaffNotification(`New report submitted by ${r.reporter}: ${r.ordinance}`, `report-detail.html?id=${r.id}`));
+  const fresh = list.filter((r) => !seen.includes(r.id));
+  fresh.forEach((r) => addStaffNotification(`New report submitted by ${r.reporter}: ${r.ordinance}`, `report-detail.html?id=${r.id}`));
   setSeenIds(NOTIF_SEEN_REPORTS_KEY, currentIds);
+  return fresh.length;
 }
 
 // Polls GET /api/concerns/staff/ and raises a notification for any concern/
-// suggestion that wasn't there last time this ran.
+// suggestion that wasn't there last time this ran. Returns how many were new.
 async function checkForNewConcerns() {
   let list;
   try {
     const res = await authFetch("/api/concerns/staff/");
-    if (!res.ok) return;
+    if (!res.ok) return 0;
     list = await res.json();
   } catch {
-    return;
+    return 0;
   }
 
   const currentIds = list.map((c) => c.id);
   const seen = getSeenIds(NOTIF_SEEN_CONCERNS_KEY);
   if (seen === null) {
     setSeenIds(NOTIF_SEEN_CONCERNS_KEY, currentIds);
-    return;
+    return 0;
   }
 
-  list
-    .filter((c) => !seen.includes(c.id))
-    .forEach((c) => addStaffNotification(`New concern/suggestion submitted by ${c.reporter}`, `concern-detail.html?id=${c.id}`));
+  const fresh = list.filter((c) => !seen.includes(c.id));
+  fresh.forEach((c) => addStaffNotification(`New concern/suggestion submitted by ${c.reporter}`, `concern-detail.html?id=${c.id}`));
   setSeenIds(NOTIF_SEEN_CONCERNS_KEY, currentIds);
+  return fresh.length;
 }
 
 // Same show/hide eye button as main.js's — duplicated here since admin.js
@@ -519,13 +521,34 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    // A brief pulse on the bell so a fresh notification catches the eye even
+    // in peripheral vision — the dropdown popping open alone is easy to miss
+    // if a staffer isn't already looking at the topbar.
+    function flashNotifBell() {
+      notifBell.classList.remove("navbar__bell--flash");
+      void notifBell.offsetWidth; // restart the animation if it's still mid-flash
+      notifBell.classList.add("navbar__bell--flash");
+    }
+
     // Check immediately on page load, then keep polling — there's no
     // real-time push here, so this is what makes new report/concern
-    // submissions show up as notifications without a full page reload.
-    Promise.all([checkForNewReports(), checkForNewConcerns()]).then(renderNotifications);
-    setInterval(() => {
-      Promise.all([checkForNewReports(), checkForNewConcerns()]).then(renderNotifications);
-    }, 30000);
+    // submissions show up as notifications without a full page reload. A
+    // report/concern that's genuinely new (not just unread from before) pops
+    // the dropdown open on its own — a new submission is easy to miss as a
+    // small badge, and this is core to the job, so it doesn't wait for a
+    // click on the bell (same reasoning as notifications not being opt-in
+    // at all — see the file header comment above).
+    function pollNotifications() {
+      return Promise.all([checkForNewReports(), checkForNewConcerns()]).then(([newReports, newConcerns]) => {
+        renderNotifications();
+        if (newReports + newConcerns > 0) {
+          notifDropdown.hidden = false;
+          flashNotifBell();
+        }
+      });
+    }
+    pollNotifications();
+    setInterval(pollNotifications, 30000);
 
     const toggleNotifDropdown = () => {
       notifDropdown.hidden = !notifDropdown.hidden;
