@@ -1,8 +1,9 @@
 // SafeSpace — Ordinances data, backed by the real API (GET /api/ordinances/,
-// public — guests can browse without an account). Replaces the old
-// hardcoded placeholder array. createOrdinance/updateOrdinanceById require
-// Staff/Admin (enforced server-side) — harmless to load on every portal,
-// same as this file being kept identical across citizen/staff.
+// AllowAny — guests can browse without an account, but this Staff Portal
+// copy always sends the caller's token anyway so Secretary/Admin also see
+// archived ordinances; see ensureOrdinancesLoaded). createOrdinance/
+// updateOrdinanceById/archiveOrdinanceById/unarchiveOrdinanceById all
+// require Secretary/Admin, enforced server-side.
 
 let _ordinancesCache = null;
 
@@ -58,9 +59,14 @@ function applyOrdinanceUpdate(updated) {
   return updated;
 }
 
+// Sent authenticated (unlike the citizen copy of this file) even though GET
+// is AllowAny — the backend uses the caller's identity to decide whether
+// archived ordinances are included (see OrdinanceListCreateView.get_queryset),
+// so an unauthenticated request here would make Staff/Admin lose visibility
+// into anything they'd archived.
 async function ensureOrdinancesLoaded() {
   if (_ordinancesCache) return _ordinancesCache;
-  const response = await fetch("/api/ordinances/");
+  const response = await authFetch("/api/ordinances/");
   if (!response.ok) throw new Error("Could not load ordinances.");
   const data = await response.json();
   _ordinancesCache = data.map(mapOrdinance);
@@ -76,7 +82,7 @@ function getOrdinanceById(id) {
 }
 
 async function refreshOrdinanceInCache(id) {
-  const response = await fetch(`/api/ordinances/${encodeURIComponent(id)}/`);
+  const response = await authFetch(`/api/ordinances/${encodeURIComponent(id)}/`);
   if (!response.ok) throw new Error("Could not reload this ordinance.");
   return applyOrdinanceUpdate(mapOrdinance(await response.json()));
 }
