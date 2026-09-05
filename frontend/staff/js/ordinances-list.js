@@ -13,11 +13,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const PAGE_SIZE = 5;
   let currentPage = 1;
 
-  tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
     await ensureOrdinancesLoaded();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">${err.message}</td></tr>`;
     return;
   }
 
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rows = allRows.slice(start, start + PAGE_SIZE);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${
+      tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">${
         liveOrdinances().length ? "No ordinances match your search." : "No ordinances uploaded yet."
       }</td></tr>`;
     } else {
@@ -75,6 +75,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <td>${escapeHtml(o.author)}</td>
             <td>${escapeHtml(o.number)}</td>
             <td>${escapeHtml(o.dateApproved)}</td>
+            <td>${escapeHtml(o.uploadedBy || "—")}</td>
+            <td>${
+              o.isArchived
+                ? `<span class="status-badge status-badge--submitted">Archived</span>`
+                : `<span class="status-badge status-badge--resolved">Active</span>`
+            }</td>
           </tr>`
         )
         .join("");

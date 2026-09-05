@@ -12,12 +12,14 @@ class OrdinanceSerializer(serializers.ModelSerializer):
     """
 
     pdf_url = serializers.SerializerMethodField()
+    uploaded_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Ordinance
         fields = [
             "id", "number", "title", "author", "category", "date_approved",
-            "description", "pdf_url", "created_at", "updated_at",
+            "description", "pdf_url", "uploaded_by_name", "is_archived",
+            "created_at", "updated_at",
         ]
 
     def get_pdf_url(self, obj):
@@ -26,6 +28,11 @@ class OrdinanceSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         url = obj.pdf_file.url
         return request.build_absolute_uri(url) if request else url
+
+    def get_uploaded_by_name(self, obj):
+        if not obj.uploaded_by:
+            return None
+        return obj.uploaded_by.get_full_name() or obj.uploaded_by.username
 
 
 class OrdinanceCreateSerializer(serializers.ModelSerializer):

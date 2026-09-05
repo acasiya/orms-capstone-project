@@ -61,6 +61,8 @@
             <div id="detailBody">
               <div class="status-edit-row">
                 <h1 class="detail-title" id="detailTitle">Loading…</h1>
+                <span class="status-badge status-badge--submitted" id="archivedBadge" hidden>Archived</span>
+                <button type="button" class="btn btn-muted" id="archiveToggleBtn" hidden>Archive</button>
                 <button type="button" class="status-edit-btn" id="editOrdinanceBtn" aria-label="Edit ordinance"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20H5.5a1.5 1.5 0 01-1.5-1.5V12"/><path d="M17.4 3.6a2.1 2.1 0 013 3L10 17l-4.5 1.2L6.8 13.7z"/></svg></button>
               </div>
 
@@ -71,6 +73,8 @@
                 <dd id="detailAuthor"></dd>
                 <dt>Date Approved</dt>
                 <dd id="detailDate"></dd>
+                <dt>Uploaded by</dt>
+                <dd id="detailUploadedBy"></dd>
               </dl>
 
               <div class="detail-description" id="detailDescription"></div>

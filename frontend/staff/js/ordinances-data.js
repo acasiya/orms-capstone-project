@@ -41,9 +41,21 @@ function mapOrdinance(o) {
     dateSort: o.date_approved,
     description: o.description,
     pdf: o.pdf_url,
+    uploadedBy: o.uploaded_by_name,
+    isArchived: o.is_archived,
     createdAt: o.created_at,
     updatedAt: o.updated_at,
   };
+}
+
+// Shared by refreshOrdinanceInCache/archiveOrdinanceById/unarchiveOrdinanceById —
+// all three get back a full ordinance and just need it swapped into the cache.
+function applyOrdinanceUpdate(updated) {
+  if (_ordinancesCache) {
+    const idx = _ordinancesCache.findIndex((o) => o.id === updated.id);
+    if (idx !== -1) _ordinancesCache[idx] = updated;
+  }
+  return updated;
 }
 
 async function ensureOrdinancesLoaded() {
@@ -66,12 +78,7 @@ function getOrdinanceById(id) {
 async function refreshOrdinanceInCache(id) {
   const response = await fetch(`/api/ordinances/${encodeURIComponent(id)}/`);
   if (!response.ok) throw new Error("Could not reload this ordinance.");
-  const updated = mapOrdinance(await response.json());
-  if (_ordinancesCache) {
-    const idx = _ordinancesCache.findIndex((o) => o.id === id);
-    if (idx !== -1) _ordinancesCache[idx] = updated;
-  }
-  return updated;
+  return applyOrdinanceUpdate(mapOrdinance(await response.json()));
 }
 
 // DRF's own errors — permission denied, request-too-large, throttling,
@@ -125,4 +132,18 @@ async function updateOrdinanceById(id, fields) {
   const response = await authFetch(`/api/ordinances/${encodeURIComponent(id)}/`, { method: "PATCH", body: formData });
   if (!response.ok) await readFirstError(response, "Could not update this ordinance.");
   return refreshOrdinanceInCache(id);
+}
+
+// Secretary hides/restores an ordinance on the Citizen portal — see
+// OrdinanceArchiveView/OrdinanceUnarchiveView.
+async function archiveOrdinanceById(id) {
+  const response = await authFetch(`/api/ordinances/${encodeURIComponent(id)}/archive/`, { method: "POST" });
+  if (!response.ok) await readFirstError(response, "Could not archive this ordinance.");
+  return applyOrdinanceUpdate(mapOrdinance(await response.json()));
+}
+
+async function unarchiveOrdinanceById(id) {
+  const response = await authFetch(`/api/ordinances/${encodeURIComponent(id)}/unarchive/`, { method: "POST" });
+  if (!response.ok) await readFirstError(response, "Could not unarchive this ordinance.");
+  return applyOrdinanceUpdate(mapOrdinance(await response.json()));
 }

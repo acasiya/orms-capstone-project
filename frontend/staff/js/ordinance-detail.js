@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfPreviewFrame = document.getElementById("pdfPreviewFrame");
   const pdfPreviewNote = document.getElementById("pdfPreviewNote");
   const detailDownload = document.getElementById("detailDownload");
+  const archivedBadge = document.getElementById("archivedBadge");
 
   function renderDisplay() {
     document.title = `${ordinance.number} — SafeSpace`;
@@ -34,6 +35,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("detailAuthor").textContent = ordinance.author;
     document.getElementById("detailDate").textContent = ordinance.dateApproved;
     document.getElementById("detailOrdinanceTitle").textContent = ordinance.title;
+    document.getElementById("detailUploadedBy").textContent = ordinance.uploadedBy || "—";
+    archivedBadge.hidden = !ordinance.isArchived;
 
     detailDescription.innerHTML = "";
     ordinance.description.split("\n\n").forEach((para) => {
@@ -68,6 +71,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const editBtn = document.getElementById("editOrdinanceBtn");
   editBtn.hidden = !isSecretary;
+
+  const archiveToggleBtn = document.getElementById("archiveToggleBtn");
+
+  function renderArchiveToggle() {
+    archiveToggleBtn.hidden = !isSecretary;
+    archiveToggleBtn.textContent = ordinance.isArchived ? "Restore" : "Archive";
+  }
+  renderArchiveToggle();
+
+  archiveToggleBtn.addEventListener("click", async () => {
+    archiveToggleBtn.disabled = true;
+    try {
+      ordinance = ordinance.isArchived
+        ? await unarchiveOrdinanceById(ordinance.id)
+        : await archiveOrdinanceById(ordinance.id);
+      renderDisplay();
+      renderArchiveToggle();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      archiveToggleBtn.disabled = false;
+    }
+  });
+
   if (!isSecretary) return;
 
   const editForm = document.getElementById("editOrdinanceForm");
