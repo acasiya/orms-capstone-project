@@ -25,6 +25,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!isOther) otherInput.value = "";
   });
 
+  // ---- Nature of Violation: TF-IDF ordinance suggestions (GET /api/ordinances/suggest/) ----
+  function debounce(fn, delay) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  }
+
+  const violationInput = document.getElementById("violationDetails");
+  const suggestionsPanel = document.getElementById("ordinanceSuggestions");
+  const suggestionsList = document.getElementById("ordinanceSuggestionsList");
+
+  function renderSuggestions(results) {
+    if (!results.length) {
+      suggestionsPanel.hidden = true;
+      return;
+    }
+    suggestionsList.innerHTML = results
+      .map((r) => `<li data-id="${r.id}">${r.number} — ${r.title}</li>`)
+      .join("");
+    suggestionsPanel.hidden = false;
+  }
+
+  const debouncedFetchSuggestions = debounce(async (text) => {
+    if (text.trim().length < 3) {
+      suggestionsPanel.hidden = true;
+      return;
+    }
+    try {
+      const response = await fetch(`/api/ordinances/suggest/?q=${encodeURIComponent(text.trim())}`);
+      if (!response.ok) throw new Error("suggest failed");
+      const { results } = await response.json();
+      renderSuggestions(results || []);
+    } catch {
+      // Fail soft — a broken suggestion fetch must never block report submission.
+      suggestionsPanel.hidden = true;
+    }
+  }, 400);
+
+  violationInput.addEventListener("input", () => debouncedFetchSuggestions(violationInput.value));
+
+  suggestionsList.addEventListener("click", (e) => {
+    const item = e.target.closest("li[data-id]");
+    if (!item) return;
+    select.value = item.dataset.id;
+    select.dispatchEvent(new Event("change"));
+    suggestionsPanel.hidden = true;
+  });
+
   // ---- Specific Location: type-to-filter street combobox ----
   const locationInput = document.getElementById("reportLocation");
   const locationList = document.getElementById("reportLocationList");

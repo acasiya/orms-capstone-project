@@ -589,6 +589,28 @@ button {
   margin-bottom: 16px;
 }
 
+.suggestion-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggestion-list li {
+  padding: 9px 10px;
+  border-radius: 5px;
+  font-size: 0.88rem;
+  color: var(--text);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.suggestion-list li:hover {
+  background: #f6f4ef;
+}
+
 .form-links {
   display: flex;
   align-items: center;

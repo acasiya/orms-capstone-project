@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from accounts.models import User, log_action
 from accounts.views import IsSecretaryOrAdmin
 
+from .matching import suggest_ordinances
 from .models import Ordinance
 from .serializers import OrdinanceCreateSerializer, OrdinanceSerializer, OrdinanceUpdateSerializer
 
@@ -83,6 +84,33 @@ class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
         ordinance = serializer.save()
         log_action(request.user, f"Updated ordinance {ordinance.number} — {ordinance.title}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)
+
+
+class OrdinanceSuggestView(APIView):
+    """
+    GET /api/ordinances/suggest/?q=<text> — ranks non-archived ordinances by
+    relevance to the citizen-typed violation text, for the File a Report
+    form's suggestion panel. Public, and always excludes archived
+    ordinances regardless of caller — this endpoint has exactly one
+    consumer (the citizen form), unlike OrdinanceListCreateView which also
+    serves Staff/Admin.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        query = request.query_params.get("q", "").strip()
+        if len(query) < 3:
+            return Response({"results": []})
+
+        ordinances = Ordinance.objects.filter(is_archived=False)
+        matches = suggest_ordinances(query, ordinances)
+        return Response({
+            "results": [
+                {"id": str(o.id), "number": o.number, "title": o.title, "score": round(score, 4)}
+                for o, score in matches
+            ]
+        })
 
 
 class OrdinanceArchiveView(APIView):
