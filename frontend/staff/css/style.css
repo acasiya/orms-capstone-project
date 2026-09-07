@@ -726,8 +726,8 @@ button {
 }
 
 .pagination-controls button {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--white);
@@ -2101,6 +2101,11 @@ button {
   font-size: 1.25rem;
   color: var(--text);
   line-height: 1;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .admin-topbar__profile {
@@ -2111,8 +2116,8 @@ button {
 }
 
 .admin-topbar__avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--cream-dark);
@@ -2392,6 +2397,12 @@ button {
 
 .dash-dropdown {
   position: relative;
+  /* Direct flex item of .dash-header — needs its own min-width: 0 or its
+     default min-width: auto blocks the shrink-to-fit chain from ever
+     reaching .dash-dropdown__btn's label, even though that's already
+     set up to truncate. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dash-dropdown__btn {
@@ -2402,10 +2413,21 @@ button {
   border-radius: 8px;
   background: var(--white);
   color: var(--text);
-  padding: 10px 14px;
+  padding: 12px 14px;
   font-size: 0.85rem;
   font-weight: 600;
   white-space: nowrap;
+  max-width: 100%;
+}
+
+/* The label (e.g. a custom date range like "September 7, 2026 - September
+   13, 2026") can be longer than the smallest supported screen can fit —
+   truncate it with an ellipsis instead of forcing the button (and the
+   page) wider than the viewport. */
+.dash-dropdown__btn > span:not(.dash-dropdown__chevron) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .dash-dropdown__btn:hover {
@@ -2481,6 +2503,11 @@ button {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 20px 22px;
+  /* Grid items default to min-width: auto, which refuses to shrink below
+     the recent-reports table's intrinsic width and blows out the whole
+     row (and the page) instead of letting .ordinances-table-wrap's own
+     overflow-x: auto handle it. */
+  min-width: 0;
 }
 
 .dash-card__header {
@@ -2547,8 +2574,8 @@ button {
 }
 
 .recent-reports-table__action {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--white);
@@ -2593,6 +2620,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 .stat-card {
@@ -2911,10 +2939,16 @@ button {
   gap: 48px;
   height: 220px;
   padding: 16px 16px 0;
+  /* Wrapping would squash the bars into half the fixed height per row,
+     breaking the height-encodes-value chart, so scroll horizontally
+     within the card instead of wrapping or blowing out the page —
+     same pattern as .ordinances-table-wrap. */
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .status-bar-chart__col {
-  flex: 1;
+  flex: 1 0 54px;
   max-width: 120px;
   display: flex;
   flex-direction: column;
@@ -3363,8 +3397,8 @@ button {
   }
 
   .admin-topbar__menu-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     font-size: 1.1rem;
   }
 
@@ -3373,8 +3407,8 @@ button {
   }
 
   .admin-topbar__avatar {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
   }
 
   .admin-content {
