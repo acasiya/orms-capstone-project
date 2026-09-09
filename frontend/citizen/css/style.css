@@ -160,20 +160,26 @@ button {
 }
 
 .navbar__links a {
+  display: inline-block;
   opacity: 0.9;
   letter-spacing: 0.3px;
-  transition: opacity 0.15s ease;
+  padding-bottom: 4px;
+  border-bottom: 3px solid transparent;
+  transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .navbar__links a:hover {
   opacity: 1;
-  text-decoration: underline;
 }
 
+/* Same idea as the Staff/Admin sidebar's active link (a solid bar in an
+   accent color) — a left border there, a bottom border here since this
+   navbar runs horizontally instead of vertically. Yellow rather than the
+   sidebar's orange (#f2994a), per request. */
 .navbar__links a.active {
   opacity: 1;
-  color: #f2994a;
-  text-decoration: underline;
+  color: #f2c94c;
+  border-bottom-color: #f2c94c;
 }
 
 /* Inverted chip: navbar itself is navy, so the bell's own background flips
