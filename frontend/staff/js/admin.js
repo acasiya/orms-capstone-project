@@ -67,7 +67,8 @@ function getAdminUser() {
 // Each Barangay Staff role sees a different slice of the Staff Portal:
 // Barangay Captain gets read-only dashboards + Ordinances + Questions,
 // Secretary gets Concerns/Suggestions + Ordinances + Questions, Investigator
-// gets Reports (claim/work reports — see reports-list.js) + Questions.
+// gets Reports (claim/work reports — see reports-list.js) + a read-only
+// Ordinances (citing one is part of filing/reviewing a report) + Questions.
 // Detail pages reached by navigating from an allowed page (report-detail.html
 // etc.) aren't restricted here — what changes per role there is only which
 // edit controls show (see report-detail.js/concern-detail.js/
@@ -77,7 +78,7 @@ const STAFF_NAV_ACCESS = {
   "reports.html": ["Investigator"],
   "concerns-dashboard.html": ["Barangay Captain"],
   "concerns.html": ["Secretary"],
-  "ordinances.html": ["Barangay Captain", "Secretary"],
+  "ordinances.html": ["Barangay Captain", "Secretary", "Investigator"],
   "questions.html": ["Barangay Captain", "Secretary", "Investigator"],
 };
 

@@ -63,6 +63,16 @@
           </div>
 
           <div class="field">
+            <label for="violationDetails">Nature of Violation</label>
+            <textarea id="violationDetails" name="violationDetails" placeholder="Please describe the incident and any relevant details..." required></textarea>
+          </div>
+
+          <div class="field" id="ordinanceSuggestions" hidden>
+            <label class="field-hint">Suggested ordinances based on what you typed:</label>
+            <ul class="suggestion-list" id="ordinanceSuggestionsList"></ul>
+          </div>
+
+          <div class="field">
             <label for="ordinanceSelect">Ordinance in Violation</label>
             <select id="ordinanceSelect" name="ordinance" required>
               <option value="" selected disabled>Select</option>
@@ -72,16 +82,6 @@
           <div class="field" id="otherOrdinanceField" hidden>
             <label for="otherOrdinanceInput">Please specify</label>
             <input type="text" id="otherOrdinanceInput" placeholder="Describe the ordinance in violation" />
-          </div>
-
-          <div class="field">
-            <label for="violationDetails">Nature of Violation</label>
-            <textarea id="violationDetails" name="violationDetails" placeholder="Please describe the incident and any relevant details..." required></textarea>
-          </div>
-
-          <div class="field" id="ordinanceSuggestions" hidden>
-            <label class="field-hint">Suggested ordinances based on what you typed:</label>
-            <ul class="suggestion-list" id="ordinanceSuggestionsList"></ul>
           </div>
 
           <div class="field">
