@@ -237,12 +237,22 @@ class ChangePasswordSerializer(serializers.Serializer):
     """
 
     current_password = serializers.CharField(write_only=True)
-    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    # Not run via `validators=[validate_password]` on the field — that calls
+    # validate_password(value) with no user, so UserAttributeSimilarityValidator
+    # would have nothing to compare against. validate_new_password below
+    # passes the real user instance instead, so "too similar to your name or
+    # email" is actually enforced here (RegisterSerializer's password field
+    # can't do this the same way since the user doesn't exist yet at that point).
+    new_password = serializers.CharField(write_only=True)
 
     def validate_current_password(self, value):
         user = self.context["request"].user
         if not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect.")
+        return value
+
+    def validate_new_password(self, value):
+        validate_password(value, user=self.context["request"].user)
         return value
 
     def save(self):

@@ -83,6 +83,12 @@
           <div class="profile-panel__view" id="passwordView" hidden>
             <div class="profile-page__avatar" id="passwordAvatar"></div>
             <form id="changePasswordForm">
+              <!-- Feeds the password-hint "not too similar to your name or
+                   email" check (see setupPasswordHints in main.js) — this
+                   form has no visible name/email fields of its own. -->
+              <input type="hidden" name="first_name" id="passwordHintFirstName" />
+              <input type="hidden" name="last_name" id="passwordHintLastName" />
+              <input type="hidden" name="email" id="passwordHintEmail" />
               <div class="field">
                 <label for="currentPassword">Current Password</label>
                 <input type="password" id="currentPassword" required />
@@ -91,6 +97,12 @@
                 <label for="newPassword">New Password</label>
                 <input type="password" id="newPassword" name="password" required />
               </div>
+              <ul class="password-hint" data-password-field="newPassword">
+                <li data-rule="length"><input type="checkbox" disabled tabindex="-1" /> At least 8 characters</li>
+                <li data-rule="numeric"><input type="checkbox" disabled tabindex="-1" /> Not entirely numbers</li>
+                <li data-rule="common"><input type="checkbox" disabled tabindex="-1" /> Not a commonly used password</li>
+                <li data-rule="similar"><input type="checkbox" disabled tabindex="-1" /> Not too similar to your name or email</li>
+              </ul>
               <div class="field">
                 <label for="confirmNewPassword">Confirm Password</label>
                 <input type="password" id="confirmNewPassword" name="confirmPassword" required />

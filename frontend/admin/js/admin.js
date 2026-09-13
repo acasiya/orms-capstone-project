@@ -315,6 +315,87 @@ async function checkForNewAuditLogs() {
   setSeenIds(NOTIF_SEEN_LOGINS_KEY, Array.from(new Set(currentIds.concat(seen))));
 }
 
+// Same password-strength checklist as main.js's/create-accounts.js's —
+// duplicated here (own name for the word list to avoid clashing with
+// create-accounts.js's own COMMON_PASSWORDS when both load on the same
+// page) since My Profile → Change Password needs it on every admin page,
+// not just Create Accounts. Mirrors the backend's AUTH_PASSWORD_VALIDATORS
+// (see orms_backend/settings.py) closely enough to catch obviously-invalid
+// passwords client-side.
+const ADMIN_COMMON_PASSWORDS = new Set([
+  "password", "123456", "12345678", "qwerty", "123456789", "12345",
+  "1234567890", "1234567", "password1", "111111", "iloveyou", "1234",
+  "abc123", "123123", "qwerty123", "welcome", "admin123", "letmein",
+  "monkey123", "login", "princess", "solo123", "starwars", "dragon",
+  "passw0rd", "master", "hello123", "freedom", "whatever", "qazwsx",
+  "trustno1", "000000", "football", "baseball", "shadow123", "michael1",
+  "superman1", "batman123", "charlie1", "jordan23", "harley123",
+  "hunter123", "ranger123", "buster123", "soccer123", "hockey123",
+  "computer1", "jessica1", "pepper123", "1qaz2wsx", "flower123",
+]);
+
+function getPasswordRuleStatus(pw, attrs = {}) {
+  const lowerPw = pw.toLowerCase();
+  const candidates = [attrs.firstName, attrs.lastName, (attrs.email || "").split("@")[0]].filter(Boolean);
+  const tooSimilar = candidates.some((candidate) => {
+    const lowerCandidate = candidate.toLowerCase().trim();
+    return lowerCandidate.length >= 3 && (lowerPw.includes(lowerCandidate) || lowerCandidate.includes(lowerPw));
+  });
+  return {
+    length: pw.length >= 8,
+    numeric: pw.length > 0 && !/^\d+$/.test(pw),
+    common: pw.length > 0 && !ADMIN_COMMON_PASSWORDS.has(lowerPw),
+    similar: pw.length > 0 && !tooSimilar,
+  };
+}
+
+function getPasswordRequirementError(pw, attrs = {}) {
+  const status = getPasswordRuleStatus(pw, attrs);
+  if (!status.length) return "Password must be at least 8 characters.";
+  if (!status.numeric) return "Password can't be entirely numbers.";
+  if (!status.common) return "That password is too common. Please choose a less predictable one.";
+  if (!status.similar) return "Password is too similar to your name or email.";
+  return null;
+}
+
+// Wires live checkbox feedback for every .password-hint list on the page —
+// each <li data-rule="..."> ticks its checkbox once that requirement is
+// met. Defaults to the form's first password field; a form with more than
+// one (Change Password: current/new/confirm) must say which one via
+// data-password-field="<id>" on the .password-hint element.
+function setupPasswordHints() {
+  document.querySelectorAll(".password-hint").forEach((hintList) => {
+    const form = hintList.closest("form");
+    if (!form) return;
+    const passwordField = hintList.dataset.passwordField
+      ? document.getElementById(hintList.dataset.passwordField)
+      : form.querySelector('input[type="password"]');
+    if (!passwordField) return;
+    const firstNameField = form.querySelector('[name="first_name"]');
+    const lastNameField = form.querySelector('[name="last_name"]');
+    const emailField = form.querySelector('[name="email"]');
+
+    function update() {
+      const status = getPasswordRuleStatus(passwordField.value, {
+        firstName: firstNameField ? firstNameField.value : "",
+        lastName: lastNameField ? lastNameField.value : "",
+        email: emailField ? emailField.value : "",
+      });
+      hintList.querySelectorAll("li[data-rule]").forEach((li) => {
+        const satisfied = !!status[li.dataset.rule];
+        li.classList.toggle("is-satisfied", satisfied);
+        const checkbox = li.querySelector('input[type="checkbox"]');
+        if (checkbox) checkbox.checked = satisfied;
+      });
+    }
+
+    [passwordField, firstNameField, lastNameField, emailField].forEach((field) => {
+      if (field) field.addEventListener("input", update);
+    });
+    update();
+  });
+}
+
 // Same show/hide eye button as main.js's — duplicated here since admin.js
 // and main.js are never loaded on the same page. Covers Create Accounts'
 // password field and any other password input on an authenticated page.
@@ -349,6 +430,7 @@ function setupPasswordVisibilityToggles() {
 
 document.addEventListener("DOMContentLoaded", () => {
   setupPasswordVisibilityToggles();
+  setupPasswordHints();
   const sidebarToggle = document.getElementById("sidebarToggle");
   const sidebar = document.querySelector(".admin-sidebar");
   const shell = document.querySelector(".admin-shell");

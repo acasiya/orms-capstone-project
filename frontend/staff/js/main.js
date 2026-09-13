@@ -623,7 +623,14 @@ function setupPasswordHints() {
   document.querySelectorAll(".password-hint").forEach((hintList) => {
     const form = hintList.closest("form");
     if (!form) return;
-    const passwordField = form.querySelector('input[type="password"]');
+    // Defaults to the form's first password field (true for every existing
+    // use — Sign Up, Create Accounts, account setup — which have exactly
+    // one). A form with more than one (Change Password: current/new/confirm)
+    // must say which one via data-password-field="<id>", or this would wire
+    // the hints to Current Password instead of New Password.
+    const passwordField = hintList.dataset.passwordField
+      ? document.getElementById(hintList.dataset.passwordField)
+      : form.querySelector('input[type="password"]');
     if (!passwordField) return;
     const firstNameField = form.querySelector('[name="first_name"]');
     const lastNameField = form.querySelector('[name="last_name"]');

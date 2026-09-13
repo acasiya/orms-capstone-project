@@ -41,6 +41,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     emailInput.value = user.email || "";
     mobileInput.value = user.mobile || "";
     addressInput.value = user.address || "";
+
+    // Feeds the New Password field's "too similar to your name/email" hint
+    // (see setupPasswordHints in admin.js) — Change Password has no visible
+    // name/email fields of its own to read those from.
+    document.getElementById("passwordHintFirstName").value = user.firstName || "";
+    document.getElementById("passwordHintLastName").value = user.lastName || "";
+    document.getElementById("passwordHintEmail").value = user.email || "";
   }
 
   const cached = getAdminUser();
@@ -231,6 +238,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       return false;
     }
 
+    const passwordError = getPasswordRequirementError(newPasswordInput.value, {
+      firstName: firstNameInput.value,
+      lastName: lastNameInput.value,
+      email: emailInput.value,
+    });
+    if (passwordError) {
+      showFormError(passwordForm, passwordError);
+      return false;
+    }
+
     const submitBtn = passwordForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = "Changing...";
@@ -268,34 +285,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // ---- Leaving with unsaved changes (Cancel button) ----
-  const cancelBtn = document.getElementById("profileCancelBtn");
+  // ---- Leaving with unsaved changes ----
+  // Catches every in-page link on the page (sidebar, Cancel, the profile
+  // popup, notification "View All", etc.) while something's unsaved — not
+  // just the Cancel button — so there's no way to click away from an
+  // unsaved edit without being asked first. beforeunload above is the
+  // fallback for anything that isn't a click (browser back/refresh/close).
   const unsavedChangesModal = document.getElementById("unsavedChangesModal");
   const unsavedSaveBtn = document.getElementById("unsavedSaveBtn");
   const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
   const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
+  let pendingHref = null;
 
-  function goToCancelTarget() {
-    window.location.href = cancelBtn.getAttribute("href");
+  function goToPendingTarget() {
+    if (pendingHref) window.location.href = pendingHref;
   }
 
-  cancelBtn.addEventListener("click", (e) => {
-    if (isDirty()) {
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!isDirty()) return;
+      const link = e.target.closest("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
       e.preventDefault();
+      e.stopPropagation();
+      pendingHref = href;
       unsavedChangesModal.hidden = false;
-    }
-  });
+    },
+    true
+  );
+
   unsavedSaveBtn.addEventListener("click", async () => {
     unsavedChangesModal.hidden = true;
     const saved = isEditDirty() ? await commitEditSave() : await commitPasswordSave();
-    if (saved) goToCancelTarget();
+    if (saved) goToPendingTarget();
   });
   unsavedDiscardBtn.addEventListener("click", () => {
     unsavedChangesModal.hidden = true;
-    goToCancelTarget();
+    goToPendingTarget();
   });
   unsavedCancelBtn.addEventListener("click", () => {
     unsavedChangesModal.hidden = true;
+    pendingHref = null;
   });
   unsavedChangesModal.addEventListener("click", (e) => {
     if (e.target === unsavedChangesModal) unsavedChangesModal.hidden = true;
