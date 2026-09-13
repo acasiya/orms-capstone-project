@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Questions</title>
+  <title>SafeSpace — Notifications</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -23,8 +23,8 @@
         <li><a href="create-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.25"/><path d="M3 20v-1.5A3.5 3.5 0 016.5 15h6A3.5 3.5 0 0116 18.5V20"/><path d="M18.5 8v5.5M21.2 10.75h-5.4"/></svg> Create Accounts</a></li>
         <li><a href="approve-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Approve Accounts</a></li>
         <li><a href="audit-logs.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="13" height="17" rx="1.8"/><path d="M9.3 4a1.2 1.2 0 011.2-1.2h3a1.2 1.2 0 011.2 1.2v.6H9.3z"/><path d="M8.7 11h6.6M8.7 14.3h6.6M8.7 17.6h4.4"/></svg> View Audit Logs</a></li>
-        <li><a href="questions.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
-      </ul>
+              <li><a href="questions.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
+</ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
 
@@ -54,66 +54,31 @@
       </header>
 
       <div class="admin-content">
-        <div class="reports-filters-row">
-          <select id="statusFilter" class="reports-filter">
-            <option value="all">All Questions</option>
-            <option value="pending">Pending</option>
-            <option value="answered">Answered</option>
-          </select>
+        <div class="reports-toolbar">
+          <h1 class="page-heading">All Notifications</h1>
+          <button type="button" class="notif-dropdown__clear-all" id="notifPageClearAll">Clear All</button>
         </div>
 
-        <div class="concerns-page-layout">
-          <div class="concerns-page-main">
-            <div class="concerns-card" id="questionsList"></div>
-          </div>
-
-          <div class="dash-card">
-            <h2 class="folders-card__title">Frequently Asked Questions</h2>
-            <p class="auth-card__subtitle" style="margin:-6px 0 12px;text-align:left;font-size:0.8rem;">Shown on the citizen FAQs page.</p>
-            <div id="faqManageList"></div>
-            <button type="button" class="folder-add-btn" id="addFaqBtn" aria-label="Add FAQ">+</button>
-          </div>
-        </div>
+        <ul class="notif-page__list" id="notifPageList"></ul>
       </div>
     </div>
   </div>
 
-  <script src="js/questions-data.js"></script>
-  <script src="js/questions-list.js"></script>
+  <script src="js/notifications-page.js"></script>
   <script src="js/admin.js"></script>
 
-  <!-- Add/Edit FAQ -->
-  <div class="modal-overlay" id="faqModal" hidden>
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
     <div class="modal-card">
-      <h2 id="faqModalTitle">Add FAQ</h2>
-      <div class="field field--boxed">
-        <label for="faqQuestionInput">Question</label>
-        <input type="text" id="faqQuestionInput" placeholder="e.g. How do I file a report?" />
-      </div>
-      <div class="field field--boxed">
-        <label for="faqAnswerInput">Answer</label>
-        <textarea id="faqAnswerInput" rows="4" placeholder="Type the answer..."></textarea>
-      </div>
+      <h2>Continue to Logout?</h2>
       <div class="btn-row">
-        <button type="button" class="btn" id="faqModalSave">Save</button>
-        <button type="button" class="btn btn-danger" id="faqModalCancel">Cancel</button>
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
       </div>
     </div>
   </div>
 
-  <!-- Delete FAQ confirmation -->
-  <div class="modal-overlay" id="faqDeleteModal" hidden>
-    <div class="modal-card">
-      <h2>Delete this FAQ?</h2>
-      <p class="auth-card__subtitle">It will no longer show on the citizen FAQs page.</p>
-      <div class="btn-row">
-        <button type="button" class="btn btn-danger" id="faqDeleteConfirm">Delete</button>
-        <button type="button" class="btn" id="faqDeleteCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile popup -->
+  <!-- Profile popup: opened by clicking the admin's own photo/name in the topbar -->
   <div class="modal-overlay" id="profileModal" hidden>
     <div class="modal-card profile-card">
       <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
@@ -126,17 +91,6 @@
       </div>
       <a class="btn btn-muted" href="profile.html">Edit Account Information</a>
       <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
-    </div>
-  </div>
-
-  <!-- Logout confirmation -->
-  <div class="modal-overlay" id="logoutConfirmModal" hidden>
-    <div class="modal-card">
-      <h2>Continue to Logout?</h2>
-      <div class="btn-row">
-        <button type="button" class="btn" id="logoutYes">Yes</button>
-        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
-      </div>
     </div>
   </div>
 </body>

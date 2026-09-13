@@ -28,7 +28,9 @@ class Report(models.Model):
     # array), so this just stores whichever option label the citizen picked.
     ordinance = models.CharField(max_length=255)
     incident_date = models.DateField()
-    incident_time = models.TimeField()
+    # Nullable — the exact time of an incident is often unknown (ongoing or
+    # long-standing violations), so a citizen can leave it blank.
+    incident_time = models.TimeField(null=True, blank=True)
     nature_of_violation = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     remarks = models.TextField(blank=True)

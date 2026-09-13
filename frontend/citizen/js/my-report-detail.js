@@ -15,6 +15,7 @@ const REPORT_TIMELINE_STEPS = [
 const REPORT_COMPLETED_STEPS = { submitted: 1, under_review: 2, in_action: 3, resolved: 4 };
 
 function formatTime12h(hhmm) {
+  if (!hhmm) return "Not specified";
   const [h, m] = hhmm.split(":").map(Number);
   const period = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 || 12;

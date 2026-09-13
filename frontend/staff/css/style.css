@@ -198,16 +198,16 @@ button {
 
 /* Plays once when a report/concern notification pops the dropdown open on
    its own (see admin.js's flashNotifBell) — catches the eye even if the
-   topbar isn't where a staffer is currently looking. */
+   topbar isn't where a staffer is currently looking. Kept to one gentle
+   pulse (previously an oscillating double-bounce that read as glitchy). */
 @keyframes navbar-bell-flash {
-  0%, 100% { transform: scale(1); }
-  25% { transform: scale(1.22); }
-  50% { transform: scale(0.92); }
-  75% { transform: scale(1.12); }
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
 }
 
 .navbar__bell--flash {
-  animation: navbar-bell-flash 0.5s ease-in-out 2;
+  animation: navbar-bell-flash 0.35s ease-out 1;
 }
 
 .navbar__profile {
@@ -336,6 +336,38 @@ button {
   color: #c0392b;
   margin-top: 0.5rem;
   font-size: 0.9rem;
+}
+
+/* Password requirement checklist (account-setup.html) — was missing here
+   entirely (only citizen/admin had it), so it rendered as a bare unstyled
+   list with no red/green feedback. */
+.password-hint {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: -8px 0 16px;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.password-hint li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #c0392b;
+}
+
+.password-hint li input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: #2e7d32;
+  pointer-events: none;
+}
+
+.password-hint li.is-satisfied {
+  color: #2e7d32;
 }
 
 .field--code input {
@@ -593,6 +625,46 @@ button {
   display: flex;
   gap: 14px;
   margin-bottom: 20px;
+}
+
+/* Floating "+ Upload Ordinance" button (Secretary only — see
+   ordinances-list.js) — fixed to the viewport so it's always reachable
+   without hunting for it in the toolbar. */
+.fab-upload-ordinance {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 50;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.fab-upload-ordinance:hover {
+  background: var(--navy-dark);
+  transform: scale(1.06);
+}
+
+.fab-upload-ordinance[hidden] {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .fab-upload-ordinance {
+    right: 20px;
+    bottom: 20px;
+    width: 50px;
+    height: 50px;
+  }
 }
 
 .ordinances-toolbar select {
@@ -1223,6 +1295,8 @@ button {
   right: -10px;
   width: 320px;
   max-width: calc(100vw - 24px);
+  max-height: min(480px, calc(100vh - 90px));
+  overflow-y: auto;
   background: var(--white);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -1230,10 +1304,20 @@ button {
   text-align: left;
   z-index: 60;
   cursor: default;
+  animation: notif-pop-in 0.16s ease-out;
 }
 
 .notif-dropdown[hidden] {
   display: none;
+}
+
+/* Replays automatically each time the dropdown goes from display:none to
+   visible (manual click or the auto-pop-open on a fresh notification) — a
+   quick fade/settle instead of an instant snap, which is what made the
+   auto-pop read as glitchy alongside the bell flash. */
+@keyframes notif-pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .notif-dropdown__title {
@@ -1332,6 +1416,54 @@ button {
   color: var(--text-muted);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.notif-dropdown__view-all {
+  display: block;
+  text-align: center;
+  padding: 10px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--link, var(--navy));
+  text-decoration: none;
+}
+
+.notif-dropdown__view-all:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Notifications (view-all page) ---------- */
+
+.notif-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.notif-page__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.notif-page__item:first-child {
+  border-top: none;
+}
+
+.notif-page__empty {
+  padding: 28px 22px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 /* ---------- My Concerns/Suggestions list ---------- */
@@ -1560,6 +1692,75 @@ button {
 .reports-filter:focus {
   outline: none;
   border-color: var(--navy);
+}
+
+/* ---------- Reports: check-in/check-out date range picker ---------- */
+
+.date-range-picker {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  overflow: hidden;
+}
+
+.date-range-picker__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.date-range-picker__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.date-range-picker__field input[type="date"] {
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.date-range-picker__field input[type="date"]:focus {
+  outline: none;
+}
+
+.date-range-picker__arrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0 8px;
+}
+
+.date-range-picker__clear {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.date-range-picker__clear:hover {
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .date-range-picker__field {
+    padding: 6px 10px;
+  }
 }
 
 /* ---------- Report detail: evidence photo + notice + remarks ---------- */
@@ -2482,6 +2683,24 @@ button {
   grid-template-columns: 2.1fr 1fr;
   gap: 20px;
   align-items: start;
+}
+
+/* Reports Dashboard (Barangay Captain) only — Recent Reports was removed so
+   the freed space now goes to the stat cards + the charts below, which
+   shift straight up into it instead of being pushed down by a table. */
+.dash-row-top--full {
+  display: block;
+}
+
+.dash-stats--row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.dash-stats--row .stat-card {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .dash-row-bottom {

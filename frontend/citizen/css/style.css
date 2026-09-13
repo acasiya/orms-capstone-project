@@ -402,6 +402,7 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
+  color: #c0392b;
 }
 
 .password-hint li input[type="checkbox"] {
@@ -1240,6 +1241,38 @@ button {
   padding: 32px 36px 30px;
 }
 
+/* Reporting As: read-only citizen info shown above the actual report form —
+   given a distinct cream tint + left accent bar so it reads as "about you"
+   rather than as part of the editable report itself. */
+.reporting-as-card {
+  background: var(--cream);
+  border-left: 4px solid var(--navy);
+  padding: 22px 36px 8px;
+  margin-bottom: 22px;
+}
+
+.reporting-as-card .report-card__title {
+  text-align: left;
+  margin-bottom: 4px;
+  font-size: 0.88rem;
+}
+
+.reporting-as-card::after {
+  content: "This information is on file and can't be edited here.";
+  display: block;
+  margin: -6px 0 18px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.reporting-as-card .field input[disabled] {
+  background: var(--cream-dark);
+  color: var(--text);
+  border-color: var(--navy);
+  opacity: 0.85;
+}
+
 /* ---------- FAQs ---------- */
 
 .faq-card {
@@ -1569,6 +1602,8 @@ button {
   right: -10px;
   width: 320px;
   max-width: calc(100vw - 24px);
+  max-height: min(480px, calc(100vh - 90px));
+  overflow-y: auto;
   background: var(--white);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -1576,10 +1611,16 @@ button {
   text-align: left;
   z-index: 60;
   cursor: default;
+  animation: notif-pop-in 0.16s ease-out;
 }
 
 .notif-dropdown[hidden] {
   display: none;
+}
+
+@keyframes notif-pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .notif-dropdown__title {
@@ -1678,6 +1719,54 @@ button {
   color: var(--text-muted);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.notif-dropdown__view-all {
+  display: block;
+  text-align: center;
+  padding: 10px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--link);
+  text-decoration: none;
+}
+
+.notif-dropdown__view-all:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Notifications (view-all page) ---------- */
+
+.notif-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.notif-page__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.notif-page__item:first-child {
+  border-top: none;
+}
+
+.notif-page__empty {
+  padding: 28px 22px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 /* ---------- My Concerns/Suggestions list ---------- */

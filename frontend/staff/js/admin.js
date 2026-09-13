@@ -75,7 +75,12 @@ function getAdminUser() {
 // ordinance-detail.js's own role checks), not access to the page itself.
 const STAFF_NAV_ACCESS = {
   "reports-dashboard.html": ["Barangay Captain"],
-  "reports.html": ["Investigator"],
+  // Barangay Captain gets read-only Reports too — the Reports Dashboard's
+  // Recent Reports table (their only path to an individual report's detail
+  // page) was removed in favor of showing the charts up top, so this is now
+  // how they reach report-detail.html (report-detail.js's own role check
+  // keeps them read-only there, same as Ordinances).
+  "reports.html": ["Investigator", "Barangay Captain"],
   "concerns-dashboard.html": ["Barangay Captain"],
   "concerns.html": ["Secretary"],
   "ordinances.html": ["Barangay Captain", "Secretary", "Investigator"],

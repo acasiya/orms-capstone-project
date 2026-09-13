@@ -26,6 +26,43 @@
         <li><a href="ordinances.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4 4.5 4v14c3.5 0 6 1 7.5 2.5"/><path d="M12 6.5C13.5 5 16 4 19.5 4v14c-3.5 0-6 1-7.5 2.5V6.5z"/></svg> Ordinance</a></li>
               <li><a href="questions.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
 </ul>
+      <script>
+        // Hides sidebar items this role can't see BEFORE the rest of the
+        // page (and its script tags) finish parsing — admin.js's own
+        // enforceStaffSectionAccess does the same thing but only runs after
+        // the whole body is parsed, which on a full page navigation let the
+        // full/wrong-role nav flash visible for a moment on every page
+        // load. Keep this object in sync with STAFF_NAV_ACCESS in admin.js.
+        (function () {
+          var STAFF_NAV_ACCESS = {
+            "reports-dashboard.html": ["Barangay Captain"],
+            "reports.html": ["Investigator", "Barangay Captain"],
+            "concerns-dashboard.html": ["Barangay Captain"],
+            "concerns.html": ["Secretary"],
+            "ordinances.html": ["Barangay Captain", "Secretary", "Investigator"],
+            "questions.html": ["Barangay Captain", "Secretary", "Investigator"],
+          };
+          var remembered = localStorage.getItem("orms_remember_me") === "1";
+          var store = remembered ? localStorage : sessionStorage;
+          var user;
+          try {
+            user = JSON.parse(store.getItem("orms_auth_user"));
+          } catch (e) {
+            user = null;
+          }
+          if (!user) return;
+          var allowed = Object.keys(STAFF_NAV_ACCESS).filter(function (page) {
+            return STAFF_NAV_ACCESS[page].indexOf(user.position) !== -1;
+          });
+          document.querySelectorAll(".admin-sidebar__nav a[href]").forEach(function (link) {
+            var page = link.getAttribute("href");
+            if (Object.prototype.hasOwnProperty.call(STAFF_NAV_ACCESS, page) && allowed.indexOf(page) === -1) {
+              var item = link.closest("li");
+              if (item) item.hidden = true;
+            }
+          });
+        })();
+      </script>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
 
@@ -41,6 +78,7 @@
                 <button type="button" class="notif-dropdown__clear-all" id="notifClearAll">Clear All</button>
               </div>
               <ul class="notif-dropdown__list" id="notifList"></ul>
+        <a class="notif-dropdown__view-all" href="notifications.html">View All Notifications</a>
             </div>
           </span>
           <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
@@ -67,7 +105,6 @@
               <input type="text" id="ordinanceSearch" placeholder="Search..." />
               <button type="submit">Search</button>
             </form>
-            <button type="button" class="btn" id="uploadOrdinanceBtn">+ Upload Ordinance</button>
           </div>
 
           <div class="ordinances-table-wrap">
@@ -97,6 +134,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Secretary-only (see ordinances-list.js) — floating instead of in the
+       toolbar so it stays reachable at a glance no matter how far the table
+       is scrolled. -->
+  <button type="button" class="fab-upload-ordinance" id="uploadOrdinanceBtn" title="Upload Ordinance" aria-label="Upload Ordinance">
+    <svg class="nav-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
 
   <script src="js/ordinances-data.js"></script>
   <script src="js/ordinances-list.js"></script>
@@ -157,7 +201,7 @@
           <p class="profile-card__role" id="profileCardRole"></p>
         </div>
       </div>
-      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <a class="btn btn-muted" href="profile.html">Edit Account Information</a>
       <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
     </div>
   </div>

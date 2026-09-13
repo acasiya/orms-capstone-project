@@ -15,7 +15,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const searchForm = document.getElementById("reportSearchForm");
   const searchInput = document.getElementById("reportSearchInput");
   const typeFilter = document.getElementById("typeFilter");
-  const dateFilter = document.getElementById("dateFilter");
+  const dateFrom = document.getElementById("dateFrom");
+  const dateTo = document.getElementById("dateTo");
+  const dateRangeClear = document.getElementById("dateRangeClear");
   const statusFilter = document.getElementById("statusFilter");
   const list = document.getElementById("reportsList");
   const pagination = document.getElementById("reportsPagination");
@@ -61,8 +63,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     return pages;
   }
 
+  // No check-in/check-out picked yet: default to today's reports plus any
+  // older report that's still unresolved, rather than the whole queue —
+  // this is what an Investigator needs to see first thing on login, without
+  // having to remember to filter for it.
+  function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  function getDefaultRows() {
+    const today = new Date();
+    return liveReports().filter((r) => isSameDay(r.dateSubmitted, today) || r.status !== "Resolved");
+  }
+
   function getFiltered() {
-    let rows = dateFilter.value === "all" ? liveReports() : getReportsForPeriod(dateFilter.value);
+    let rows;
+    if (!dateFrom.value && !dateTo.value) {
+      rows = getDefaultRows();
+    } else {
+      rows = liveReports().filter((r) => {
+        if (dateFrom.value && r.dateSubmitted < new Date(`${dateFrom.value}T00:00:00`)) return false;
+        if (dateTo.value && r.dateSubmitted > new Date(`${dateTo.value}T23:59:59`)) return false;
+        return true;
+      });
+    }
 
     if (typeFilter.value !== "all") {
       rows = rows.filter((r) => r.incidentType === typeFilter.value);
@@ -181,7 +205,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     page = 1;
     render();
   });
-  dateFilter.addEventListener("change", () => {
+  dateFrom.addEventListener("change", () => {
+    // Check-in can't land after check-out — keep the range sane instead of
+    // silently returning zero results.
+    if (dateTo.value && dateFrom.value > dateTo.value) dateTo.value = dateFrom.value;
+    page = 1;
+    render();
+  });
+  dateTo.addEventListener("change", () => {
+    if (dateFrom.value && dateTo.value < dateFrom.value) dateFrom.value = dateTo.value;
+    page = 1;
+    render();
+  });
+  dateRangeClear.addEventListener("click", () => {
+    dateFrom.value = "";
+    dateTo.value = "";
     page = 1;
     render();
   });

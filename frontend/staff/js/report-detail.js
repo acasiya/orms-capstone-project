@@ -5,6 +5,7 @@
 // localStorage-only mock.
 
 function formatTime12h(hhmmss) {
+  if (!hhmmss) return "Not specified";
   const [h, m] = hhmmss.split(":").map(Number);
   const period = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 || 12;

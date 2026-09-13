@@ -7,9 +7,10 @@
 // centroid in street-coordinates.js) — see js/heatmap.js.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const PAGE_SIZE = 5;
   const WEEK_OPTIONS_COUNT = 8;
   const MONTHS_BACK_COUNT = 5;
+  const QUARTERS_BACK_COUNT = 3;
+  const YEARS_BACK_COUNT = 2;
   const CATEGORY_COLOR_PALETTE = [
     "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
     "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
@@ -17,8 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const state = {
     weekOffset: 0,
-    statusFilter: "all",
-    page: 1,
     categoryPeriod: "week",
     heatmapPeriod: "week",
     statusChartPeriod: "week",
@@ -68,6 +67,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         value: `month${m}`,
         label: m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       });
+    }
+    for (let q = 0; q <= QUARTERS_BACK_COUNT; q++) {
+      const { quarter, year } = getQuarterRange(q);
+      opts.push({ value: `quarter${q}`, label: q === 0 ? `This Quarter (Q${quarter} ${year})` : `Q${quarter} ${year}` });
+    }
+    for (let y = 0; y <= YEARS_BACK_COUNT; y++) {
+      const { year } = getYearRange(y);
+      opts.push({ value: `year${y}`, label: y === 0 ? `This Year (${year})` : `${year}` });
     }
     return opts;
   }
@@ -157,100 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     dateRangeMenu.querySelectorAll("li").forEach((li) => {
       li.addEventListener("click", () => {
         state.weekOffset = Number(li.dataset.offset);
-        state.page = 1;
         renderAll();
-      });
-    });
-  }
-
-  // ---- Recent reports table + View All status filter + pagination ----
-
-  const viewAllMenu = document.getElementById("viewAllMenu");
-  const viewAllLabel = document.getElementById("viewAllLabel");
-  const recentReportsBody = document.getElementById("recentReportsBody");
-  const recentReportsPagination = document.getElementById("recentReportsPagination");
-
-  const STATUS_FILTER_LABELS = {
-    all: "View All Reports",
-    "New Submission": "New Submission Reports",
-    "Under Review": "Under Review Reports",
-    "In Action": "In Action Reports",
-    Resolved: "Resolved Reports",
-  };
-
-  viewAllMenu.querySelectorAll("li").forEach((li) => {
-    li.addEventListener("click", () => {
-      state.statusFilter = li.dataset.status;
-      state.page = 1;
-      viewAllMenu.querySelectorAll("li").forEach((el) => el.classList.toggle("active", el === li));
-      viewAllLabel.textContent = STATUS_FILTER_LABELS[state.statusFilter];
-      renderRecentReports();
-    });
-  });
-
-  function statusPillClass(status) {
-    if (status === "New Submission") return "status-pill--new";
-    if (status === "Under Review") return "status-pill--in-process";
-    if (status === "In Action") return "status-pill--remarks";
-    return "status-pill--resolved";
-  }
-
-  function buildPageList(current, total) {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages = [1];
-    if (current > 3) pages.push("...");
-    const start = Math.max(2, current - 1);
-    const end = Math.min(total - 1, current + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (current < total - 2) pages.push("...");
-    pages.push(total);
-    return pages;
-  }
-
-  function renderRecentReports() {
-    let reports = getReportsForWeekOffset(state.weekOffset);
-    if (state.statusFilter !== "all") {
-      reports = reports.filter((r) => r.status === state.statusFilter);
-    }
-
-    const totalPages = Math.max(1, Math.ceil(reports.length / PAGE_SIZE));
-    state.page = Math.min(state.page, totalPages);
-    const start = (state.page - 1) * PAGE_SIZE;
-    const pageRows = reports.slice(start, start + PAGE_SIZE);
-
-    recentReportsBody.innerHTML = pageRows.length
-      ? pageRows
-          .map(
-            (r) => `
-        <tr>
-          <td>${r.id.slice(0, 8).toUpperCase()}</td>
-          <td>${r.incidentType}</td>
-          <td>${r.location}</td>
-          <td>${r.assignedInvestigator || "Unclaimed"}</td>
-          <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
-          <td>${r.dateSubmitted.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}, ${r.dateSubmitted.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</td>
-          <td><a class="recent-reports-table__action" href="report-detail.html?id=${encodeURIComponent(r.id)}" aria-label="View report">&#8594;</a></td>
-        </tr>`
-          )
-          .join("")
-      : `<tr><td colspan="7" class="ordinances-empty">No reports for this selection.</td></tr>`;
-
-    const pages = buildPageList(state.page, totalPages);
-    let html = `<button type="button" data-page="prev" ${state.page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;
-    pages.forEach((p) => {
-      html +=
-        p === "..."
-          ? `<span class="dash-pagination__ellipsis">&hellip;</span>`
-          : `<button type="button" data-page="${p}" class="${p === state.page ? "active" : ""}">${p}</button>`;
-    });
-    html += `<button type="button" data-page="next" ${state.page >= totalPages ? "disabled" : ""} aria-label="Next page">&#8250;</button>`;
-    recentReportsPagination.innerHTML = html;
-
-    recentReportsPagination.querySelectorAll("button[data-page]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const val = btn.dataset.page;
-        state.page = val === "prev" ? state.page - 1 : val === "next" ? state.page + 1 : Number(val);
-        renderRecentReports();
       });
     });
   }
@@ -545,7 +459,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     dateRangeLabel.textContent = getWeekRange(state.weekOffset).label;
     renderDateRangeMenu();
     renderStats();
-    renderRecentReports();
   }
 
   renderAll();

@@ -29,6 +29,7 @@
                 <button type="button" class="notif-dropdown__clear-all" id="notifClearAll">Clear All</button>
               </div>
         <ul class="notif-dropdown__list" id="notifList"></ul>
+        <a class="notif-dropdown__view-all" href="notifications.html">View All Notifications</a>
       </div>
     </span>
     <div class="navbar__profile" role="button" tabindex="0"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></div>
@@ -39,6 +40,31 @@
       <h1 class="page-heading">Submit a Report</h1>
 
       <div class="plain-page__layout">
+      <div>
+      <div class="report-card reporting-as-card">
+        <h2 class="report-card__title">Reporting As</h2>
+        <div class="form-row">
+          <div class="field">
+            <label for="reporterName">Name</label>
+            <input type="text" id="reporterName" disabled />
+          </div>
+          <div class="field">
+            <label for="reporterContact">Contact Number</label>
+            <input type="text" id="reporterContact" disabled />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="reporterEmail">Email</label>
+            <input type="text" id="reporterEmail" disabled />
+          </div>
+          <div class="field">
+            <label for="reporterAddress">Address</label>
+            <input type="text" id="reporterAddress" disabled />
+          </div>
+        </div>
+      </div>
+
       <div class="report-card">
         <h2 class="report-card__title">Report Details</h2>
 
@@ -57,8 +83,8 @@
               <input type="date" id="incidentDate" name="incidentDate" required />
             </div>
             <div class="field">
-              <label for="incidentTime">Time of Incident</label>
-              <input type="time" id="incidentTime" name="incidentTime" required />
+              <label for="incidentTime">Time of Incident <span class="field-hint">(optional — leave blank if unknown)</span></label>
+              <input type="time" id="incidentTime" name="incidentTime" />
             </div>
           </div>
 
@@ -104,6 +130,7 @@
             <button type="submit" class="btn">Submit Report</button>
           </div>
         </form>
+      </div>
       </div>
 
       <aside class="info-panel">
@@ -163,7 +190,7 @@
           <span class="profile-avatar" id="profileUserInitials"></span>
           <p class="profile-card__name" id="profileUserName"></p>
         </div>
-        <a class="btn btn-muted" href="profile.html">Edit Information</a>
+        <a class="btn btn-muted" href="profile.html">Edit Account Information</a>
         <button type="button" class="btn btn-muted" id="logoutBtn">Log Out</button>
       </div>
     </div>

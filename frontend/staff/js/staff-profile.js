@@ -1,9 +1,9 @@
 // SafeSpace — Staff "My Profile": tab switching, real field population from
-// the API, and a real Apply Changes save (including profile picture
-// upload) to PATCH /api/auth/me/. Mirrors the Admin portal's version —
+// the API, a real Apply Changes save (including profile picture upload) to
+// PATCH /api/auth/me/, and a real Change Password to
+// POST /api/auth/change-password/. Mirrors the Admin portal's version —
 // previously this page always showed a hardcoded "Eliseo Aurelio Jr."
-// mock regardless of who was actually logged in. Change Password stays a
-// front-end-only mock — no backend endpoint for that yet.
+// mock regardless of who was actually logged in.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const avatarUpload = document.getElementById("avatarUpload");
@@ -64,7 +64,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Network hiccup — the cached values already painted above are fine to leave.
   }
 
-  // Profile picture upload preview (Edit Information only) — shows the
+  // ---- Unsaved-changes tracking ----
+  // Snapshotted right after the form is populated from the server, then
+  // re-snapshotted after every successful save — isDirty() just compares
+  // the live inputs against whichever snapshot is current.
+  let savedSnapshot = {
+    firstName: firstNameInput.value,
+    lastName: lastNameInput.value,
+    email: emailInput.value,
+    mobile: mobileInput.value,
+    address: addressInput.value,
+  };
+
+  function isEditDirty() {
+    return (
+      firstNameInput.value !== savedSnapshot.firstName ||
+      lastNameInput.value !== savedSnapshot.lastName ||
+      emailInput.value !== savedSnapshot.email ||
+      mobileInput.value !== savedSnapshot.mobile ||
+      addressInput.value !== savedSnapshot.address ||
+      avatarUpload.files.length > 0
+    );
+  }
+
+  function isPasswordDirty() {
+    return !!(currentPasswordInput.value || newPasswordInput.value || confirmNewPasswordInput.value);
+  }
+
+  function isDirty() {
+    return isEditDirty() || isPasswordDirty();
+  }
+
+  // Catch-all for navigation this page doesn't otherwise intercept (sidebar
+  // links, browser back/refresh/close) — the Cancel button below gets a
+  // nicer custom modal instead of this native browser prompt.
+  window.addEventListener("beforeunload", (e) => {
+    if (!isDirty()) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+  // Profile picture upload preview (Edit Account Information only) — shows the
   // newly-picked file immediately; the actual upload happens on submit.
   avatarUpload.addEventListener("change", () => {
     const file = avatarUpload.files[0];
@@ -105,8 +145,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     onUpdatedConfirm();
   });
 
-  editForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // Returns true on success — shared between the form's own submit handler
+  // and the unsaved-changes modal's "Save Changes" button.
+  async function commitEditSave() {
     clearFormError(editForm);
     const submitBtn = editForm.querySelector('button[type="submit"]');
 
@@ -148,24 +189,115 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
       );
 
+      savedSnapshot = {
+        firstName: firstNameInput.value,
+        lastName: lastNameInput.value,
+        email: emailInput.value,
+        mobile: mobileInput.value,
+        address: addressInput.value,
+      };
+      avatarUpload.value = "";
+      return true;
+    } catch (err) {
+      showFormError(editForm, err.message);
+      return false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Apply Changes";
+    }
+  }
+
+  editForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (await commitEditSave()) {
       updatedTitle.textContent = "Information Changed!";
       onUpdatedConfirm = () => {
         window.location.href = "reports-dashboard.html";
       };
       updatedModal.hidden = false;
-    } catch (err) {
-      showFormError(editForm, err.message);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Apply Changes";
     }
   });
 
   const passwordForm = document.getElementById("changePasswordForm");
-  passwordForm.addEventListener("submit", (e) => {
+  const currentPasswordInput = document.getElementById("currentPassword");
+  const newPasswordInput = document.getElementById("newPassword");
+  const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
+
+  async function commitPasswordSave() {
+    clearFormError(passwordForm);
+
+    if (newPasswordInput.value !== confirmNewPasswordInput.value) {
+      showFormError(passwordForm, "New password and confirm password don't match.");
+      return false;
+    }
+
+    const submitBtn = passwordForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Changing...";
+    try {
+      const response = await authFetch("/api/auth/change-password/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          current_password: currentPasswordInput.value,
+          new_password: newPasswordInput.value,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const firstError = Object.values(data)[0];
+        throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not change your password.");
+      }
+      passwordForm.reset();
+      return true;
+    } catch (err) {
+      showFormError(passwordForm, err.message);
+      return false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Change Password";
+    }
+  }
+
+  passwordForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    updatedTitle.textContent = "Password Changed!";
-    onUpdatedConfirm = () => switchToTab("edit");
-    updatedModal.hidden = false;
+    if (await commitPasswordSave()) {
+      updatedTitle.textContent = "Password Changed!";
+      onUpdatedConfirm = () => switchToTab("edit");
+      updatedModal.hidden = false;
+    }
+  });
+
+  // ---- Leaving with unsaved changes (Cancel button) ----
+  const cancelBtn = document.getElementById("profileCancelBtn");
+  const unsavedChangesModal = document.getElementById("unsavedChangesModal");
+  const unsavedSaveBtn = document.getElementById("unsavedSaveBtn");
+  const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
+  const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
+
+  function goToCancelTarget() {
+    window.location.href = cancelBtn.getAttribute("href");
+  }
+
+  cancelBtn.addEventListener("click", (e) => {
+    if (isDirty()) {
+      e.preventDefault();
+      unsavedChangesModal.hidden = false;
+    }
+  });
+  unsavedSaveBtn.addEventListener("click", async () => {
+    unsavedChangesModal.hidden = true;
+    const saved = isEditDirty() ? await commitEditSave() : await commitPasswordSave();
+    if (saved) goToCancelTarget();
+  });
+  unsavedDiscardBtn.addEventListener("click", () => {
+    unsavedChangesModal.hidden = true;
+    goToCancelTarget();
+  });
+  unsavedCancelBtn.addEventListener("click", () => {
+    unsavedChangesModal.hidden = true;
+  });
+  unsavedChangesModal.addEventListener("click", (e) => {
+    if (e.target === unsavedChangesModal) unsavedChangesModal.hidden = true;
   });
 });

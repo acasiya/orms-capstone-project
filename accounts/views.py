@@ -18,6 +18,7 @@ from .serializers import (
     AdminCreateCitizenSerializer,
     AdminCreateUserSerializer,
     AuditLogSerializer,
+    ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -177,6 +178,17 @@ class MeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UserSerializer(request.user, context={"request": request}).data)
+
+
+class ChangePasswordView(APIView):
+    """POST /api/auth/change-password/ — My Profile → Edit Account Information → Change Password, all three portals."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Your password has been changed."})
 
 
 class IsAdmin(permissions.BasePermission):

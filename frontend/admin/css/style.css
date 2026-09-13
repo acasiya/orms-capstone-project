@@ -333,6 +333,7 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
+  color: #c0392b;
 }
 
 .password-hint li input[type="checkbox"] {
@@ -1235,6 +1236,8 @@ button {
   right: -10px;
   width: 320px;
   max-width: calc(100vw - 24px);
+  max-height: min(480px, calc(100vh - 90px));
+  overflow-y: auto;
   background: var(--white);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -1242,10 +1245,16 @@ button {
   text-align: left;
   z-index: 60;
   cursor: default;
+  animation: notif-pop-in 0.16s ease-out;
 }
 
 .notif-dropdown[hidden] {
   display: none;
+}
+
+@keyframes notif-pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .notif-dropdown__title {
@@ -1351,6 +1360,54 @@ button {
   color: var(--text-muted);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.notif-dropdown__view-all {
+  display: block;
+  text-align: center;
+  padding: 10px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--link, var(--navy));
+  text-decoration: none;
+}
+
+.notif-dropdown__view-all:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Notifications (view-all page) ---------- */
+
+.notif-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.notif-page__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.notif-page__item:first-child {
+  border-top: none;
+}
+
+.notif-page__empty {
+  padding: 28px 22px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .notif-dropdown__dismiss {

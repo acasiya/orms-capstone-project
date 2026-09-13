@@ -4,6 +4,19 @@
 // nothing actually saved.
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // ---- Reporting As: read-only citizen info, from the session cache ----
+  const reportingUser = getCurrentUser();
+  if (reportingUser) {
+    const nameField = document.getElementById("reporterName");
+    const contactField = document.getElementById("reporterContact");
+    const emailField = document.getElementById("reporterEmail");
+    const addressField = document.getElementById("reporterAddress");
+    if (nameField) nameField.value = reportingUser.name || "";
+    if (contactField) contactField.value = reportingUser.mobile || "";
+    if (emailField) emailField.value = reportingUser.email || "";
+    if (addressField) addressField.value = reportingUser.address || "";
+  }
+
   const select = document.getElementById("ordinanceSelect");
   try {
     await ensureOrdinancesLoaded();
@@ -138,7 +151,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       select.value === "other" ? `Other: ${otherInput.value.trim()}` : select.options[select.selectedIndex].text
     );
     formData.append("incident_date", document.getElementById("incidentDate").value);
-    formData.append("incident_time", document.getElementById("incidentTime").value);
+    // Time of incident is optional — an unknown/unset time is common for
+    // reports of ongoing or long-standing violations, so only send it when
+    // the citizen actually picked one; an empty string would fail TimeField validation.
+    const incidentTimeValue = document.getElementById("incidentTime").value;
+    if (incidentTimeValue) formData.append("incident_time", incidentTimeValue);
     formData.append("nature_of_violation", document.getElementById("violationDetails").value.trim());
     Array.from(document.getElementById("reportFiles").files).forEach((file) => formData.append("files", file));
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Reset Password</title>
+  <title>SafeSpace — Notifications</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -35,50 +35,18 @@
     <div class="navbar__profile" role="button" tabindex="0"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></div>
   </nav>
 
-  <section class="plain-hero">
-    <div class="auth-card auth-card--outline">
-      <h1 class="auth-card__title">Reset Password</h1>
-      <form data-goto="reset-success.html" data-forgot-confirm novalidate>
-        <div class="field field--boxed">
-          <label for="newPassword">Input New Password</label>
-          <input type="password" id="newPassword" name="password" placeholder="XXXXXX" required />
-        </div>
-        <div class="field field--boxed">
-          <label for="confirmNewPassword">Confirm New Password</label>
-          <input type="password" id="confirmNewPassword" name="confirmPassword" placeholder="XXXXXX" required />
-        </div>
-        <button type="submit" class="btn">Reset Password</button>
-      </form>
-      <a class="form-back" href="index.html">Back to Log In</a>
-    </div>
-  </section>
+  <div class="plain-page">
+    <div class="plain-page__inner plain-page__inner--wide">
+      <div class="reports-toolbar">
+        <h1 class="page-heading">All Notifications</h1>
+        <button type="button" class="notif-dropdown__clear-all" id="notifPageClearAll">Clear All</button>
+      </div>
 
-  <section class="info-section">
-    <div class="info-grid">
-      <div class="info-card">
-        <h3>Barangay Platero</h3>
-        <p>Ordinance Reporting and Management System</p>
-      </div>
-      <div class="info-card">
-        <h3>What is SafeSpace?</h3>
-        <p>
-          Ordinance Reporting and Management System, or SafeSpace for short, is a
-          web-based system that is designed to help Barangay Citizens to report
-          ordinance violations, as well as submit concerns and suggestions in
-          order to promote collaborative and safe communities.
-        </p>
-      </div>
-      <div class="info-card">
-        <h3>Our Mission</h3>
-        <p>
-          SafeSpace gives the Barangay Citizen to check what happens to their
-          reports and concerns and suggestions. It also helps promote Local
-          Government Accountability and Action.
-        </p>
-      </div>
+      <ul class="notif-page__list" id="notifPageList"></ul>
     </div>
-  </section>
+  </div>
 
+  <script src="js/notifications-page.js"></script>
   <script src="js/main.js"></script>
 
   <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->

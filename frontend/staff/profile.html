@@ -18,6 +18,7 @@
                 <button type="button" class="notif-dropdown__clear-all" id="notifClearAll">Clear All</button>
               </div>
           <ul class="notif-dropdown__list" id="notifList"></ul>
+        <a class="notif-dropdown__view-all" href="notifications.html">View All Notifications</a>
         </div>
       </span>
       <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
@@ -35,9 +36,9 @@
       <div class="profile-layout">
         <aside class="profile-sidebar">
           <h1 class="profile-sidebar__title">My Profile</h1>
-          <button type="button" class="profile-tab active" data-tab="edit">Edit Information</button>
+          <button type="button" class="profile-tab active" data-tab="edit">Edit Account Information</button>
           <button type="button" class="profile-tab" data-tab="password">Change Password</button>
-          <a class="btn btn-danger profile-sidebar__cancel" href="reports-dashboard.html">Cancel</a>
+          <a class="btn btn-danger profile-sidebar__cancel" href="reports-dashboard.html" id="profileCancelBtn">Cancel</a>
         </aside>
 
         <div class="profile-panel">
@@ -105,6 +106,19 @@
     </div>
   </div>
 
+  <!-- Leaving with unsaved edits (Cancel, or closing/navigating away) -->
+  <div class="modal-overlay" id="unsavedChangesModal" hidden>
+    <div class="modal-card">
+      <h2>Save Changes?</h2>
+      <p class="auth-card__subtitle">You have unsaved changes to your account information.</p>
+      <div class="stacked-buttons">
+        <button type="button" class="btn" id="unsavedSaveBtn">Save Changes</button>
+        <button type="button" class="btn btn-muted" id="unsavedDiscardBtn">Discard Changes</button>
+        <button type="button" class="btn btn-danger" id="unsavedCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>
     <div class="modal-card profile-card">
@@ -116,7 +130,7 @@
           <p class="profile-card__role" id="profileCardRole"></p>
         </div>
       </div>
-      <a class="btn btn-muted" href="profile.html">Edit Information</a>
+      <a class="btn btn-muted" href="profile.html">Edit Account Information</a>
       <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
     </div>
   </div>

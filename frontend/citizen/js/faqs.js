@@ -87,6 +87,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         await askQuestion(value);
         questionInput.value = "";
         await loadMyQuestions();
+        const askDetails = document.getElementById("askQuestionDetails");
+        if (askDetails) askDetails.open = false;
       } catch (err) {
         alert(err.message);
       } finally {

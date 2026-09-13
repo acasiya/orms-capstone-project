@@ -228,6 +228,30 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         fields = ["first_name", "last_name", "email", "contact_number", "address", "profile_picture"]
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Self-service password change from My Profile → Edit Account Information →
+    Change Password (all three portals) — POST /api/auth/change-password/.
+    Requires the current password so a logged-in-but-unattended session
+    can't be used to lock the real owner out.
+    """
+
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+
+    def validate_current_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Current password is incorrect.")
+        return value
+
+    def save(self):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return user
+
+
 class AdminAccountSerializer(serializers.ModelSerializer):
     """
     Shapes a User into exactly the fields the admin Manage Accounts page
