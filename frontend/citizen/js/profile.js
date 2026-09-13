@@ -102,6 +102,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     return isEditDirty() || isPasswordDirty();
   }
 
+  // What to actually do once the user resolves the unsaved-changes modal
+  // (Save/Discard) — either "go to this link" or "switch to this tab". Set
+  // right before the modal opens, read by its buttons further down.
+  let pendingAction = null;
+  const unsavedChangesModal = document.getElementById("unsavedChangesModal");
+  const unsavedSaveBtn = document.getElementById("unsavedSaveBtn");
+  const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
+  const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
+
   // Catch-all for navigation this page doesn't otherwise intercept (navbar
   // links, browser back/refresh/close) — the Cancel button below gets a
   // nicer custom modal instead of this native browser prompt.
@@ -139,7 +148,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   tabs.forEach((tab) => {
-    tab.addEventListener("click", () => switchToTab(tab.dataset.tab));
+    tab.addEventListener("click", () => {
+      const key = tab.dataset.tab;
+      if (tab.classList.contains("active")) return;
+      if (isDirty()) {
+        pendingAction = () => switchToTab(key);
+        unsavedChangesModal.hidden = false;
+        return;
+      }
+      switchToTab(key);
+    });
   });
 
   const updatedModal = document.getElementById("profileUpdatedModal");
@@ -293,16 +311,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // just the Cancel button — so there's no way to click away from an
   // unsaved edit without being asked first. beforeunload above is the
   // fallback for anything that isn't a click (browser back/refresh/close).
-  const unsavedChangesModal = document.getElementById("unsavedChangesModal");
-  const unsavedSaveBtn = document.getElementById("unsavedSaveBtn");
-  const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
-  const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
-  let pendingHref = null;
-
-  function goToPendingTarget() {
-    if (pendingHref) window.location.href = pendingHref;
-  }
-
+  // Switching from Edit Account Information to Change Password (or back)
+  // while dirty goes through the same modal — see the tabs handler above.
   document.addEventListener(
     "click",
     (e) => {
@@ -313,7 +323,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
       e.preventDefault();
       e.stopPropagation();
-      pendingHref = href;
+      pendingAction = () => {
+        window.location.href = href;
+      };
       unsavedChangesModal.hidden = false;
     },
     true
@@ -322,15 +334,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   unsavedSaveBtn.addEventListener("click", async () => {
     unsavedChangesModal.hidden = true;
     const saved = isEditDirty() ? await commitEditSave() : await commitPasswordSave();
-    if (saved) goToPendingTarget();
+    if (saved && pendingAction) pendingAction();
+    pendingAction = null;
   });
   unsavedDiscardBtn.addEventListener("click", () => {
     unsavedChangesModal.hidden = true;
-    goToPendingTarget();
+    if (pendingAction) pendingAction();
+    pendingAction = null;
   });
   unsavedCancelBtn.addEventListener("click", () => {
     unsavedChangesModal.hidden = true;
-    pendingHref = null;
+    pendingAction = null;
   });
   unsavedChangesModal.addEventListener("click", (e) => {
     if (e.target === unsavedChangesModal) unsavedChangesModal.hidden = true;
