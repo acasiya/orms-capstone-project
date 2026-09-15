@@ -136,13 +136,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    const blockLot = document.getElementById("reportBlockLot").value.trim();
+    if (!blockLot) {
+      showFormError(form, "Please enter the Block, Lot, etc.");
+      return;
+    }
+
     if (select.value === "other" && !otherInput.value.trim()) {
       showFormError(form, "Please specify the ordinance in violation.");
       return;
     }
 
     const formData = new FormData();
-    formData.append("location", document.getElementById("reportLocation").value.trim());
+    // Combines Block/Lot with the selected street into one location string
+    // — same composition as Sign Up's address field — since Report.location
+    // is a single text field, not separate columns.
+    formData.append("location", `${blockLot}, ${locationInput.value.trim()}`);
     // Stores the ordinance's readable label as free text rather than its id
     // — Report.ordinance is a text snapshot, not a foreign key, so a report
     // still shows what it cited even if that ordinance is later edited or removed.

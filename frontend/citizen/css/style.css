@@ -1329,6 +1329,76 @@ button {
   line-height: 1.6;
 }
 
+/* Ask a Question — deliberately NOT styled like a .faq-card/.faq-item row
+   (an answer to read); it's an action, so it gets its own accented,
+   button-like card instead of blending into the FAQ list above it. */
+.ask-question-card {
+  background: var(--cream);
+  border: 1.5px solid var(--cream-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.ask-question-card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--navy);
+}
+
+.ask-question-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.ask-question-card__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ask-question-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ask-question-card__text strong {
+  font-size: 1rem;
+}
+
+.ask-question-card__text small {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.ask-question-card__chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  color: var(--navy);
+}
+
+.ask-question-card[open] .ask-question-card__chevron {
+  transform: rotate(180deg);
+}
+
+.ask-question-card__body {
+  padding: 0 24px 24px;
+  border-top: 1px solid var(--cream-dark);
+  padding-top: 18px;
+}
+
 .report-card__title {
   text-align: center;
   font-size: 1.02rem;

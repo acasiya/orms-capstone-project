@@ -137,58 +137,14 @@
 
   <!-- Secretary-only (see ordinances-list.js) — floating instead of in the
        toolbar so it stays reachable at a glance no matter how far the table
-       is scrolled. -->
-  <button type="button" class="fab-upload-ordinance" id="uploadOrdinanceBtn" title="Upload Ordinance" aria-label="Upload Ordinance">
+       is scrolled. Navigates to its own page rather than opening a modal. -->
+  <a class="fab-upload-ordinance" id="uploadOrdinanceBtn" href="upload-ordinance.html" title="Upload Ordinance" aria-label="Upload Ordinance">
     <svg class="nav-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
+  </a>
 
   <script src="js/ordinances-data.js"></script>
   <script src="js/ordinances-list.js"></script>
   <script src="js/admin.js"></script>
-
-  <!-- Upload ordinance -->
-  <div class="modal-overlay" id="uploadOrdinanceModal" hidden>
-    <div class="modal-card">
-      <h2>Upload Ordinance</h2>
-      <div class="field">
-        <label for="ordNumberInput">Ordinance No.</label>
-        <input type="text" id="ordNumberInput" placeholder="e.g. No. 31-(2026)" />
-      </div>
-      <div class="field">
-        <label for="ordTitleInput">Title</label>
-        <input type="text" id="ordTitleInput" placeholder="Ordinance title" />
-      </div>
-      <div class="field">
-        <label for="ordAuthorInput">Authored by</label>
-        <input type="text" id="ordAuthorInput" placeholder="e.g. Hon. Juan Dela Cruz" />
-      </div>
-      <div class="field">
-        <label for="ordCategoryInput">Category</label>
-        <input type="text" id="ordCategoryInput" placeholder="e.g. Public Safety" />
-      </div>
-      <div class="field">
-        <label for="ordDateInput">Date Approved</label>
-        <input type="date" id="ordDateInput" />
-      </div>
-      <div class="field">
-        <label for="ordDescriptionInput">Description</label>
-        <textarea id="ordDescriptionInput" placeholder="Full ordinance text/summary..."></textarea>
-      </div>
-      <div class="field">
-        <label class="upload-drop upload-drop--compact" for="ordPdfInput" id="ordPdfLabel">
-          <span class="upload-drop__icon"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 15v3.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V15"/></svg></span>
-          <span class="upload-drop__text" id="ordPdfLabelText">Click to browse for the ordinance PDF</span>
-          <span class="upload-drop__formats">PDF only, up to 20MB.</span>
-        </label>
-        <input type="file" id="ordPdfInput" accept="application/pdf" hidden />
-      </div>
-      <p class="form-error" id="uploadOrdinanceError" hidden></p>
-      <div class="btn-row">
-        <button type="button" class="btn btn-danger" id="uploadOrdinanceCancel">Cancel</button>
-        <button type="button" class="btn" id="uploadOrdinanceConfirm">Upload</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>
@@ -201,7 +157,7 @@
           <p class="profile-card__role" id="profileCardRole"></p>
         </div>
       </div>
-      <a class="btn btn-muted" href="profile.html">Edit Account Information</a>
+      <a class="btn btn-muted" href="profile.html">View Details</a>
       <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
     </div>
   </div>

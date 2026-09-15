@@ -17,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const formData = new FormData();
-    formData.append("location", document.getElementById("suggestionLocation").value.trim());
     formData.append("description", document.getElementById("suggestionDetails").value.trim());
     Array.from(document.getElementById("suggestionFiles").files).forEach((file) => formData.append("files", file));
 
