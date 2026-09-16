@@ -11,14 +11,17 @@
 
 // tile.openstreetmap.org is OSM's own demo server, meant for light,
 // occasional use — it actively rate-limits/blocks any third-party app that
-// hits it repeatedly (exactly what was happening here: every tile came back
-// as OSM's "Access blocked" 403 image instead of an actual map). CARTO's
-// free basemap tiles are the standard Leaflet drop-in replacement for
-// embedding in a real app — same OSM data, no such block.
-const HEATMAP_TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-const HEATMAP_TILE_SUBDOMAINS = "abcd";
+// hits it repeatedly (that's what was happening: every tile came back as
+// OSM's "Access blocked" 403 image instead of an actual map). CARTO's
+// basemaps.cartocdn.com looked like the standard free drop-in, but now
+// requires an API key too (tiles came back watermarked "API KEY REQUIRED").
+// Esri's ArcGIS World_Light_Gray_Base tiles are still free/keyless for this
+// kind of embedding — note the {z}/{y}/{x} order, which is Esri's own tile
+// addressing, not a typo of the usual {z}/{x}/{y}.
+const HEATMAP_TILE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const HEATMAP_TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  '&copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, DeLorme, NAVTEQ';
 
 // Barangay Platero / Villaggio di Xavier area. The small dashboard card
 // always uses this fixed framing (a 260px card can't usefully auto-fit a
@@ -75,8 +78,6 @@ function createIncidentHeatmap(el, opts = {}) {
 
   L.tileLayer(HEATMAP_TILE_URL, {
     maxZoom: 19,
-    subdomains: HEATMAP_TILE_SUBDOMAINS,
-    detectRetina: true,
     attribution: HEATMAP_TILE_ATTRIBUTION,
   }).addTo(map);
 
