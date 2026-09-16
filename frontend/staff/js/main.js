@@ -77,8 +77,8 @@ const ROLE_HOME = {
 // this is just where they land right after logging in/finishing setup.
 const STAFF_POSITION_HOME = {
   "Barangay Captain": "/staff/reports-dashboard.html",
-  Secretary: "/staff/concerns.html",
-  Investigator: "/staff/reports.html",
+  Secretary: "/staff/secretary-dashboard.html",
+  Investigator: "/staff/investigator-dashboard.html",
 };
 
 // Works out where to send someone right after apiLogin/apiCompleteStaffSetup

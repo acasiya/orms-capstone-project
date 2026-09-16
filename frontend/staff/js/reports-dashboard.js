@@ -1,13 +1,12 @@
-// SafeSpace — Reports Dashboard: week filter, status filter, pagination,
-// stat cards, the category pie, and the incident heatmap — all real, from
-// reports-data.js's API-backed data (category comes from matching each
-// report's ordinance against the real uploaded ordinances — see
-// reports-data.js's categoryForOrdinance). The heatmap is a Leaflet +
+// SafeSpace — Reports Dashboard: a single date-range filter drives every
+// card (stats, heatmap, category pie, status chart, investigator chart) —
+// all real, from reports-data.js's API-backed data (category comes from
+// matching each report's ordinance against the real uploaded ordinances —
+// see reports-data.js's categoryForOrdinance). The heatmap is a Leaflet +
 // OpenStreetMap density map keyed on each report's street (geocoded to a
 // centroid in street-coordinates.js) — see js/heatmap.js.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const WEEK_OPTIONS_COUNT = 8;
   const MONTHS_BACK_COUNT = 5;
   const QUARTERS_BACK_COUNT = 3;
   const YEARS_BACK_COUNT = 2;
@@ -16,12 +15,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
   ];
 
+  // A single period drives every card on the dashboard — the stats,
+  // heatmap, and all three charts — so the top date-range dropdown filters
+  // the whole page instead of each card tracking its own period.
   const state = {
-    weekOffset: 0,
-    categoryPeriod: "week",
-    heatmapPeriod: "week",
-    statusChartPeriod: "week",
-    investigatorPeriod: "week",
+    period: "week",
   };
 
   const dashboardMain = document.querySelector(".admin-content");
@@ -120,50 +118,74 @@ document.addEventListener("DOMContentLoaded", async () => {
     return stats;
   }
 
-  function deltaText(cur, prev) {
+  // The comparison period for a delta — one week/month/quarter/year further
+  // back than the selected one. "all" has no previous period to compare
+  // against.
+  function getPreviousPeriodValue(period) {
+    if (period === "week") return "week1";
+    const match = period.match(/^(week|month|quarter|year)(\d+)$/);
+    if (!match) return null;
+    return `${match[1]}${Number(match[2]) + 1}`;
+  }
+
+  function periodDeltaSuffix(period) {
+    if (period.startsWith("week")) return "vs last week";
+    if (period.startsWith("month")) return "vs last month";
+    if (period.startsWith("quarter")) return "vs last quarter";
+    if (period.startsWith("year")) return "vs last year";
+    return "";
+  }
+
+  function deltaText(cur, prev, suffix) {
     let pct;
     if (prev === 0) pct = cur === 0 ? 0 : 100;
     else pct = Math.round(((cur - prev) / prev) * 100);
     const arrow = pct >= 0 ? "↗" : "↘";
-    return { text: `${arrow} ${Math.abs(pct)}% vs last week`, isDown: pct < 0 };
+    return { text: `${arrow} ${Math.abs(pct)}% ${suffix}`, isDown: pct < 0 };
   }
 
-  function setStat(valueId, deltaId, cur, prev) {
+  function setStat(valueId, deltaId, cur, prev, suffix) {
     document.getElementById(valueId).textContent = cur;
-    const { text, isDown } = deltaText(cur, prev);
     const deltaEl = document.getElementById(deltaId);
+    if (prev === null) {
+      deltaEl.textContent = "";
+      deltaEl.classList.remove("stat-card__delta--down");
+      return;
+    }
+    const { text, isDown } = deltaText(cur, prev, suffix);
     deltaEl.textContent = text;
     deltaEl.classList.toggle("stat-card__delta--down", isDown);
   }
 
   function renderStats() {
-    const cur = computeStats(getReportsForWeekOffset(state.weekOffset));
-    const prev = computeStats(getReportsForWeekOffset(state.weekOffset + 1));
-    setStat("statTotal", "statTotalDelta", cur.total, prev.total);
-    setStat("statNew", "statNewDelta", cur.new, prev.new);
-    setStat("statProcess", "statProcessDelta", cur.process, prev.process);
-    setStat("statResolved", "statResolvedDelta", cur.resolved, prev.resolved);
-    setStat("statRemarks", "statRemarksDelta", cur.remarks, prev.remarks);
+    const cur = computeStats(getReportsForPeriod(state.period));
+    const prevPeriod = getPreviousPeriodValue(state.period);
+    const prev = prevPeriod ? computeStats(getReportsForPeriod(prevPeriod)) : null;
+    const suffix = periodDeltaSuffix(state.period);
+    setStat("statTotal", "statTotalDelta", cur.total, prev && prev.total, suffix);
+    setStat("statNew", "statNewDelta", cur.new, prev && prev.new, suffix);
+    setStat("statProcess", "statProcessDelta", cur.process, prev && prev.process, suffix);
+    setStat("statResolved", "statResolvedDelta", cur.resolved, prev && prev.resolved, suffix);
+    setStat("statRemarks", "statRemarksDelta", cur.remarks, prev && prev.remarks, suffix);
   }
 
-  // ---- Date range dropdown ----
+  // ---- Date range dropdown (drives the whole dashboard) ----
 
   const dateRangeLabel = document.getElementById("dateRangeLabel");
   const dateRangeMenu = document.getElementById("dateRangeMenu");
 
+  function currentPeriodLabel() {
+    const opt = buildPeriodOptions().find((o) => o.value === state.period);
+    return opt ? opt.label : "";
+  }
+
   function renderDateRangeMenu() {
-    const items = [];
-    for (let i = 0; i < WEEK_OPTIONS_COUNT; i++) {
-      const { label } = getWeekRange(i);
-      const prefix = i === 0 ? "This Week — " : i === 1 ? "Last Week — " : "";
-      items.push(
-        `<li data-offset="${i}" class="${i === state.weekOffset ? "active" : ""}">${prefix}${label}</li>`
-      );
-    }
-    dateRangeMenu.innerHTML = items.join("");
+    dateRangeMenu.innerHTML = buildPeriodOptions()
+      .map((o) => `<li data-value="${o.value}" class="${o.value === state.period ? "active" : ""}">${o.label}</li>`)
+      .join("");
     dateRangeMenu.querySelectorAll("li").forEach((li) => {
       li.addEventListener("click", () => {
-        state.weekOffset = Number(li.dataset.offset);
+        state.period = li.dataset.value;
         renderAll();
       });
     });
@@ -171,32 +193,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Reports by Category pie ----
 
-  const categoryPeriodMenu = document.getElementById("categoryPeriodMenu");
-  const categoryPeriodLabel = document.getElementById("categoryPeriodLabel");
   const categoryPie = document.getElementById("categoryPie");
   const categoryLegend = document.getElementById("categoryLegend");
-
-  // Rebuilds the menu's <li>s AND rewires their click handlers every call —
-  // rebuilding innerHTML without redoing this leaves the fresh <li>s with no
-  // listeners, so only the first selection would ever do anything.
-  function renderPeriodMenu(menuEl, labelEl, getValue, setValue, onChange) {
-    menuEl.innerHTML = buildPeriodOptions()
-      .map((o) => `<li data-value="${o.value}" class="${o.value === getValue() ? "active" : ""}">${o.label}</li>`)
-      .join("");
-    menuEl.querySelectorAll("li").forEach((li) => {
-      li.addEventListener("click", () => {
-        setValue(li.dataset.value);
-        labelEl.textContent = li.textContent;
-        renderPeriodMenu(menuEl, labelEl, getValue, setValue, onChange);
-        onChange();
-      });
-    });
-  }
 
   function renderCategoryPie() {
     categoryPie.querySelectorAll(".pie-chart__label, .pie-chart__empty").forEach((el) => el.remove());
 
-    const reports = getReportsForPeriod(state.categoryPeriod);
+    const reports = getReportsForPeriod(state.period);
     if (!reports.length) {
       categoryPie.style.background = "var(--border)";
       categoryPie.insertAdjacentHTML("beforeend", `<div class="pie-chart__empty">No data yet</div>`);
@@ -240,18 +243,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     ).join("");
   }
 
-  renderPeriodMenu(
-    categoryPeriodMenu,
-    categoryPeriodLabel,
-    () => state.categoryPeriod,
-    (v) => (state.categoryPeriod = v),
-    renderCategoryPie
-  );
-
   // ---- Reports by Status bar chart ----
 
-  const statusChartPeriodMenu = document.getElementById("statusChartPeriodMenu");
-  const statusChartPeriodLabel = document.getElementById("statusChartPeriodLabel");
   const statusBarChart = document.getElementById("statusBarChart");
 
   const STATUS_BAR_DEFS = [
@@ -263,7 +256,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const MAX_BAR_HEIGHT = 168; // px — leaves room for the count label above it
 
   function renderStatusChart() {
-    const stats = computeStats(getReportsForPeriod(state.statusChartPeriod));
+    const stats = computeStats(getReportsForPeriod(state.period));
     const maxCount = Math.max(stats.new, stats.process, stats.remarks, stats.resolved, 1);
 
     if (!stats.total) {
@@ -283,14 +276,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }).join("");
   }
 
-  renderPeriodMenu(
-    statusChartPeriodMenu,
-    statusChartPeriodLabel,
-    () => state.statusChartPeriod,
-    (v) => (state.statusChartPeriod = v),
-    renderStatusChart
-  );
-
   // ---- Investigator Performance bar chart (Barangay Captain only — this
   // whole dashboard is Captain-only, see admin.js's STAFF_NAV_ACCESS) ----
   // Counts how many reports each Investigator currently has claimed (see
@@ -298,8 +283,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // built from whichever Investigators show up claiming a report, since
   // there's no separate "list every Investigator" endpoint available here.
 
-  const investigatorPeriodMenu = document.getElementById("investigatorPeriodMenu");
-  const investigatorPeriodLabel = document.getElementById("investigatorPeriodLabel");
   const investigatorBarChart = document.getElementById("investigatorBarChart");
   const INVESTIGATOR_BAR_COLORS = [
     "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
@@ -307,7 +290,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ];
 
   function renderInvestigatorChart() {
-    const reports = getReportsForPeriod(state.investigatorPeriod).filter((r) => r.assignedInvestigator);
+    const reports = getReportsForPeriod(state.period).filter((r) => r.assignedInvestigator);
     const counts = {};
     reports.forEach((r) => {
       counts[r.assignedInvestigator] = (counts[r.assignedInvestigator] || 0) + 1;
@@ -335,13 +318,54 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  renderPeriodMenu(
-    investigatorPeriodMenu,
-    investigatorPeriodLabel,
-    () => state.investigatorPeriod,
-    (v) => (state.investigatorPeriod = v),
-    renderInvestigatorChart
-  );
+  // ---- Oldest Open Reports (aging list) ----
+  //
+  // Deliberately NOT filtered by state.period — an old report shouldn't
+  // vanish from this list just because the selected date range has moved
+  // past its submission date. Report has no resolved_at (see reports/
+  // models.py), so "days open" is measured from created_at to now for
+  // anything not yet Resolved, which is the closest honest proxy available.
+  const AGING_LIST_LIMIT = 8;
+  const agingReportsBody = document.getElementById("agingReportsBody");
+
+  function daysBetween(from, to) {
+    return Math.max(0, Math.floor((to - from) / (1000 * 60 * 60 * 24)));
+  }
+
+  function renderAgingReports() {
+    if (!agingReportsBody) return;
+    const now = new Date();
+    const open = liveReports()
+      .filter((r) => r.status !== "Resolved")
+      .slice()
+      .sort((a, b) => a.dateSubmitted - b.dateSubmitted)
+      .slice(0, AGING_LIST_LIMIT);
+
+    agingReportsBody.innerHTML = open.length
+      ? open
+          .map((r) => {
+            const days = daysBetween(r.dateSubmitted, now);
+            return `
+        <tr>
+          <td>${r.id.slice(0, 8).toUpperCase()}</td>
+          <td>${r.ordinance || "—"}</td>
+          <td>${r.location || "—"}</td>
+          <td>${days} ${days === 1 ? "day" : "days"}</td>
+          <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
+          <td>${r.assignedInvestigator || "Unclaimed"}</td>
+          <td><a class="recent-reports-table__action" href="report-detail.html?id=${encodeURIComponent(r.id)}" aria-label="View report">&#8594;</a></td>
+        </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="7" class="ordinances-empty">Nothing open — every report has been resolved.</td></tr>`;
+  }
+
+  function statusPillClass(status) {
+    if (status === "Resolved") return "status-pill--resolved";
+    if (status === "Under Review") return "status-pill--in-process";
+    if (status === "In Action") return "status-pill--remarks";
+    return "status-pill--new";
+  }
 
   // ---- Incident heatmap (real Leaflet + OpenStreetMap density map) ----
   //
@@ -352,10 +376,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const heatmapCanvasEl = document.getElementById("heatmapCanvas");
   const heatmapModal = document.getElementById("heatmapModal");
   const heatmapCanvasModalEl = document.getElementById("heatmapCanvasModal");
-  const heatmapPeriodMenu = document.getElementById("heatmapPeriodMenu");
-  const heatmapPeriodLabel = document.getElementById("heatmapPeriodLabel");
-  const heatmapModalPeriodMenu = document.getElementById("heatmapModalPeriodMenu");
-  const heatmapModalPeriodLabel = document.getElementById("heatmapModalPeriodLabel");
 
   // No-op unless setupHeatmap() succeeds — a failed map init (Leaflet or the
   // tile host unreachable) then just leaves an empty heatmap card instead of
@@ -370,7 +390,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const cardHeatmap = createIncidentHeatmap(heatmapCanvasEl, { interactive: false });
     let modalHeatmap = null;
 
-    const heatmapCounts = () => countByLocation(getReportsForPeriod(state.heatmapPeriod));
+    const heatmapCounts = () => countByLocation(getReportsForPeriod(state.period));
 
     renderHeatmaps = () => {
       const counts = heatmapCounts();
@@ -380,31 +400,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.warn("[heatmap] reports on streets with no known coordinates:", unmapped);
       }
     };
-
-    // Card and modal each have their own period dropdown; both drive
-    // state.heatmapPeriod and are rebuilt together so their active row and
-    // button label stay in sync.
-    function renderHeatmapMenus() {
-      const opts = buildPeriodOptions();
-      [
-        [heatmapPeriodMenu, heatmapPeriodLabel],
-        [heatmapModalPeriodMenu, heatmapModalPeriodLabel],
-      ].forEach(([menu, label]) => {
-        if (!menu) return;
-        menu.innerHTML = opts
-          .map((o) => `<li data-value="${o.value}" class="${o.value === state.heatmapPeriod ? "active" : ""}">${o.label}</li>`)
-          .join("");
-        const cur = opts.find((o) => o.value === state.heatmapPeriod) || opts[0];
-        if (label) label.textContent = cur.label;
-        menu.querySelectorAll("li").forEach((li) => {
-          li.addEventListener("click", () => {
-            state.heatmapPeriod = li.dataset.value;
-            renderHeatmapMenus();
-            renderHeatmaps();
-          });
-        });
-      });
-    }
 
     function openHeatmapModal() {
       heatmapModal.hidden = false;
@@ -436,7 +431,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (modalHeatmap) modalHeatmap.invalidate();
     });
 
-    renderHeatmapMenus();
     // Defer the first paint: during DOMContentLoaded the card hasn't been
     // laid out yet, so Leaflet would measure it at 0×0 and mis-fit the view.
     requestAnimationFrame(() => {
@@ -453,16 +447,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     heatmapCanvasEl.innerHTML = `<div class="ordinances-empty">Map unavailable</div>`;
   }
 
-  // ---- Wire up ----
+  // ---- Wire up — one period, every card ----
 
   function renderAll() {
-    dateRangeLabel.textContent = getWeekRange(state.weekOffset).label;
+    dateRangeLabel.textContent = currentPeriodLabel();
     renderDateRangeMenu();
     renderStats();
+    renderCategoryPie();
+    renderStatusChart();
+    renderInvestigatorChart();
+    renderHeatmaps();
+    renderAgingReports();
   }
 
-  renderAll();
-  renderCategoryPie();
-  renderStatusChart();
-  renderInvestigatorChart();
+  // Deferred two frames, same as setupHeatmap()'s own first paint above —
+  // at DOMContentLoaded the heatmap card hasn't been laid out yet, so
+  // calling renderHeatmaps() (via renderAll) synchronously here would
+  // measure its canvas at 0×0. Later calls (dropdown selection) run
+  // renderAll() directly since layout is already settled by then.
+  requestAnimationFrame(() => requestAnimationFrame(renderAll));
 });

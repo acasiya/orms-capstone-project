@@ -74,6 +74,12 @@ function getAdminUser() {
 // edit controls show (see report-detail.js/concern-detail.js/
 // ordinance-detail.js's own role checks), not access to the page itself.
 const STAFF_NAV_ACCESS = {
+  // Each role's own overview dashboard is listed first so it's also the
+  // first entry in allowedPages below — enforceStaffSectionAccess uses that
+  // as the redirect target for a page the current role can't see, which is
+  // what makes it the landing page after login (see main.js's
+  // STAFF_POSITION_HOME, kept in sync with this).
+  "investigator-dashboard.html": ["Investigator"],
   "reports-dashboard.html": ["Barangay Captain"],
   // Barangay Captain gets read-only Reports too — the Reports Dashboard's
   // Recent Reports table (their only path to an individual report's detail
@@ -82,6 +88,7 @@ const STAFF_NAV_ACCESS = {
   // keeps them read-only there, same as Ordinances).
   "reports.html": ["Investigator", "Barangay Captain"],
   "concerns-dashboard.html": ["Barangay Captain"],
+  "secretary-dashboard.html": ["Secretary"],
   "concerns.html": ["Secretary"],
   "ordinances.html": ["Barangay Captain", "Secretary", "Investigator"],
   "questions.html": ["Barangay Captain", "Secretary", "Investigator"],

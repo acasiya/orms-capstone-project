@@ -2710,13 +2710,38 @@ button {
    flex-column, which is what kept these 5 cards stacked instead of in a row. */
 .dash-stats.dash-stats--row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
 }
 
+/* Compact, horizontal layout (icon beside the label/value instead of above
+   it) so all 5 cards read at a glance without pushing the charts below the
+   fold — the stacked, full-padding layout .stat-card uses elsewhere is too
+   tall once there are this many cards in a row. */
 .dash-stats--row .stat-card {
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.dash-stats--row .stat-card__icon {
+  width: 30px;
+  height: 30px;
+  font-size: 0.9rem;
+}
+
+.dash-stats--row .stat-card__label {
+  font-size: 0.68rem;
+}
+
+.dash-stats--row .stat-card__value {
+  font-size: 1.15rem;
+  margin: 1px 0;
+}
+
+.dash-stats--row .stat-card__delta {
+  font-size: 0.66rem;
 }
 
 .dash-row-bottom {
@@ -2759,6 +2784,12 @@ button {
   font-size: 1.02rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.dash-card__subtitle {
+  margin: -8px 0 14px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
 }
 
 .recent-reports-table th,
