@@ -2703,7 +2703,12 @@ button {
   display: block;
 }
 
-.dash-stats--row {
+/* Qualified as .dash-stats.dash-stats--row (two classes) rather than just
+   .dash-stats--row — the base .dash-stats rule below is also a single
+   class, so at equal specificity its later position in the stylesheet was
+   winning the cascade and silently overriding this grid with its own
+   flex-column, which is what kept these 5 cards stacked instead of in a row. */
+.dash-stats.dash-stats--row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;

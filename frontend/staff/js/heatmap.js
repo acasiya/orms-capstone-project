@@ -54,6 +54,18 @@ function countByLocation(items) {
   return counts;
 }
 
+// Report.location is now "Block X, Lot Y, <Street>" (see file-report.js's
+// Block/Lot field) instead of just the street name, so a plain
+// STREET_COORDINATES[name] lookup stopped matching anything and every
+// report silently vanished from the heatmap. Falls back to whichever known
+// street the location ends with, on a ", " boundary so "Blueberry Street"
+// can't accidentally match something like "New Blueberry Street".
+function resolveStreetCoord(locationName) {
+  if (STREET_COORDINATES[locationName]) return STREET_COORDINATES[locationName];
+  const match = Object.keys(STREET_COORDINATES).find((street) => locationName.endsWith(`, ${street}`));
+  return match ? STREET_COORDINATES[match] : null;
+}
+
 // Creates a heatmap bound to `el` (a .heatmap-canvas div). Returns a small
 // handle: { render(counts), invalidate(), map }.
 //
@@ -110,7 +122,7 @@ function createIncidentHeatmap(el, opts = {}) {
 
     Object.entries(counts).forEach(([name, count]) => {
       if (!count) return;
-      const coord = STREET_COORDINATES[name];
+      const coord = resolveStreetCoord(name);
       if (!coord) {
         unmapped.push(name);
         return;
