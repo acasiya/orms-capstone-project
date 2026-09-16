@@ -2749,7 +2749,10 @@ button {
   grid-template-columns: 1.2fr 1fr;
   gap: 20px;
   margin-top: 20px;
-  align-items: start;
+  /* stretch (grid's default) rather than start — keeps the heatmap and
+     category cards the same height and bottom-aligned even when one has
+     more content (e.g. a long category legend) than the other. */
+  align-items: stretch;
 }
 
 /* A single full-width card row (e.g. Concerns/Suggestions by Category,
@@ -2983,6 +2986,15 @@ button {
 
 /* Incident heatmap — real Leaflet + OpenStreetMap map (see js/heatmap.js) */
 
+/* Column layout so the map (flex: 1 below) is what absorbs the extra height
+   .dash-row-bottom's align-items: stretch gives this card when the sibling
+   category card's legend is taller — the map grows instead of leaving dead
+   space under it, and the two cards still end up the same overall height. */
+.heatmap-card {
+  display: flex;
+  flex-direction: column;
+}
+
 /* z-index: 0 traps Leaflet's internal panes/controls (which climb to ~1000)
    in a local stacking context, so the map can't paint over the page's
    modal overlay (z-index 50) or the sidebar. */
@@ -2991,7 +3003,8 @@ button {
   z-index: 0;
   border-radius: 8px;
   overflow: hidden;
-  height: 260px;
+  flex: 1;
+  min-height: 260px;
   background: linear-gradient(135deg, #eef1e6 0%, #e3ead9 45%, #e9e4d3 100%);
   cursor: pointer;
 }
@@ -3162,6 +3175,11 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Lets the legend give way to the pie rather than forcing
+     .category-card__body to wrap the whole legend below it — the label
+     itself truncates (see .pie-legend__label) instead. */
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 .pie-legend li {
@@ -3171,7 +3189,14 @@ button {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
+  min-width: 0;
+}
+
+.pie-legend__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .pie-legend__dot {

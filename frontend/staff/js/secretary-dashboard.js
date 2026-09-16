@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     categoryLegend.innerHTML = folders
-      .map((f) => `<li><span class="pie-legend__dot" style="background:${folderColor(f.id)}"></span>${f.name} (${counts[f.id] || 0})</li>`)
+      .map((f) => `<li title="${f.name} (${counts[f.id] || 0})"><span class="pie-legend__dot" style="background:${folderColor(f.id)}"></span><span class="pie-legend__label">${f.name} (${counts[f.id] || 0})</span></li>`)
       .join("");
   }
 

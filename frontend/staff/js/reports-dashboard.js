@@ -239,7 +239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     categoryLegend.innerHTML = REPORT_CATEGORIES.map(
-      (c) => `<li><span class="pie-legend__dot" style="background:${categoryColor(c)}"></span>${c} (${counts[c] || 0})</li>`
+      (c) => `<li title="${c} (${counts[c] || 0})"><span class="pie-legend__dot" style="background:${categoryColor(c)}"></span><span class="pie-legend__label">${c} (${counts[c] || 0})</span></li>`
     ).join("");
   }
 
