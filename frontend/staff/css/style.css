@@ -113,7 +113,7 @@ button {
 .navbar__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   font-family: "Poppins", var(--serif);
   font-weight: 400;
   font-size: 1.3rem;
@@ -133,12 +133,10 @@ button {
 }
 
 .navbar__logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   background: url("../assets/logo.png") center / cover no-repeat;
-  border: 2px solid var(--cream);
 }
 
 .navbar__links {
@@ -908,7 +906,6 @@ button {
 .doc-preview__seal {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
   background: url("../assets/logo.png") center / cover no-repeat;
   flex-shrink: 0;
 }
@@ -2213,12 +2210,10 @@ button {
 }
 
 .admin-sidebar__logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  width: 54px;
+  height: 54px;
   flex-shrink: 0;
   background: url("../assets/logo.png") center / cover no-repeat;
-  border: 2px solid var(--cream);
 }
 
 .admin-sidebar__brand-text {

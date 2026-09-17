@@ -493,10 +493,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutNo = document.getElementById("logoutNo");
 
   // Both the sidebar's Logout button and the profile popup's Log Out button
-  // (when present) open the same confirmation modal.
+  // (when present) open the same confirmation modal. The profile popup
+  // itself must close first — both are full-screen .modal-overlay elements
+  // with the same stacking, so leaving it open buried the confirmation
+  // behind it instead of showing on top.
   [document.getElementById("logoutBtn"), document.getElementById("profileLogoutBtn")].forEach((btn) => {
     if (btn && logoutConfirmModal) {
       btn.addEventListener("click", () => {
+        const openProfileModal = document.getElementById("profileModal");
+        if (openProfileModal) openProfileModal.hidden = true;
         logoutConfirmModal.hidden = false;
       });
     }
