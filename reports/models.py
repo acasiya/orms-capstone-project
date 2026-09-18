@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class Report(models.Model):
@@ -164,3 +165,35 @@ class FAQ(models.Model):
 
     def __str__(self):
         return self.question
+
+
+class ReportVerificationCode(models.Model):
+    """
+    A short-lived 6-digit code emailed to confirm the real account owner is
+    the one filing a report — required on a citizen's first-ever report, and
+    again any time it's been more than REVERIFY_AFTER_DAYS since their last
+    one (see reports/verification.py). Same shape as
+    accounts.PasswordResetCode, but kept separate since it gates report
+    filing specifically, not the account itself.
+    """
+
+    CODE_TTL_MINUTES = 15
+    # Once verified, the code stays good for this long — enough time to
+    # finish filling out the report form and hit Submit — after which
+    # verifying again would be required.
+    VERIFIED_GRACE_MINUTES = 60
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="report_verification_codes"
+    )
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    def is_valid(self):
+        return self.verified_at is None and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"Report verification code for {self.user}"

@@ -13,6 +13,10 @@ below:
     - their account is rejected (with the admin's reason, and another chance
       to sign up again with the same email)
     - a question they asked on the FAQs page is answered
+    - they're filing a report and need to verify it's really them (a
+      6-digit code — see reports/verification.py)
+    - their account gets automatically disabled for filing reports too
+      fast (suspicious activity)
   Staff gets emailed when...
     - a report is submitted (needs review)
     - a suggestion is submitted (needs review)
@@ -132,6 +136,33 @@ def send_question_answered_email(question):
         subject="SafeSpace — Your question has been answered",
         template_name="question_answered",
         context={"question": question},
+    )
+
+
+def send_report_verification_code_email(user, code, expires_minutes):
+    # Filing a report needs to confirm the real account owner is the one
+    # doing it — see reports/verification.py — hence its own template
+    # distinct from the password reset code, even though the layout is the
+    # same idea.
+    send_templated_email(
+        to=user.email,
+        subject="SafeSpace — Your report verification code",
+        template_name="report_verification_code",
+        context={"user": user, "code": code, "expires_minutes": expires_minutes},
+    )
+
+
+def send_account_suspicious_activity_email(user):
+    # Sent when reports/verification.py's abuse lockout disables the
+    # account automatically — the citizen can't log in to see an in-app
+    # notice, so this is the only place they'd learn why and what to do
+    # (reset their password via Forgot Password; an admin still has to
+    # manually re-enable the account afterward from Manage Accounts).
+    send_templated_email(
+        to=user.email,
+        subject="SafeSpace — Your account has been disabled due to suspicious activity",
+        template_name="account_suspicious_activity",
+        context={"user": user},
     )
 
 

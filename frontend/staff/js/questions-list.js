@@ -15,19 +15,38 @@ function formatQuestionDate(iso) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const PAGE_SIZE = 8;
+
   const list = document.getElementById("questionsList");
   const statusFilter = document.getElementById("statusFilter");
+  const pagination = document.getElementById("questionsPagination");
   if (!list) return;
 
   let questions = [];
+  let page = 1;
 
-  function render() {
+  function getFiltered() {
     const filterValue = statusFilter ? statusFilter.value : "all";
-    const rows = questions.filter((q) => {
+    return questions.filter((q) => {
       if (filterValue === "pending") return !q.is_answered;
       if (filterValue === "answered") return q.is_answered;
       return true;
     });
+  }
+
+  function render() {
+    const filtered = getFiltered();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    page = Math.min(page, totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const rows = filtered.slice(start, start + PAGE_SIZE);
+
+    if (pagination) {
+      renderPaginationControls(pagination, page, totalPages, (n) => {
+        page = n;
+        render();
+      });
+    }
 
     if (!rows.length) {
       list.innerHTML = `<div class="ordinances-empty">${questions.length ? "No questions match this filter." : "No questions asked yet."}</div>`;
@@ -83,7 +102,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  if (statusFilter) statusFilter.addEventListener("change", render);
+  if (statusFilter) {
+    statusFilter.addEventListener("change", () => {
+      page = 1;
+      render();
+    });
+  }
 
   list.innerHTML = `<div class="ordinances-empty">Loading questions...</div>`;
   try {

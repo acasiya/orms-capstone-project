@@ -1,6 +1,9 @@
+import random
+from datetime import timedelta
+
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -11,23 +14,31 @@ from orms_backend.emails import (
     send_report_resolved_email,
     send_report_submitted_citizen_email,
     send_report_submitted_staff_emails,
+    send_report_verification_code_email,
     send_suggestion_submitted_citizen_email,
     send_suggestion_submitted_staff_emails,
 )
 
-from .models import FAQ, Concern, ConcernFolder, Question, Report
+from .models import FAQ, Concern, ConcernFolder, Question, Report, ReportVerificationCode
 from .serializers import (
     FAQSerializer,
     ConcernFolderSerializer,
     ConcernSerializer,
     QuestionSerializer,
     ReportSerializer,
+    ReportVerifyCodeSerializer,
     StaffConcernSerializer,
     StaffConcernUpdateSerializer,
     StaffQuestionAnswerSerializer,
     StaffQuestionSerializer,
     StaffReportSerializer,
     StaffReportUpdateSerializer,
+)
+from .verification import (
+    check_and_apply_abuse_lockout,
+    cooldown_remaining,
+    has_valid_verification,
+    verification_required,
 )
 
 
@@ -38,7 +49,9 @@ def _staff_recipients():
 class ReportListCreateView(generics.ListCreateAPIView):
     """
     GET /api/reports/ — the logged-in citizen's own filed reports (My Reports).
-    POST /api/reports/ — file a new report (File Report page).
+    POST /api/reports/ — file a new report (File Report page). Gated by
+    reports/verification.py's three anti-abuse checks — see that module's
+    docstring for the full picture.
     """
     serializer_class = ReportSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -49,11 +62,88 @@ class ReportListCreateView(generics.ListCreateAPIView):
     def get_serializer_context(self):
         return {"request": self.request}
 
+    def create(self, request, *args, **kwargs):
+        user = request.user
+
+        remaining = cooldown_remaining(user)
+        if remaining is not None:
+            minutes = max(1, int(remaining.total_seconds() // 60) + 1)
+            return Response(
+                {"detail": f"You can file another report in about {minutes} minute(s)."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        if verification_required(user) and not has_valid_verification(user):
+            return Response(
+                {
+                    "detail": "Please verify your email before filing this report.",
+                    "verification_required": True,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            # Consumed on success so the next report needs fresh verification
+            # once REVERIFY_AFTER_DAYS rolls around again.
+            ReportVerificationCode.objects.filter(user=user, verified_at__isnull=False).delete()
+            check_and_apply_abuse_lockout(user)
+
+        return response
+
     def perform_create(self, serializer):
         report = serializer.save()
         log_action(self.request.user, f"Submitted a report — {report.ordinance}")
         send_report_submitted_citizen_email(report)
         send_report_submitted_staff_emails(report, _staff_recipients())
+
+
+class ReportVerificationStatusView(APIView):
+    """
+    GET /api/reports/verification-status/ — File Report calls this on load
+    to decide whether to show the "verify it's you" gate and/or a cooldown
+    notice before the citizen even starts filling out the form.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        remaining = cooldown_remaining(user)
+        return Response({
+            "verification_required": verification_required(user) and not has_valid_verification(user),
+            "cooldown_seconds": int(remaining.total_seconds()) if remaining is not None else 0,
+        })
+
+
+class ReportSendVerificationView(APIView):
+    """POST /api/reports/send-verification/ — emails a fresh 6-digit code to confirm the report filer's identity."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        code = f"{random.randint(0, 999999):06d}"
+        ReportVerificationCode.objects.create(
+            user=user,
+            code=code,
+            expires_at=timezone.now() + timedelta(minutes=ReportVerificationCode.CODE_TTL_MINUTES),
+        )
+        send_report_verification_code_email(user, code, ReportVerificationCode.CODE_TTL_MINUTES)
+        return Response({"detail": "A verification code has been sent to your email."})
+
+
+class ReportVerifyCodeView(APIView):
+    """POST /api/reports/verify-code/ — checks the code sent by ReportSendVerificationView."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ReportVerifyCodeSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Verified."})
 
 
 class ReportDetailView(generics.RetrieveAPIView):

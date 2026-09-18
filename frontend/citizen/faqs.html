@@ -44,46 +44,45 @@
       <div class="faq-card" id="faqList">
         <div class="ordinances-empty">Loading...</div>
       </div>
-
-      <details class="ask-question-card" id="askQuestionDetails" style="margin-top:36px;">
-        <summary>
-          <span class="ask-question-card__icon" aria-hidden="true"><svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg></span>
-          <span class="ask-question-card__text">
-            <strong>Didn't find your answer above?</strong>
-            <small>Ask a Barangay Official directly</small>
-          </span>
-          <span class="ask-question-card__chevron" aria-hidden="true">&#9662;</span>
-        </summary>
-        <div class="ask-question-card__body">
-          <p class="auth-card__subtitle" style="margin-top:0;">Don't see your question above? Ask it directly — a Barangay Official will get back to you.</p>
-          <form id="askQuestionForm">
-            <div class="field">
-              <label for="questionInput">Your Question</label>
-              <textarea id="questionInput" placeholder="Type your question here..." required></textarea>
-            </div>
-            <button type="submit" class="btn">Submit Question</button>
-          </form>
-        </div>
-      </details>
-
-      <div data-auth-only style="margin-top:36px;">
-        <h1 class="page-heading">My Questions</h1>
-        <div class="faq-card" id="myQuestionsList">
-          <div class="ordinances-empty">Loading...</div>
-        </div>
-      </div>
       </div>
 
       <aside class="info-panel">
         <h3 class="info-panel__title">Need More Help?</h3>
         <ul>
           <li>Check the list on the left first — most common questions are already answered there.</li>
-          <li>Ask directly if yours isn't covered; a Barangay Official will reply and you'll get an email once it's answered.</li>
-          <li>Track your past questions anytime under My Questions.</li>
+          <li>Still stuck? Use the <strong>?</strong> button in the corner to ask a Barangay Official directly — you'll get an email with the answer once it's ready.</li>
         </ul>
         <p class="info-panel__note">Looking to report something instead? Use File Report or Submit Suggestion from the menu above.</p>
       </aside>
       </div>
+    </div>
+  </div>
+
+  <!-- Floating "Ask a Question" button — opens askQuestionModal below -->
+  <button type="button" class="fab-ask-question" id="askQuestionFab" title="Ask a Question" aria-label="Ask a Question">?</button>
+
+  <!-- Ask a Question popup -->
+  <div class="modal-overlay" id="askQuestionModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Ask a Question</h2>
+      <p class="auth-card__subtitle">Don't see your answer in the FAQs? Ask directly — a Barangay Official will get back to you, and we'll email you the answer.</p>
+      <form id="askQuestionForm">
+        <div class="field">
+          <label for="questionInput">Your Question</label>
+          <textarea id="questionInput" placeholder="Type your question here..." required></textarea>
+        </div>
+        <button type="submit" class="btn">Submit Question</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirms the question was sent, before the answer email arrives -->
+  <div class="modal-overlay" id="askQuestionSentModal" hidden>
+    <div class="modal-card">
+      <h2>Question Sent!</h2>
+      <p class="auth-card__subtitle">A Barangay Official will review it soon. We'll email you the answer once it's ready.</p>
+      <button type="button" class="btn" data-modal-confirm>Confirm</button>
     </div>
   </div>
 

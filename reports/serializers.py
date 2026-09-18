@@ -1,6 +1,7 @@
+from django.utils import timezone
 from rest_framework import serializers
 
-from .models import FAQ, Concern, ConcernAttachment, ConcernFolder, Question, Report, ReportAttachment
+from .models import FAQ, Concern, ConcernAttachment, ConcernFolder, Question, Report, ReportAttachment, ReportVerificationCode
 
 MAX_ATTACHMENTS = 5
 MAX_TOTAL_ATTACHMENT_BYTES = 50 * 1024 * 1024
@@ -301,3 +302,31 @@ class FAQSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("Answer can't be empty.")
         return value
+
+
+class ReportVerifyCodeSerializer(serializers.Serializer):
+    """
+    POST /api/reports/verify-code/ — checks the code emailed by
+    ReportSendVerificationView. Scoped to the logged-in citizen (not email —
+    they're already authenticated), unlike PasswordResetVerifySerializer
+    which runs before login.
+    """
+
+    code = serializers.CharField()
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        verification_code = (
+            ReportVerificationCode.objects.filter(user=user, code=attrs["code"], verified_at__isnull=True)
+            .order_by("-created_at")
+            .first()
+        )
+        if not verification_code or not verification_code.is_valid():
+            raise serializers.ValidationError("Invalid or expired code.")
+        attrs["verification_code"] = verification_code
+        return attrs
+
+    def save(self):
+        verification_code = self.validated_data["verification_code"]
+        verification_code.verified_at = timezone.now()
+        verification_code.save(update_fields=["verified_at"])

@@ -42,10 +42,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     pdfPreviewFrame.src = pdfViewerUrl(ordinance.pdf);
     pdfPreview.hidden = false;
     pdfPreviewNote.hidden = false;
-    downloadBtn.href = ordinance.pdf;
-    downloadBtn.target = "_blank";
-    downloadBtn.rel = "noopener";
+    downloadBtn.hidden = false;
+    downloadBtn.href = "#";
     downloadBtn.textContent = `Download ${ordinance.number}`;
+
+    // Downloading goes through the API (not a plain href straight to
+    // storage) so it can actually be gated to one download per citizen and
+    // logged — see OrdinanceDownloadView. Guests get the same sign-up/login
+    // prompt as every other gated action on the citizen portal.
+    downloadBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (!isLoggedIn()) {
+        const authGateModal = document.getElementById("authGateModal");
+        const authGateTitle = document.getElementById("authGateTitle");
+        if (authGateModal && authGateTitle) {
+          authGateTitle.textContent = "Want to Download This Ordinance?";
+          authGateModal.hidden = false;
+        }
+        return;
+      }
+
+      const originalText = downloadBtn.textContent;
+      downloadBtn.textContent = "Preparing download...";
+      try {
+        const response = await authFetch(`/api/ordinances/${encodeURIComponent(ordinance.id)}/download/`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          alert(data.detail || "Could not download this ordinance.");
+          return;
+        }
+        window.open(data.pdf_url, "_blank", "noopener");
+      } catch {
+        alert("Could not download this ordinance. Please try again.");
+      } finally {
+        downloadBtn.textContent = originalText;
+      }
+    });
   } else {
     pdfPreview.hidden = true;
     pdfPreviewNote.hidden = true;

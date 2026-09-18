@@ -98,14 +98,13 @@
       <div class="admin-content">
         <div class="page-shell page-shell--nested">
           <div class="ordinances-toolbar">
-            <select id="sortField" class="sort-select">
-              <option value="none">- All -</option>
-              <option value="title" selected>Title</option>
-              <option value="author">Author</option>
-              <option value="numberSort">No.</option>
-              <option value="dateSort">Date Approved</option>
-            </select>
             <form class="ordinances-search" id="ordinanceSearchForm">
+              <select id="filterField" class="sort-select">
+                <option value="title">Title</option>
+                <option value="author">Author</option>
+                <option value="number">Ordinance No.</option>
+                <option value="category">Category</option>
+              </select>
               <input type="text" id="ordinanceSearch" placeholder="Search..." />
               <button type="submit">Search</button>
             </form>
@@ -129,10 +128,7 @@
 
           <div class="pagination-bar">
             <span id="paginationInfo"></span>
-            <div class="pagination-controls">
-              <button type="button" id="paginationPrev" aria-label="Previous page">&#8249;</button>
-              <button type="button" id="paginationNext" aria-label="Next page">&#8250;</button>
-            </div>
+            <div class="pagination-controls" id="ordinancesPagination"></div>
           </div>
         </div>
       </div>
@@ -147,6 +143,7 @@
   </a>
 
   <script src="js/ordinances-data.js"></script>
+  <script src="js/pagination.js"></script>
   <script src="js/ordinances-list.js"></script>
   <script src="js/admin.js"></script>
 

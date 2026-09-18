@@ -3,13 +3,17 @@
 // Data comes from the real API (see audit-log-data.js).
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const PAGE_SIZE = 15;
+
   const tbody = document.getElementById("auditTableBody");
   const sortSelect = document.getElementById("sortSelect");
   const typeFilter = document.getElementById("typeFilter");
   const searchForm = document.getElementById("auditSearchForm");
   const searchInput = document.getElementById("auditSearchInput");
+  const pagination = document.getElementById("auditPagination");
 
   let logs = [];
+  let page = 1;
 
   async function loadLogs() {
     tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading audit logs...</td></tr>`;
@@ -43,12 +47,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       return new Date(b.timeAt) - new Date(a.timeAt);
     });
 
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    page = Math.min(page, totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+    if (pagination) {
+      renderPaginationControls(pagination, page, totalPages, (n) => {
+        page = n;
+        render();
+      });
+    }
+
     if (!rows.length) {
       tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No logs match this filter.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = rows
+    tbody.innerHTML = pageRows
       .map(
         (a) => `
         <tr>
@@ -62,11 +78,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  sortSelect.addEventListener("change", render);
-  typeFilter.addEventListener("change", render);
-  searchInput.addEventListener("input", render);
+  sortSelect.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
+  typeFilter.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
+  searchInput.addEventListener("input", () => {
+    page = 1;
+    render();
+  });
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
+    page = 1;
     render();
   });
 

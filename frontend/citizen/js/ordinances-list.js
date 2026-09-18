@@ -2,15 +2,19 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("ordinanceRows");
-  const sortSelect = document.getElementById("sortField");
+  const filterField = document.getElementById("filterField");
   const searchInput = document.getElementById("ordinanceSearch");
   const searchForm = document.getElementById("ordinanceSearchForm");
   const paginationInfo = document.getElementById("paginationInfo");
-  const paginationPrev = document.getElementById("paginationPrev");
-  const paginationNext = document.getElementById("paginationNext");
+  const pagination = document.getElementById("ordinancesPagination");
 
   const PAGE_SIZE = 5;
   let currentPage = 1;
+  // Only re-filters on Search (or pressing Enter in the field), not on every
+  // keystroke — this tracks the query that was actually searched for, kept
+  // separate from whatever's currently typed in the box.
+  let appliedQuery = "";
+  let appliedField = filterField.value;
 
   tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
@@ -21,30 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function getFiltered() {
-    const query = searchInput.value.trim().toLowerCase();
-
-    return liveOrdinances().filter((o) => {
-      return (
-        !query ||
-        o.title.toLowerCase().includes(query) ||
-        o.author.toLowerCase().includes(query) ||
-        o.number.toLowerCase().includes(query)
-      );
-    });
-  }
-
-  function getSorted(list) {
-    const sortKey = sortSelect.value;
-    if (sortKey === "none") return list;
-    return [...list].sort((a, b) => {
-      let av = a[sortKey];
-      let bv = b[sortKey];
-      if (typeof av === "string") av = av.toLowerCase();
-      if (typeof bv === "string") bv = bv.toLowerCase();
-      if (av < bv) return -1;
-      if (av > bv) return 1;
-      return 0;
-    });
+    if (!appliedQuery) return liveOrdinances();
+    return liveOrdinances().filter((o) => String(o[appliedField] || "").toLowerCase().includes(appliedQuery));
   }
 
   function escapeHtml(str) {
@@ -54,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function render() {
-    const allRows = getSorted(getFiltered());
+    const allRows = getFiltered();
     const totalPages = Math.max(1, Math.ceil(allRows.length / PAGE_SIZE));
     currentPage = Math.min(currentPage, totalPages);
 
@@ -95,29 +77,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     paginationInfo.textContent = allRows.length
       ? `Showing ${start + 1} to ${Math.min(start + PAGE_SIZE, allRows.length)} of ${allRows.length} entries`
       : "Showing 0 entries";
-    paginationPrev.disabled = currentPage <= 1;
-    paginationNext.disabled = currentPage >= totalPages;
+    renderPaginationControls(pagination, currentPage, totalPages, (n) => {
+      currentPage = n;
+      render();
+    });
   }
 
-  sortSelect.addEventListener("change", () => {
-    currentPage = 1;
-    render();
-  });
+  // Only actually filters when Search is pressed (or Enter in the field) —
+  // not on every keystroke — and only searches whichever single field is
+  // selected, not every column at once.
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
+    appliedField = filterField.value;
+    appliedQuery = searchInput.value.trim().toLowerCase();
     currentPage = 1;
-    render();
-  });
-  searchInput.addEventListener("input", () => {
-    currentPage = 1;
-    render();
-  });
-  paginationPrev.addEventListener("click", () => {
-    currentPage -= 1;
-    render();
-  });
-  paginationNext.addEventListener("click", () => {
-    currentPage += 1;
     render();
   });
 

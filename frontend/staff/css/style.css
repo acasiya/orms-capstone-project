@@ -790,6 +790,12 @@ button {
   color: var(--text);
 }
 
+/* For a pagination bar with no "Showing X-Y of Z" text alongside it —
+   centers the controls instead of space-between shoving a lone child left. */
+.pagination-bar--center {
+  justify-content: center;
+}
+
 .pagination-controls {
   display: flex;
   gap: 8px;
@@ -816,6 +822,14 @@ button {
 .pagination-controls button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* "Page X of Y" — click to jump to a specific page (see pagination.js) */
+.pagination-jump-btn {
+  width: auto !important;
+  padding: 0 12px;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .ordinances-empty {

@@ -7,12 +7,6 @@ async function getFAQs() {
   return response.json();
 }
 
-async function getMyQuestions() {
-  const response = await authFetch("/api/questions/");
-  if (!response.ok) throw new Error("Could not load your questions.");
-  return response.json();
-}
-
 async function askQuestion(question) {
   const response = await authFetch("/api/questions/", {
     method: "POST",

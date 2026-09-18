@@ -184,18 +184,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return status === "Resolved" ? "status-pill--resolved" : "status-pill--in-process";
   }
 
-  function buildPageList(current, total) {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages = [1];
-    if (current > 3) pages.push("...");
-    const start = Math.max(2, current - 1);
-    const end = Math.min(total - 1, current + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (current < total - 2) pages.push("...");
-    pages.push(total);
-    return pages;
-  }
-
   function renderRecentConcerns() {
     let concerns = getConcernsForWeekOffset(state.weekOffset);
     if (state.statusFilter !== "all") {
@@ -223,23 +211,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           .join("")
       : `<tr><td colspan="6" class="ordinances-empty">No concerns/suggestions for this selection.</td></tr>`;
 
-    const pages = buildPageList(state.page, totalPages);
-    let html = `<button type="button" data-page="prev" ${state.page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;
-    pages.forEach((p) => {
-      html +=
-        p === "..."
-          ? `<span class="dash-pagination__ellipsis">&hellip;</span>`
-          : `<button type="button" data-page="${p}" class="${p === state.page ? "active" : ""}">${p}</button>`;
-    });
-    html += `<button type="button" data-page="next" ${state.page >= totalPages ? "disabled" : ""} aria-label="Next page">&#8250;</button>`;
-    recentConcernsPagination.innerHTML = html;
-
-    recentConcernsPagination.querySelectorAll("button[data-page]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const val = btn.dataset.page;
-        state.page = val === "prev" ? state.page - 1 : val === "next" ? state.page + 1 : Number(val);
-        renderRecentConcerns();
-      });
+    renderPaginationControls(recentConcernsPagination, state.page, totalPages, (n) => {
+      state.page = n;
+      renderRecentConcerns();
     });
   }
 

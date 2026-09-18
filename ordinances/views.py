@@ -7,7 +7,7 @@ from accounts.models import User, log_action
 from accounts.views import IsSecretaryOrAdmin
 
 from .matching import suggest_ordinances
-from .models import Ordinance
+from .models import Ordinance, OrdinanceDownload
 from .serializers import OrdinanceCreateSerializer, OrdinanceSerializer, OrdinanceUpdateSerializer
 
 
@@ -141,3 +141,43 @@ class OrdinanceUnarchiveView(APIView):
         ordinance.save(update_fields=["is_archived"])
         log_action(request.user, f"Unarchived ordinance {ordinance.number} — {ordinance.title}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)
+
+
+class OrdinanceDownloadView(APIView):
+    """
+    GET /api/ordinances/<id>/download/ — hands back the real PDF URL rather
+    than a plain <a href> straight to storage, so the download can actually
+    be gated and logged. A citizen gets exactly one download per ordinance
+    (OrdinanceDownload's unique_together); Staff/Admin aren't limited — the
+    cap is specifically to stop a citizen's link from being reshared/scraped
+    indefinitely, not to restrict staff doing their job. Every successful
+    download (citizen or staff) is written to the audit log either way.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        ordinance = get_object_or_404(Ordinance, pk=pk)
+        if not ordinance.pdf_file:
+            return Response({"detail": "This ordinance has no PDF on file."}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        is_citizen = user.role == User.Role.CITIZEN
+
+        if is_citizen:
+            _, created = OrdinanceDownload.objects.get_or_create(ordinance=ordinance, citizen=user)
+            if not created:
+                return Response(
+                    {
+                        "detail": (
+                            "You've already downloaded this ordinance. "
+                            "Each ordinance can only be downloaded once."
+                        )
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        log_action(user, f"Downloaded ordinance {ordinance.number} — {ordinance.title}")
+
+        url = ordinance.pdf_file.url
+        return Response({"pdf_url": request.build_absolute_uri(url)})

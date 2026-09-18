@@ -17,6 +17,136 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (addressField) addressField.value = reportingUser.address || "";
   }
 
+  // ---- Verify It's You gate (first-ever report, or 30+ days since the last one) + cooldown ----
+  const form = document.getElementById("reportForm");
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const successModal = document.getElementById("successModal");
+
+  const gateNotice = document.getElementById("reportGateNotice");
+  const gateNoticeText = document.getElementById("reportGateNoticeText");
+  const gateVerifyBtn = document.getElementById("reportGateVerifyBtn");
+  const verifyModal = document.getElementById("reportVerifyModal");
+  const verifyError = document.getElementById("reportVerifyError");
+  const verifySendRow = document.getElementById("reportVerifySendRow");
+  const verifySendBtn = document.getElementById("reportVerifySendBtn");
+  const verifyCodeRow = document.getElementById("reportVerifyCodeRow");
+  const verifyCodeInput = document.getElementById("reportVerifyCodeInput");
+  const verifyCheckRow = document.getElementById("reportVerifyCheckRow");
+  const verifyCheckBtn = document.getElementById("reportVerifyCheckBtn");
+  const verifyResendBtn = document.getElementById("reportVerifyResendBtn");
+
+  let verificationNeeded = false;
+  let cooldownActive = false;
+
+  function showVerifyError(message) {
+    verifyError.textContent = message;
+    verifyError.hidden = false;
+  }
+
+  function openVerifyModal() {
+    verifyError.hidden = true;
+    verifySendRow.hidden = false;
+    verifyCodeRow.hidden = true;
+    verifyCheckRow.hidden = true;
+    verifyCodeInput.value = "";
+    verifyModal.hidden = false;
+  }
+
+  function applyGateStatus({ verification_required, cooldown_seconds }) {
+    verificationNeeded = !!verification_required;
+    cooldownActive = cooldown_seconds > 0;
+    if (cooldownActive) {
+      const minutes = Math.max(1, Math.ceil(cooldown_seconds / 60));
+      gateNoticeText.textContent = `You've recently filed a report — you can file another in about ${minutes} minute(s).`;
+      gateVerifyBtn.hidden = true;
+      gateNotice.hidden = false;
+      submitBtn.disabled = true;
+    } else if (verificationNeeded) {
+      gateNoticeText.textContent = "Please verify it's you before filing this report.";
+      gateVerifyBtn.hidden = false;
+      gateNotice.hidden = false;
+      submitBtn.disabled = true;
+    } else {
+      gateNotice.hidden = true;
+      submitBtn.disabled = false;
+    }
+  }
+
+  async function refreshGateStatus() {
+    if (!isLoggedIn()) return;
+    try {
+      const res = await authFetch("/api/reports/verification-status/");
+      if (!res.ok) return;
+      applyGateStatus(await res.json());
+    } catch {
+      // Fail soft — the real gate check still runs again on submit.
+    }
+  }
+
+  async function sendVerificationCode() {
+    verifySendBtn.disabled = true;
+    verifyResendBtn.disabled = true;
+    verifyError.hidden = true;
+    const sendingLabel = verifySendRow.hidden ? verifyResendBtn : verifySendBtn;
+    const originalLabel = sendingLabel.textContent;
+    sendingLabel.textContent = "Sending...";
+    try {
+      const res = await authFetch("/api/reports/send-verification/", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Could not send a verification code. Please try again.");
+      }
+      verifySendRow.hidden = true;
+      verifyCodeRow.hidden = false;
+      verifyCheckRow.hidden = false;
+      verifyCodeInput.focus();
+    } catch (err) {
+      showVerifyError(err.message);
+    } finally {
+      verifySendBtn.disabled = false;
+      verifyResendBtn.disabled = false;
+      sendingLabel.textContent = originalLabel;
+    }
+  }
+
+  gateVerifyBtn.addEventListener("click", openVerifyModal);
+  verifySendBtn.addEventListener("click", sendVerificationCode);
+  verifyResendBtn.addEventListener("click", sendVerificationCode);
+
+  verifyCheckBtn.addEventListener("click", async () => {
+    const code = verifyCodeInput.value.trim();
+    if (!code) {
+      showVerifyError("Please enter the code sent to your email.");
+      return;
+    }
+    verifyCheckBtn.disabled = true;
+    verifyCheckBtn.textContent = "Verifying...";
+    verifyError.hidden = true;
+    try {
+      const res = await authFetch("/api/reports/verify-code/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const firstError = Object.values(data)[0];
+        throw new Error(Array.isArray(firstError) ? firstError[0] : data.detail || "Invalid or expired code.");
+      }
+      verifyModal.hidden = true;
+      verificationNeeded = false;
+      gateNotice.hidden = cooldownActive;
+      submitBtn.disabled = cooldownActive;
+    } catch (err) {
+      showVerifyError(err.message);
+    } finally {
+      verifyCheckBtn.disabled = false;
+      verifyCheckBtn.textContent = "Verify";
+    }
+  });
+
+  if (isLoggedIn()) refreshGateStatus();
+
   const select = document.getElementById("ordinanceSelect");
   try {
     await ensureOrdinancesLoaded();
@@ -118,10 +248,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.key === "Escape") locationList.hidden = true;
   });
 
-  const form = document.getElementById("reportForm");
-  const submitBtn = form.querySelector('button[type="submit"]');
-  const successModal = document.getElementById("successModal");
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearFormError(form);
@@ -168,20 +294,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     formData.append("nature_of_violation", document.getElementById("violationDetails").value.trim());
     Array.from(document.getElementById("reportFiles").files).forEach((file) => formData.append("files", file));
 
+    // Belt-and-suspenders — the status check on load can go stale (e.g. the
+    // page sat open past a cooldown boundary), so re-check right before
+    // submitting rather than relying solely on refreshGateStatus().
+    if (verificationNeeded) {
+      openVerifyModal();
+      showFormError(form, "Please verify it's you before filing this report.");
+      return;
+    }
+    if (cooldownActive) {
+      showFormError(form, "You're still in the cooldown period between reports.");
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting...";
     try {
       const response = await authFetch("/api/reports/", { method: "POST", body: formData });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        const firstError = Object.values(data)[0];
-        throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not submit your report.");
+        if (data.verification_required) {
+          applyGateStatus({ verification_required: true, cooldown_seconds: 0 });
+          openVerifyModal();
+        } else if (response.status === 429) {
+          refreshGateStatus();
+        }
+        throw new Error(data.detail || "Could not submit your report.");
       }
       successModal.hidden = false;
     } catch (err) {
       showFormError(form, err.message);
     } finally {
-      submitBtn.disabled = false;
+      submitBtn.disabled = verificationNeeded || cooldownActive;
       submitBtn.textContent = "Submit Report";
     }
   });

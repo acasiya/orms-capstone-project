@@ -909,6 +909,12 @@ button {
   color: var(--text);
 }
 
+/* For a pagination bar with no "Showing X-Y of Z" text alongside it —
+   centers the controls instead of space-between shoving a lone child left. */
+.pagination-bar--center {
+  justify-content: center;
+}
+
 .pagination-controls {
   display: flex;
   gap: 8px;
@@ -935,6 +941,14 @@ button {
 .pagination-controls button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* "Page X of Y" — click to jump to a specific page (see pagination.js) */
+.pagination-jump-btn {
+  width: auto !important;
+  padding: 0 12px;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .ordinances-empty {
@@ -1272,6 +1286,44 @@ button {
 
 /* ---------- FAQs ---------- */
 
+/* Floating "Ask a Question" button — fixed to the viewport so it's always
+   reachable, replacing the old inline accordion form on this page. */
+.fab-ask-question {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 50;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.fab-ask-question:hover {
+  background: var(--navy-dark);
+  transform: scale(1.06);
+}
+
+@media (max-width: 640px) {
+  .fab-ask-question {
+    right: 20px;
+    bottom: 20px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
 .faq-card {
   background: var(--white);
   border-radius: var(--radius);
@@ -1326,75 +1378,6 @@ button {
   line-height: 1.6;
 }
 
-/* Ask a Question — deliberately NOT styled like a .faq-card/.faq-item row
-   (an answer to read); it's an action, so it gets its own accented,
-   button-like card instead of blending into the FAQ list above it. */
-.ask-question-card {
-  background: var(--cream);
-  border: 1.5px solid var(--cream-dark);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.ask-question-card summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--navy);
-}
-
-.ask-question-card summary::-webkit-details-marker {
-  display: none;
-}
-
-.ask-question-card__icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--navy);
-  color: var(--white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ask-question-card__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.ask-question-card__text strong {
-  font-size: 1rem;
-}
-
-.ask-question-card__text small {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-}
-
-.ask-question-card__chevron {
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-  color: var(--navy);
-}
-
-.ask-question-card[open] .ask-question-card__chevron {
-  transform: rotate(180deg);
-}
-
-.ask-question-card__body {
-  padding: 0 24px 24px;
-  border-top: 1px solid var(--cream-dark);
-  padding-top: 18px;
-}
 
 .report-card__title {
   text-align: center;
@@ -1466,6 +1449,25 @@ button {
   font-size: 0.8rem;
   color: var(--text);
   text-align: left;
+}
+
+.gate-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #fdf1ea;
+  border: 1px solid #e8c9a8;
+  color: #8a4a1c;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: 0.88rem;
+}
+
+.gate-notice p {
+  margin: 0;
 }
 
 .consent-row input {

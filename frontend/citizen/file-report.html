@@ -68,6 +68,11 @@
       <div class="report-card">
         <h2 class="report-card__title">Report Details</h2>
 
+        <div class="gate-notice" id="reportGateNotice" hidden>
+          <p id="reportGateNoticeText"></p>
+          <button type="button" class="btn btn-muted" id="reportGateVerifyBtn" hidden>Verify Now</button>
+        </div>
+
         <form id="reportForm">
           <div class="field">
             <label for="reportLocation">Specific Location</label>
@@ -162,6 +167,28 @@
   <script src="js/ordinances-data.js"></script>
   <script src="js/file-report.js"></script>
   <script src="js/main.js"></script>
+
+  <!-- Report filing identity check: shown on the citizen's first-ever report,
+       or again once REVERIFY_AFTER_DAYS has passed since their last one. -->
+  <div class="modal-overlay" id="reportVerifyModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Verify It's You</h2>
+      <p>Before we accept your report, we need to confirm it's really you filing it. We'll email a verification code to your registered email address.</p>
+      <p class="form-error" id="reportVerifyError" hidden></p>
+      <div class="btn-row" id="reportVerifySendRow">
+        <button type="button" class="btn" id="reportVerifySendBtn">Send Verification Code</button>
+      </div>
+      <div class="field" id="reportVerifyCodeRow" hidden>
+        <label for="reportVerifyCodeInput">Enter the 6-digit code sent to your email</label>
+        <input type="text" id="reportVerifyCodeInput" inputmode="numeric" maxlength="6" autocomplete="off" />
+      </div>
+      <div class="btn-row" id="reportVerifyCheckRow" hidden>
+        <button type="button" class="btn btn-muted" id="reportVerifyResendBtn">Resend Code</button>
+        <button type="button" class="btn" id="reportVerifyCheckBtn">Verify</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->
   <div class="modal-overlay" id="authGateModal" hidden>

@@ -3,11 +3,15 @@
 // hardcoded array, so this file is async where it fetches/updates accounts.
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const PAGE_SIZE = 10;
+
   const tbody = document.getElementById("accountsTableBody");
   const sortSelect = document.getElementById("sortSelect");
   const typeFilter = document.getElementById("typeFilter");
+  const pagination = document.getElementById("accountsPagination");
 
   let accounts = [];
+  let page = 1;
 
   async function loadAccounts() {
     tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading accounts...</td></tr>`;
@@ -32,12 +36,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    page = Math.min(page, totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+    if (pagination) {
+      renderPaginationControls(pagination, page, totalPages, (n) => {
+        page = n;
+        render();
+      });
+    }
+
     if (!rows.length) {
       tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No accounts match this filter.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = rows
+    tbody.innerHTML = pageRows
       .map(
         (a) => `
         <tr>
@@ -57,8 +73,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  sortSelect.addEventListener("change", render);
-  typeFilter.addEventListener("change", render);
+  sortSelect.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
+  typeFilter.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
   await loadAccounts();
 
   // Edit Account popup: opened by clicking an account owner's name

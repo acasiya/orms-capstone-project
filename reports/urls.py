@@ -8,6 +8,17 @@ urlpatterns = [
     path("reports/staff/<uuid:pk>/claim/", views.StaffReportClaimView.as_view(), name="staff_report_claim"),
     path("reports/staff/<uuid:pk>/forfeit/", views.StaffReportForfeitView.as_view(), name="staff_report_forfeit"),
     path("reports/", views.ReportListCreateView.as_view(), name="report_list_create"),
+    path(
+        "reports/verification-status/",
+        views.ReportVerificationStatusView.as_view(),
+        name="report_verification_status",
+    ),
+    path(
+        "reports/send-verification/",
+        views.ReportSendVerificationView.as_view(),
+        name="report_send_verification",
+    ),
+    path("reports/verify-code/", views.ReportVerifyCodeView.as_view(), name="report_verify_code"),
     path("reports/<uuid:pk>/", views.ReportDetailView.as_view(), name="report_detail"),
     path("concerns/staff/", views.StaffConcernListView.as_view(), name="staff_concern_list"),
     path("concerns/staff/<uuid:pk>/", views.StaffConcernDetailView.as_view(), name="staff_concern_detail"),

@@ -37,13 +37,25 @@
 
   <div class="plain-page">
     <div class="plain-page__inner plain-page__inner--wide">
-      <h1 class="page-heading">My Recent Concerns/Suggestions</h1>
+      <div class="reports-toolbar">
+        <h1 class="page-heading">My Recent Concerns/Suggestions</h1>
+        <select id="statusFilter" class="reports-filter">
+          <option value="All">All</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
 
       <div class="concerns-card" id="concernsList"></div>
+
+      <div class="pagination-bar pagination-bar--center">
+        <div class="pagination-controls" id="concernsPagination"></div>
+      </div>
     </div>
   </div>
 
   <script src="js/my-concerns-data.js"></script>
+  <script src="js/pagination.js"></script>
   <script src="js/my-concerns-list.js"></script>
   <script src="js/main.js"></script>
 

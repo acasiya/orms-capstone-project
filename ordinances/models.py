@@ -51,3 +51,23 @@ class Ordinance(models.Model):
 
     def __str__(self):
         return f"{self.number} — {self.title}"
+
+
+class OrdinanceDownload(models.Model):
+    """
+    Records that a citizen has downloaded a specific ordinance's PDF — each
+    citizen gets exactly one download per ordinance (see
+    OrdinanceDownloadView), enforced here via unique_together so a race
+    between two near-simultaneous requests can't both slip through.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ordinance = models.ForeignKey(Ordinance, on_delete=models.CASCADE, related_name="downloads")
+    citizen = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ordinance_downloads"
+    )
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["ordinance", "citizen"]
+        ordering = ["-downloaded_at"]

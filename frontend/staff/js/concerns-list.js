@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const folderDeleteCancel = document.getElementById("folderDeleteCancel");
 
   let page = 1;
+  let statusFilterTouched = false;
   let activeFolderId = null; // null = "All Concerns/Suggestions"
   let folderModalMode = "create"; // "create" | "rename"
   let renameTargetId = null;
@@ -184,24 +185,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- List: search, status filter, folder filter, paginate ----
 
-  function buildPageList(current, total) {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages = [1];
-    if (current > 3) pages.push("...");
-    const start = Math.max(2, current - 1);
-    const end = Math.min(total - 1, current + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (current < total - 2) pages.push("...");
-    pages.push(total);
-    return pages;
-  }
-
   function getFiltered() {
     let rows = liveConcerns();
     if (activeFolderId) {
       rows = rows.filter((c) => c.folderId === activeFolderId);
     }
-    if (statusFilter.value !== "all") {
+    // Resolved concerns stay out of the queue until the status filter is
+    // actually touched — even re-picking "Status" (all) counts, since
+    // that's an explicit "yes, show everything" action.
+    if (!statusFilterTouched && statusFilter.value === "all") {
+      rows = rows.filter((c) => c.status !== "Resolved");
+    } else if (statusFilter.value !== "all") {
       rows = rows.filter((c) => c.status === statusFilter.value);
     }
     const query = searchInput.value.trim().toLowerCase();
@@ -237,23 +231,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           .join("")
       : `<div class="ordinances-empty">${liveConcerns().length ? "No concerns/suggestions match your search or filters." : "No concerns/suggestions submitted yet."}</div>`;
 
-    const pages = buildPageList(page, totalPages);
-    let html = `<button type="button" data-page="prev" ${page <= 1 ? "disabled" : ""} aria-label="Previous page">&#8249;</button>`;
-    pages.forEach((p) => {
-      html +=
-        p === "..."
-          ? `<span class="dash-pagination__ellipsis">&hellip;</span>`
-          : `<button type="button" data-page="${p}" class="${p === page ? "active" : ""}">${p}</button>`;
-    });
-    html += `<button type="button" data-page="next" ${page >= totalPages ? "disabled" : ""} aria-label="Next page">&#8250;</button>`;
-    pagination.innerHTML = html;
-
-    pagination.querySelectorAll("button[data-page]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const val = btn.dataset.page;
-        page = val === "prev" ? page - 1 : val === "next" ? page + 1 : Number(val);
-        render();
-      });
+    renderPaginationControls(pagination, page, totalPages, (n) => {
+      page = n;
+      render();
     });
   }
 
@@ -267,6 +247,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   });
   statusFilter.addEventListener("change", () => {
+    statusFilterTouched = true;
     page = 1;
     render();
   });
