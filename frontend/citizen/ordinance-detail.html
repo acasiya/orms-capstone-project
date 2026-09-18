@@ -74,6 +74,34 @@
   <script src="js/ordinance-detail.js"></script>
   <script src="js/main.js"></script>
 
+  <!-- Floating "Ask a Question" button — opens askQuestionModal below -->
+  <button type="button" class="fab-ask-question" id="askQuestionFab" title="Ask a Question" aria-label="Ask a Question">?</button>
+
+  <!-- Ask a Question popup -->
+  <div class="modal-overlay" id="askQuestionModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Ask a Question</h2>
+      <p class="auth-card__subtitle">Don't see your answer in the FAQs? Ask directly — a Barangay Official will get back to you, and we'll email you the answer.</p>
+      <form id="askQuestionForm">
+        <div class="field">
+          <label for="questionInput">Your Question</label>
+          <textarea id="questionInput" placeholder="Type your question here..." required></textarea>
+        </div>
+        <button type="submit" class="btn">Submit Question</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirms the question was sent, before the answer email arrives -->
+  <div class="modal-overlay" id="askQuestionSentModal" hidden>
+    <div class="modal-card">
+      <h2>Question Sent!</h2>
+      <p class="auth-card__subtitle">A Barangay Official will review it soon. We'll email you the answer once it's ready.</p>
+      <button type="button" class="btn" data-modal-confirm>Confirm</button>
+    </div>
+  </div>
+
   <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->
   <div class="modal-overlay" id="authGateModal" hidden>
     <div class="modal-card">

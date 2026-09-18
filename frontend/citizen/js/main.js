@@ -564,6 +564,22 @@ function clearFormError(form) {
   if (errEl) errEl.remove();
 }
 
+// Backs the floating "Ask a Question" button (askQuestionFab), wired below —
+// present on every citizen page, not just FAQs.
+async function askQuestion(question) {
+  const response = await authFetch("/api/questions/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const firstError = Object.values(data)[0];
+    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not submit your question.");
+  }
+  return response.json();
+}
+
 // Mirrors the backend's AUTH_PASSWORD_VALIDATORS (see orms_backend/settings.py)
 // closely enough to catch obviously-invalid passwords before the resident
 // spends time on the ID photo step, without duplicating Django's full
@@ -1592,6 +1608,57 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!notifDropdown.hidden && !notifBell.contains(e.target)) {
         notifDropdown.hidden = true;
       }
+    });
+  }
+
+  // ---- Ask a Question (floating "?" button — on every citizen page) ----
+  const askFab = document.getElementById("askQuestionFab");
+  const askQuestionModal = document.getElementById("askQuestionModal");
+  const askQuestionSentModal = document.getElementById("askQuestionSentModal");
+  const askForm = document.getElementById("askQuestionForm");
+  const questionInput = document.getElementById("questionInput");
+
+  if (askFab && askQuestionModal) {
+    askFab.addEventListener("click", () => {
+      if (!isLoggedIn()) {
+        if (authGateModal && authGateTitle) {
+          authGateTitle.textContent = "Want to Ask a Question?";
+          authGateModal.hidden = false;
+        }
+        return;
+      }
+      askQuestionModal.hidden = false;
+    });
+  }
+
+  if (askForm) {
+    askForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = askForm.querySelector('button[type="submit"]');
+      const value = questionInput.value.trim();
+      if (!value) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+      try {
+        await askQuestion(value);
+        questionInput.value = "";
+        if (askQuestionModal) askQuestionModal.hidden = true;
+        if (askQuestionSentModal) askQuestionSentModal.hidden = false;
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Question";
+      }
+    });
+  }
+
+  if (askQuestionSentModal) {
+    askQuestionSentModal.querySelectorAll("[data-modal-confirm]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        askQuestionSentModal.hidden = true;
+      });
     });
   }
 

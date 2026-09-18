@@ -1716,6 +1716,16 @@ button {
   border-color: var(--navy);
 }
 
+/* "Show [5/10/25/50/100]" — how many rows a paginated list renders per page. */
+.page-size-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 /* ---------- Reports: check-in/check-out date range picker ---------- */
 
 .date-range-picker {

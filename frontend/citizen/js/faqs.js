@@ -1,8 +1,6 @@
-// SafeSpace — FAQs page: renders the public FAQ accordion, and handles
-// Ask a Question via the floating "?" button (guests get the sign-up/login
-// prompt, same as File Report/Submit Suggestion). Asked questions no longer
-// show inline on this page — the citizen gets emailed the answer once a
-// Barangay Official responds (see send_question_answered_email).
+// SafeSpace — FAQs page: renders the public FAQ accordion. (The floating
+// "Ask a Question" "?" button itself is wired globally in main.js — it's on
+// every citizen page, not just this one.)
 
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -28,10 +26,6 @@ function renderFaqAccordion(container, items, { openFirst = false } = {}) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const faqList = document.getElementById("faqList");
-  const askForm = document.getElementById("askQuestionForm");
-  const questionInput = document.getElementById("questionInput");
-  const authGateModal = document.getElementById("authGateModal");
-  const authGateTitle = document.getElementById("authGateTitle");
 
   // ---- Public FAQ list ----
   try {
@@ -43,54 +37,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   } catch (err) {
     faqList.innerHTML = `<div class="ordinances-empty">${err.message}</div>`;
-  }
-
-  // ---- Ask a Question (floating "?" button) ----
-  const askFab = document.getElementById("askQuestionFab");
-  const askQuestionModal = document.getElementById("askQuestionModal");
-  const askQuestionSentModal = document.getElementById("askQuestionSentModal");
-
-  if (askFab && askQuestionModal) {
-    askFab.addEventListener("click", () => {
-      if (!isLoggedIn()) {
-        if (authGateModal && authGateTitle) {
-          authGateTitle.textContent = "Want to Ask a Question?";
-          authGateModal.hidden = false;
-        }
-        return;
-      }
-      askQuestionModal.hidden = false;
-    });
-  }
-
-  if (askForm) {
-    askForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const submitBtn = askForm.querySelector('button[type="submit"]');
-      const value = questionInput.value.trim();
-      if (!value) return;
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
-      try {
-        await askQuestion(value);
-        questionInput.value = "";
-        if (askQuestionModal) askQuestionModal.hidden = true;
-        if (askQuestionSentModal) askQuestionSentModal.hidden = false;
-      } catch (err) {
-        alert(err.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Question";
-      }
-    });
-  }
-
-  if (askQuestionSentModal) {
-    askQuestionSentModal.querySelectorAll("[data-modal-confirm]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        askQuestionSentModal.hidden = true;
-      });
-    });
   }
 });
