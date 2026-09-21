@@ -16,11 +16,12 @@ function formatQuestionDate(iso) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const PAGE_SIZE = 8;
+  let pageSize = 5;
 
   const list = document.getElementById("questionsList");
   const statusFilter = document.getElementById("statusFilter");
   const pagination = document.getElementById("questionsPagination");
+  const pageSizeSelect = document.getElementById("questionsPageSize");
   const faqManageList = document.getElementById("faqManageList");
   const addFaqBtn = document.getElementById("addFaqBtn");
 
@@ -52,10 +53,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       return true;
     });
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
     page = Math.min(page, totalPages);
-    const start = (page - 1) * PAGE_SIZE;
-    const rows = filtered.slice(start, start + PAGE_SIZE);
+    const start = (page - 1) * pageSize;
+    const rows = filtered.slice(start, start + pageSize);
 
     if (pagination) {
       renderPaginationControls(pagination, page, totalPages, (n) => {
@@ -238,6 +239,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (statusFilter) {
     statusFilter.addEventListener("change", () => {
+      page = 1;
+      renderQuestions();
+    });
+  }
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", () => {
+      pageSize = Number(pageSizeSelect.value);
       page = 1;
       renderQuestions();
     });

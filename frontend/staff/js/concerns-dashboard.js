@@ -6,7 +6,6 @@
 // Report.ordinance plays for Reports.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const PAGE_SIZE = 5;
   const WEEK_OPTIONS_COUNT = 8;
   const MONTHS_BACK_COUNT = 5;
   const FOLDER_COLOR_PALETTE = [
@@ -18,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     weekOffset: 0,
     statusFilter: "all",
     page: 1,
+    pageSize: 5,
     categoryPeriod: "week",
   };
 
@@ -158,6 +158,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const viewAllLabel = document.getElementById("viewAllLabel");
   const recentConcernsBody = document.getElementById("recentConcernsBody");
   const recentConcernsPagination = document.getElementById("recentConcernsPagination");
+  const recentConcernsPageSize = document.getElementById("recentConcernsPageSize");
 
   viewAllMenu.innerHTML = `
     <li data-status="all" class="active">All Concerns/Suggestions</li>
@@ -190,10 +191,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       concerns = concerns.filter((c) => c.status === state.statusFilter);
     }
 
-    const totalPages = Math.max(1, Math.ceil(concerns.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(concerns.length / state.pageSize));
     state.page = Math.min(state.page, totalPages);
-    const start = (state.page - 1) * PAGE_SIZE;
-    const pageRows = concerns.slice(start, start + PAGE_SIZE);
+    const start = (state.page - 1) * state.pageSize;
+    const pageRows = concerns.slice(start, start + state.pageSize);
 
     recentConcernsBody.innerHTML = pageRows.length
       ? pageRows
@@ -213,6 +214,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderPaginationControls(recentConcernsPagination, state.page, totalPages, (n) => {
       state.page = n;
+      renderRecentConcerns();
+    });
+  }
+
+  if (recentConcernsPageSize) {
+    recentConcernsPageSize.addEventListener("change", () => {
+      state.pageSize = Number(recentConcernsPageSize.value);
+      state.page = 1;
       renderRecentConcerns();
     });
   }

@@ -4,13 +4,14 @@
 // selecting a folder narrows the list the same way the status dropdown does.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const PAGE_SIZE = 9;
+  let pageSize = 5;
 
   const searchForm = document.getElementById("concernSearchForm");
   const searchInput = document.getElementById("concernSearchInput");
   const statusFilter = document.getElementById("statusFilter");
   const list = document.getElementById("concernsList");
   const pagination = document.getElementById("concernsPagination");
+  const pageSizeSelect = document.getElementById("concernsPageSize");
   const foldersList = document.getElementById("foldersList");
   const allFoldersBtn = document.getElementById("allFoldersBtn");
   const addFolderBtn = document.getElementById("addFolderBtn");
@@ -212,10 +213,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const rows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
     page = Math.min(page, totalPages);
-    const start = (page - 1) * PAGE_SIZE;
-    const pageRows = rows.slice(start, start + PAGE_SIZE);
+    const start = (page - 1) * pageSize;
+    const pageRows = rows.slice(start, start + pageSize);
 
     list.innerHTML = pageRows.length
       ? pageRows
@@ -251,6 +252,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     page = 1;
     render();
   });
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", () => {
+      pageSize = Number(pageSizeSelect.value);
+      page = 1;
+      render();
+    });
+  }
 
   renderFolders();
   render();

@@ -3,12 +3,13 @@
 // hardcoded array, so this file is async where it fetches/updates accounts.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const PAGE_SIZE = 10;
+  let pageSize = 5;
 
   const tbody = document.getElementById("accountsTableBody");
   const sortSelect = document.getElementById("sortSelect");
   const typeFilter = document.getElementById("typeFilter");
   const pagination = document.getElementById("accountsPagination");
+  const pageSizeSelect = document.getElementById("accountsPageSize");
 
   let accounts = [];
   let page = 1;
@@ -36,10 +37,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
-    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
     page = Math.min(page, totalPages);
-    const start = (page - 1) * PAGE_SIZE;
-    const pageRows = rows.slice(start, start + PAGE_SIZE);
+    const start = (page - 1) * pageSize;
+    const pageRows = rows.slice(start, start + pageSize);
 
     if (pagination) {
       renderPaginationControls(pagination, page, totalPages, (n) => {
@@ -81,6 +82,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     page = 1;
     render();
   });
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", () => {
+      pageSize = Number(pageSizeSelect.value);
+      page = 1;
+      render();
+    });
+  }
   await loadAccounts();
 
   // Edit Account popup: opened by clicking an account owner's name

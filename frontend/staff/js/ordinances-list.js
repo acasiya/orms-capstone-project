@@ -8,8 +8,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const searchForm = document.getElementById("ordinanceSearchForm");
   const paginationInfo = document.getElementById("paginationInfo");
   const pagination = document.getElementById("ordinancesPagination");
+  const pageSizeSelect = document.getElementById("ordinancesPageSize");
 
-  const PAGE_SIZE = 5;
+  let pageSize = 5;
   let currentPage = 1;
   // Only re-filters on Search (or pressing Enter in the field), not on every
   // keystroke — this tracks the query that was actually searched for, kept
@@ -38,11 +39,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const allRows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(allRows.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(allRows.length / pageSize));
     currentPage = Math.min(currentPage, totalPages);
 
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const rows = allRows.slice(start, start + PAGE_SIZE);
+    const start = (currentPage - 1) * pageSize;
+    const rows = allRows.slice(start, start + pageSize);
 
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">${
@@ -82,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     paginationInfo.textContent = allRows.length
-      ? `Showing ${start + 1} to ${Math.min(start + PAGE_SIZE, allRows.length)} of ${allRows.length} entries`
+      ? `Showing ${start + 1} to ${Math.min(start + pageSize, allRows.length)} of ${allRows.length} entries`
       : "Showing 0 entries";
     renderPaginationControls(pagination, currentPage, totalPages, (n) => {
       currentPage = n;
@@ -100,6 +101,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentPage = 1;
     render();
   });
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", () => {
+      pageSize = Number(pageSizeSelect.value);
+      currentPage = 1;
+      render();
+    });
+  }
 
   render();
 
