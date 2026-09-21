@@ -24,8 +24,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadConfirm = document.getElementById("uploadOrdinanceConfirm");
   const uploadError = document.getElementById("uploadOrdinanceError");
 
+  const extractStatus = document.getElementById("ordExtractStatus");
+
+  // Picking a PDF triggers an OCR pass that prefills the form. It's a
+  // convenience only: it fills fields that are still empty (never overwrites
+  // anything the Secretary already typed), and any failure just leaves the
+  // form as it was — manual entry always works. A newer pick supersedes an
+  // in-flight one so a slow scan can't fill in the wrong document's details.
+  let extractRun = 0;
+
+  async function prefillFromPdf(file) {
+    const run = ++extractRun;
+    extractStatus.className = "field-hint";
+    extractStatus.textContent = "Reading the PDF to fill in the details... this can take up to a minute.";
+    extractStatus.hidden = false;
+    try {
+      const guesses = await extractOrdinanceFields(file);
+      if (run !== extractRun) return;
+
+      const targets = [
+        [numberInput, guesses.number],
+        [titleInput, guesses.title],
+        [authorInput, guesses.author],
+        [categoryInput, guesses.category],
+        [dateInput, guesses.dateApproved],
+        [descriptionInput, guesses.description],
+      ];
+      let filled = 0;
+      for (const [input, value] of targets) {
+        if (value && !input.value.trim()) {
+          input.value = value;
+          filled++;
+        }
+      }
+      extractStatus.textContent = filled
+        ? `Filled in ${filled} field${filled === 1 ? "" : "s"} from the scan. Please check them against the document — scanned text can be misread.`
+        : "Couldn't read details from this scan — please fill them in manually.";
+    } catch (err) {
+      if (run !== extractRun) return;
+      extractStatus.textContent = "Couldn't read details from this scan — please fill them in manually.";
+    }
+  }
+
   pdfInput.addEventListener("change", () => {
-    pdfLabelText.textContent = pdfInput.files[0] ? pdfInput.files[0].name : "Click to browse for the ordinance PDF";
+    const file = pdfInput.files[0];
+    pdfLabelText.textContent = file ? file.name : "Click to browse for the ordinance PDF";
+    if (!file) {
+      extractRun++;
+      extractStatus.hidden = true;
+    } else if (file.size <= MAX_ORDINANCE_PDF_MB * 1024 * 1024) {
+      prefillFromPdf(file);
+    }
   });
 
   form.addEventListener("submit", async (e) => {

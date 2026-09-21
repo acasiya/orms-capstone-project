@@ -37,6 +37,15 @@ class User(AbstractUser):
     # Staff/Admin accounts are created directly by an admin, so default True.
     is_verified = models.BooleanField(default=False)
 
+    # Failed-login lockout (see CustomTokenObtainPairSerializer). Deliberately
+    # a temporary lock rather than reusing is_active=False: is_active needs an
+    # admin to flip it back, which would let anyone who knows an email
+    # lock that person out — the Administrator included — until an admin
+    # noticed. A timed lock stops guessing just as well without that.
+    failed_login_count = models.PositiveSmallIntegerField(default=0)
+    last_failed_login_at = models.DateTimeField(null=True, blank=True)
+    locked_until = models.DateTimeField(null=True, blank=True)
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
@@ -86,12 +95,18 @@ class PasswordResetCode(models.Model):
     # can't be used to set a new password without going through that step.
     verified_at = models.DateTimeField(null=True, blank=True)
     used_at = models.DateTimeField(null=True, blank=True)
+    # Wrong guesses so far; see orms_backend/codes.py for the cap.
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
 
     def is_valid(self):
         return self.used_at is None and timezone.now() < self.expires_at
+
+    def expire(self):
+        self.used_at = timezone.now()
+        self.save(update_fields=["used_at"])
 
     def __str__(self):
         return f"Reset code for {self.user}"

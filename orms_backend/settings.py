@@ -3,6 +3,7 @@ Django settings for orms_backend project.
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -166,7 +167,48 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    # Rate limiting. Everything gets the broad anon/user limits below; views
+    # that override throttle_classes with ScopedRateThrottle + a throttle_scope
+    # get their own tighter one from the matching entry.
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        # Broad limits, per IP (anon) / per account (user). Generous on purpose:
+        # a barangay hall or mobile carrier can put many real people behind one IP.
+        "anon": "120/min",
+        "user": "300/min",
+        # Sensitive endpoints — see the views that name these as throttle_scope.
+        "login": "10/min",
+        "register": "5/hour",
+        "staff_setup": "10/min",
+        "staff_setup_code": "5/hour",
+        "reset_request": "5/hour",
+        "reset_request_email": "3/hour",
+        "reset_verify": "5/min",
+        "reset_confirm": "5/min",
+        "report_send_code": "3/hour",
+        "report_verify_code": "5/min",
+        # Each OCR call uses several hundred MB of RAM.
+        "ordinance_extract": "5/min",
+    },
+    # How many proxies sit in front of the app. Without this DRF can't tell the
+    # real client IP from X-Forwarded-For, which anyone can fake — so every
+    # visitor would either share one limit or dodge it by changing the header.
+    # 1 = a single trusted proxy (Render's load balancer). Verify after deploying.
+    "NUM_PROXIES": config("NUM_PROXIES", default=1, cast=int),
 }
+
+# Throttle counters live in the cache. LocMemCache is per-process, which is right
+# for a single gunicorn worker (as deployed); running several workers or
+# instances would each count separately, so switch to a shared cache (Redis) then.
+# Tests get DummyCache so unrelated tests don't trip limits by sharing 127.0.0.1;
+# throttle tests opt back in with override_settings.
+if "test" in sys.argv:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),

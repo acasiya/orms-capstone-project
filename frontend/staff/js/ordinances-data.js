@@ -124,6 +124,25 @@ async function createOrdinance(fields) {
   return created;
 }
 
+// OCRs page 1 of the scanned PDF server-side and returns best-guess form values
+// ({ number, title, author, category, dateApproved, description } — "" for
+// anything it couldn't read). Suggestions only; nothing is saved.
+async function extractOrdinanceFields(pdfFile) {
+  const formData = new FormData();
+  formData.append("pdf_file", pdfFile);
+  const response = await authFetch("/api/ordinances/extract/", { method: "POST", body: formData });
+  if (!response.ok) await readFirstError(response, "Could not read this PDF.");
+  const data = await response.json();
+  return {
+    number: data.number,
+    title: data.title,
+    author: data.author,
+    category: data.category,
+    dateApproved: data.date_approved,
+    description: data.description,
+  };
+}
+
 // Same field shape as createOrdinance, but pdfFile is optional — omit it to keep the existing PDF.
 async function updateOrdinanceById(id, fields) {
   const formData = new FormData();

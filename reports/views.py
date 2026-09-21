@@ -1,14 +1,15 @@
-import random
 from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from accounts.models import User, log_action
 from accounts.views import IsAdmin, IsInvestigatorOrAdmin, IsSecretaryOrAdmin, IsStaffOrAdmin
+from orms_backend.codes import generate_code
 from orms_backend.emails import (
     send_question_answered_email,
     send_report_resolved_email,
@@ -121,10 +122,18 @@ class ReportSendVerificationView(APIView):
     """POST /api/reports/send-verification/ — emails a fresh 6-digit code to confirm the report filer's identity."""
 
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "report_send_code"
 
     def post(self, request):
         user = request.user
-        code = f"{random.randint(0, 999999):06d}"
+        # Kill any earlier unverified codes first, like Forgot Password does —
+        # otherwise every request leaves another live code lying around and each
+        # guess gets that many more chances to match.
+        ReportVerificationCode.objects.filter(user=user, verified_at__isnull=True).update(
+            expires_at=timezone.now()
+        )
+        code = generate_code()
         ReportVerificationCode.objects.create(
             user=user,
             code=code,
@@ -138,6 +147,8 @@ class ReportVerifyCodeView(APIView):
     """POST /api/reports/verify-code/ — checks the code sent by ReportSendVerificationView."""
 
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "report_verify_code"
 
     def post(self, request):
         serializer = ReportVerifyCodeSerializer(data=request.data, context={"request": request})

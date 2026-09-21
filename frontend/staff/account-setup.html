@@ -21,12 +21,22 @@
       <h1 class="auth-card__title">Complete Account Setup</h1>
 
       <form id="staffSetupEmailForm" novalidate>
-        <p class="auth-card__subtitle">An Administrator created an account for you. Enter the email it was created with to continue.</p>
+        <p class="auth-card__subtitle">An Administrator created an account for you. Enter the email it was created with and we'll send you a code to confirm it's yours.</p>
         <div class="field">
           <label for="setupEmail">Email</label>
           <input type="email" id="setupEmail" name="email" placeholder="name@example.com" required />
         </div>
-        <button type="submit" class="btn">Continue</button>
+        <button type="submit" class="btn">Send Code</button>
+      </form>
+
+      <form id="staffSetupCodeForm" novalidate hidden>
+        <p class="auth-card__subtitle">If <strong id="setupCodeEmail"></strong> has an account waiting to be set up, we've emailed it a 6-digit code. Enter it below. Already set up? <a href="index.html">Log in normally</a>.</p>
+        <div class="field">
+          <label for="setupCode">Code</label>
+          <input type="text" id="setupCode" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code" required />
+        </div>
+        <button type="submit" class="btn">Verify Code</button>
+        <p class="form-footer"><a href="#" id="setupResendCode">Send a new code</a></p>
       </form>
 
       <form id="staffSetupDetailsForm" novalidate hidden>

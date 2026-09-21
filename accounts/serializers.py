@@ -1,4 +1,3 @@
-import random
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -8,8 +7,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from orms_backend.codes import CODE_EXHAUSTED, CODE_OK, check_code, generate_code
 from orms_backend.emails import send_password_reset_email
 
+from .lockout import LOCKOUT_MINUTES, clear_failed_logins, lockout_minutes_remaining, record_failed_login
 from .models import AuditLog, LoginSession, PasswordResetCode, VoterVerification, log_action
 
 User = get_user_model()
@@ -342,6 +343,13 @@ class AdminAccountSerializer(serializers.ModelSerializer):
         return f"{timesince(obj.updated_at)} ago"
 
 
+def _locked_message(minutes):
+    return (
+        f"Too many failed login attempts. This account is locked for {minutes} more "
+        f"minute{'' if minutes == 1 else 's'}. Check your email, or use Forgot Password to unlock it now."
+    )
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Extends SimpleJWT's login serializer so the token payload — and the
@@ -358,7 +366,26 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        # Lockout (see accounts/lockout.py). A locked account is refused before
+        # the password is even checked, so a correct guess mid-lock doesn't get in.
+        # Inactive accounts are skipped — they can't log in anyway, and an admin
+        # disable shouldn't also send "you've been locked" emails.
+        account = User.objects.filter(email__iexact=attrs.get(self.username_field, "")).first()
+        if account and not account.is_active:
+            account = None
+        if account:
+            remaining = lockout_minutes_remaining(account)
+            if remaining:
+                raise AuthenticationFailed(_locked_message(remaining), code="account_locked")
+
+        try:
+            data = super().validate(attrs)
+        except AuthenticationFailed:
+            if account and record_failed_login(account):
+                raise AuthenticationFailed(_locked_message(LOCKOUT_MINUTES), code="account_locked")
+            raise
+        if account:
+            clear_failed_logins(account)
 
         # Citizens start unverified until an Administrator approves their
         # voter's ID (see AdminApproveVerificationView). Staff/Admin accounts
@@ -379,23 +406,25 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    """Forgot Password step 1 — emails a fresh 6-digit code to the account."""
+    """Forgot Password step 1 — emails a fresh 6-digit code to the account, if there is one."""
 
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        try:
-            self._user = User.objects.get(email__iexact=value)
-        except User.DoesNotExist:
-            raise serializers.ValidationError("No account found with that email.")
+        # Deliberately not an error when nothing matches: "No account found with
+        # that email" let anyone check whether a given person is registered.
+        # The caller answers the same either way (see PasswordResetRequestView).
+        self._user = User.objects.filter(email__iexact=value).first()
         return value
 
     def save(self):
+        if self._user is None:
+            return
         # Invalidate any earlier unused codes so only the one just emailed works.
         PasswordResetCode.objects.filter(user=self._user, used_at__isnull=True).update(
             used_at=timezone.now()
         )
-        code = f"{random.randint(0, 999999):06d}"
+        code = generate_code()
         PasswordResetCode.objects.create(
             user=self._user,
             code=code,
@@ -411,14 +440,20 @@ class PasswordResetVerifySerializer(serializers.Serializer):
     code = serializers.CharField()
 
     def validate(self, attrs):
+        # Only the newest unused code can be guessed at, and every wrong guess
+        # counts against it (see orms_backend/codes.py) — matching on the
+        # submitted code in the query instead would let unlimited guesses through.
         reset_code = (
-            PasswordResetCode.objects.filter(
-                user__email__iexact=attrs["email"], code=attrs["code"], used_at__isnull=True
-            )
+            PasswordResetCode.objects.filter(user__email__iexact=attrs["email"], used_at__isnull=True)
             .order_by("-created_at")
             .first()
         )
         if not reset_code or not reset_code.is_valid():
+            raise serializers.ValidationError("Invalid or expired code.")
+        result = check_code(reset_code, attrs["code"])
+        if result == CODE_EXHAUSTED:
+            raise serializers.ValidationError("Too many incorrect attempts. Please request a new code.")
+        if result != CODE_OK:
             raise serializers.ValidationError("Invalid or expired code.")
         attrs["reset_code"] = reset_code
         return attrs
@@ -459,6 +494,9 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.save(update_fields=["password"])
         reset_code.used_at = timezone.now()
         reset_code.save(update_fields=["used_at"])
+        # Completing a reset proves control of the email, so it also lifts a
+        # failed-login lock (see accounts/lockout.py).
+        clear_failed_logins(user)
 
 
 class PendingVerificationSerializer(serializers.ModelSerializer):

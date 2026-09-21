@@ -1,6 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from orms_backend.codes import CODE_EXHAUSTED, CODE_OK, check_code
+
 from .models import FAQ, Concern, ConcernAttachment, ConcernFolder, Question, Report, ReportAttachment, ReportVerificationCode
 
 MAX_ATTACHMENTS = 5
@@ -316,12 +318,19 @@ class ReportVerifyCodeSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = self.context["request"].user
+        # Newest unverified code only, with wrong guesses counted against it —
+        # see orms_backend/codes.py.
         verification_code = (
-            ReportVerificationCode.objects.filter(user=user, code=attrs["code"], verified_at__isnull=True)
+            ReportVerificationCode.objects.filter(user=user, verified_at__isnull=True)
             .order_by("-created_at")
             .first()
         )
         if not verification_code or not verification_code.is_valid():
+            raise serializers.ValidationError("Invalid or expired code.")
+        result = check_code(verification_code, attrs["code"])
+        if result == CODE_EXHAUSTED:
+            raise serializers.ValidationError("Too many incorrect attempts. Please request a new code.")
+        if result != CODE_OK:
             raise serializers.ValidationError("Invalid or expired code.")
         attrs["verification_code"] = verification_code
         return attrs

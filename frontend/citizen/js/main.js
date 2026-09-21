@@ -404,28 +404,38 @@ async function apiLogin(email, password, remember) {
 // created with just an email + role — see accounts/serializers.py's
 // AdminCreateUserSerializer) — frontend/staff/account-setup.html's flow.
 
-// Step 1: does this email belong to an account still waiting on setup?
-async function apiCheckStaffSetupStatus(email) {
+// Step 1: emails a code to an account still waiting on setup. The answer is the
+// same whether or not the email matches one — the backend deliberately doesn't
+// reveal which staff emails exist — so the UI just tells the person to check
+// their inbox. The code is then checked with apiVerifyPasswordResetCode.
+async function apiRequestStaffSetupCode(email) {
   let response;
   try {
-    response = await fetch(`${API_BASE}/staff-setup/status/?email=${encodeURIComponent(email)}`);
+    response = await fetch(`${API_BASE}/staff-setup/request-code/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
   } catch {
     throw new Error("Could not reach the server. Check your connection and try again.");
   }
-  if (!response.ok) throw new Error("Could not check this email. Please try again.");
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not send a setup code. Please try again.");
+  }
   return response.json();
 }
 
 // Step 2: supplies name/phone/password, and logs the account straight in —
 // same session-storing behavior as apiLogin, since the response is shaped
 // identically (see StaffAccountSetupView).
-async function apiCompleteStaffSetup(email, details) {
+async function apiCompleteStaffSetup(email, code, details) {
   let response;
   try {
     response = await fetch(`${API_BASE}/staff-setup/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, ...details }),
+      body: JSON.stringify({ email, code, ...details }),
     });
   } catch {
     throw new Error("Could not reach the server. Check your connection and try again.");
@@ -990,21 +1000,10 @@ document.addEventListener("DOMContentLoaded", () => {
             showFormError(form, "Enter your email, then leave Password blank to set up a new account, or fill it in to log in.");
             return;
           }
-          submitBtn.disabled = true;
-          submitBtn.textContent = "Checking...";
-          try {
-            const status = await apiCheckStaffSetupStatus(email);
-            if (status.needs_setup) {
-              window.location.href = `account-setup.html?email=${encodeURIComponent(email)}`;
-            } else {
-              showFormError(form, "Enter your password to log in.");
-            }
-          } catch (err) {
-            showFormError(form, err.message);
-          } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Login Now";
-          }
+          // No lookup here: whether this email has an account waiting on setup
+          // isn't something an anonymous visitor should be able to learn. The
+          // setup page emails a code either way and only the inbox owner can use it.
+          window.location.href = `account-setup.html?email=${encodeURIComponent(email)}`;
           return;
         }
 
@@ -1026,53 +1025,90 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ---- Staff account setup (frontend/staff/account-setup.html) ----
-  // Step 1: email only -> checks whether it's a Staff/Administrator account
-  // still waiting on setup. Step 2 (revealed only if so): name/phone/
-  // password, then logs the account straight in. Guarded on both forms
-  // existing since this only ever runs on account-setup.html.
+  // Step 1: email -> a code is emailed (if the email has an account waiting on
+  // setup; the page can't tell, by design). Step 2: enter the code. Step 3:
+  // name/phone/password, then logs the account straight in. Guarded on the
+  // forms existing since this only ever runs on account-setup.html.
   const staffSetupEmailForm = document.getElementById("staffSetupEmailForm");
+  const staffSetupCodeForm = document.getElementById("staffSetupCodeForm");
   const staffSetupDetailsForm = document.getElementById("staffSetupDetailsForm");
-  if (staffSetupEmailForm && staffSetupDetailsForm) {
+  if (staffSetupEmailForm && staffSetupCodeForm && staffSetupDetailsForm) {
     let setupEmail = "";
+    let setupCode = "";
     const setupEmailField = document.getElementById("setupEmail");
+    const setupCodeField = document.getElementById("setupCode");
 
-    async function checkAndAdvance(email) {
+    async function sendCodeAndAdvance(email) {
       const submitBtn = staffSetupEmailForm.querySelector('button[type="submit"]');
       clearFormError(staffSetupEmailForm);
+      if (!email) {
+        showFormError(staffSetupEmailForm, "Enter the email your account was created with.");
+        return;
+      }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Checking...";
+      submitBtn.textContent = "Sending...";
       try {
-        const status = await apiCheckStaffSetupStatus(email);
-        if (!status.exists) {
-          showFormError(staffSetupEmailForm, "No staff account was found with that email.");
-        } else if (!status.needs_setup) {
-          showFormError(staffSetupEmailForm, "This account is already set up — please log in normally.");
-        } else {
-          setupEmail = email;
-          staffSetupEmailForm.hidden = true;
-          staffSetupDetailsForm.hidden = false;
-        }
+        await apiRequestStaffSetupCode(email);
+        setupEmail = email;
+        document.getElementById("setupCodeEmail").textContent = email;
+        staffSetupEmailForm.hidden = true;
+        staffSetupCodeForm.hidden = false;
+        setupCodeField.focus();
       } catch (err) {
         showFormError(staffSetupEmailForm, err.message);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Continue";
+        submitBtn.textContent = "Send Code";
       }
     }
 
     // Coming from the Staff Portal's own login form (Password left blank —
     // see main.js's login handler above) skips retyping the email: it's
-    // passed along in the URL and checked automatically.
+    // passed along in the URL. The code is only sent once they confirm here,
+    // not automatically, so following a link can't trigger emails.
     const emailFromQuery = new URLSearchParams(window.location.search).get("email");
-    if (emailFromQuery) {
-      setupEmailField.value = emailFromQuery;
-      checkAndAdvance(emailFromQuery);
-    }
+    if (emailFromQuery) setupEmailField.value = emailFromQuery;
 
     staffSetupEmailForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      checkAndAdvance(setupEmailField.value.trim());
+      sendCodeAndAdvance(setupEmailField.value.trim());
+    });
+
+    document.getElementById("setupResendCode").addEventListener("click", async (e) => {
+      e.preventDefault();
+      clearFormError(staffSetupCodeForm);
+      try {
+        await apiRequestStaffSetupCode(setupEmail);
+        showFormError(staffSetupCodeForm, "A new code has been sent. Only the newest one works.");
+      } catch (err) {
+        showFormError(staffSetupCodeForm, err.message);
+      }
+    });
+
+    staffSetupCodeForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = staffSetupCodeForm.querySelector('button[type="submit"]');
+      clearFormError(staffSetupCodeForm);
+      const code = setupCodeField.value.trim();
+      if (code.length !== 6) {
+        showFormError(staffSetupCodeForm, "Enter the 6-digit code from the email.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Checking...";
+      try {
+        await apiVerifyPasswordResetCode(setupEmail, code);
+        setupCode = code;
+        staffSetupCodeForm.hidden = true;
+        staffSetupDetailsForm.hidden = false;
+      } catch (err) {
+        showFormError(staffSetupCodeForm, err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Verify Code";
+      }
     });
 
     staffSetupDetailsForm.addEventListener("submit", async (e) => {
@@ -1102,7 +1138,7 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn.disabled = true;
       submitBtn.textContent = "Setting up...";
       try {
-        const role = await apiCompleteStaffSetup(setupEmail, {
+        const role = await apiCompleteStaffSetup(setupEmail, setupCode, {
           first_name: firstName.value.trim(),
           last_name: lastName.value.trim(),
           contact_number: phone.value.trim(),

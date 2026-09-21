@@ -166,6 +166,32 @@ def send_account_suspicious_activity_email(user):
     )
 
 
+def send_staff_setup_code_email(user, code, expires_minutes):
+    # First-login setup for an admin-created Staff/Administrator account
+    # (accounts/views.py's StaffAccountSetupView) proves the person controls the
+    # address by making them enter this code before they can choose a password.
+    send_templated_email(
+        to=user.email,
+        subject="SafeSpace — Your account setup code",
+        template_name="staff_setup_code",
+        context={"user": user, "code": code, "expires_minutes": expires_minutes},
+    )
+
+
+def send_account_locked_email(user, minutes):
+    # Sent by accounts/lockout.py when repeated wrong passwords lock the
+    # account. Once per lock, not per failed attempt, so an attacker can't
+    # use it to flood the owner's inbox.
+    from accounts.lockout import MAX_FAILED_LOGINS
+
+    send_templated_email(
+        to=user.email,
+        subject="SafeSpace — Your account has been temporarily locked",
+        template_name="account_locked",
+        context={"user": user, "minutes": minutes, "attempts": MAX_FAILED_LOGINS},
+    )
+
+
 # ---- Staff --------------------------------------------------------------
 
 

@@ -1,14 +1,21 @@
+import logging
+
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from accounts.models import User, log_action
 from accounts.views import IsSecretaryOrAdmin
 
+from .extraction import extract_fields
 from .matching import suggest_ordinances
 from .models import Ordinance, OrdinanceDownload
 from .serializers import OrdinanceCreateSerializer, OrdinanceSerializer, OrdinanceUpdateSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 def _is_staff_or_admin(user):
@@ -84,6 +91,35 @@ class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
         ordinance = serializer.save()
         log_action(request.user, f"Updated ordinance {ordinance.number} — {ordinance.title}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)
+
+
+class OrdinanceExtractView(APIView):
+    """
+    POST /api/ordinances/extract/ — multipart with a `pdf_file`; OCRs page 1 of
+    the scan and returns best-guess values for the Upload Ordinance form. Only
+    a suggestion: any field it can't read comes back empty, and if extraction
+    fails outright the client just leaves the form blank. Nothing is saved.
+    Secretary/Admin only, same as the upload it feeds.
+    """
+
+    permission_classes = [IsSecretaryOrAdmin]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "ordinance_extract"
+
+    def post(self, request):
+        pdf_file = request.FILES.get("pdf_file")
+        if not pdf_file:
+            return Response({"detail": "Attach the ordinance PDF as pdf_file."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            fields = extract_fields(pdf_file.read())
+        except Exception:
+            logger.exception("Ordinance extraction failed")
+            return Response(
+                {"detail": "Couldn't read that PDF — please fill in the details manually."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        return Response(fields)
 
 
 class OrdinanceSuggestView(APIView):

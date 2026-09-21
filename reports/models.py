@@ -191,9 +191,15 @@ class ReportVerificationCode(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     verified_at = models.DateTimeField(null=True, blank=True)
+    # Wrong guesses so far; see orms_backend/codes.py for the cap.
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
 
     def is_valid(self):
         return self.verified_at is None and timezone.now() < self.expires_at
+
+    def expire(self):
+        self.expires_at = timezone.now()
+        self.save(update_fields=["expires_at"])
 
     def __str__(self):
         return f"Report verification code for {self.user}"

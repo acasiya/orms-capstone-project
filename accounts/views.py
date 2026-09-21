@@ -1,18 +1,23 @@
+from datetime import timedelta
+
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from orms_backend.codes import generate_code
 from orms_backend.emails import (
     send_account_approved_email,
     send_account_created_admin_emails,
     send_account_rejected_email,
+    send_staff_setup_code_email,
 )
 
-from .models import AuditLog, LoginSession, User, VoterVerification, log_action
+from .models import AuditLog, LoginSession, PasswordResetCode, User, VoterVerification, log_action
 from .serializers import (
     AdminAccountSerializer,
     AdminCreateCitizenSerializer,
@@ -32,6 +37,7 @@ from .serializers import (
     UserSerializer,
     validate_staff_role_uniqueness,
 )
+from .throttles import ResetRequestEmailThrottle
 
 
 class RegisterView(generics.CreateAPIView):
@@ -39,6 +45,8 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "register"
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -49,17 +57,23 @@ class RegisterView(generics.CreateAPIView):
 class PasswordResetRequestView(APIView):
     """POST /api/auth/password-reset/request/ — Forgot Password: emails a 6-digit code."""
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle, ResetRequestEmailThrottle]
+    throttle_scope = "reset_request"
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "A reset code has been sent to your email."})
+        # Same answer whether or not the email has an account, so this can't be
+        # used to find out who is registered.
+        return Response({"detail": "If an account exists for that email, we've sent a reset code to it."})
 
 
 class PasswordResetVerifyView(APIView):
     """POST /api/auth/password-reset/verify/ — Input Code: checks the code is valid."""
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "reset_verify"
 
     def post(self, request):
         serializer = PasswordResetVerifySerializer(data=request.data)
@@ -71,6 +85,8 @@ class PasswordResetVerifyView(APIView):
 class PasswordResetConfirmView(APIView):
     """POST /api/auth/password-reset/confirm/ — Reset Password: sets the new password."""
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "reset_confirm"
 
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
@@ -82,6 +98,10 @@ class PasswordResetConfirmView(APIView):
 class LoginView(TokenObtainPairView):
     """POST /api/auth/login/ — returns access + refresh JWT tokens plus user info."""
     serializer_class = CustomTokenObtainPairSerializer
+    # Per IP; the per-account failed-login lockout (accounts/lockout.py) covers
+    # guessing at one account, this covers one source trying many.
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
 
 
 class LogoutView(APIView):
@@ -108,23 +128,50 @@ class LogoutView(APIView):
         return Response({"detail": "Logged out."})
 
 
-class StaffAccountSetupStatusView(APIView):
-    """
-    GET /api/auth/staff-setup/status/?email=... — tells the staff login
-    page whether this email belongs to a Barangay Staff/Administrator
-    account still waiting on first-login setup (see
-    StaffAccountSetupView below), so it can offer the setup form instead
-    of a normal password field.
-    """
-    permission_classes = [permissions.AllowAny]
+def _pending_setup_account(email):
+    """The Staff/Administrator account an admin created that's still waiting on first-login setup, or None."""
+    user = User.objects.filter(
+        email__iexact=(email or "").strip(), role__in=[User.Role.STAFF, User.Role.ADMIN]
+    ).first()
+    return user if user and not user.has_usable_password() else None
 
-    def get(self, request):
-        email = (request.query_params.get("email") or "").strip()
-        try:
-            user = User.objects.get(email__iexact=email, role__in=[User.Role.STAFF, User.Role.ADMIN])
-        except User.DoesNotExist:
-            return Response({"exists": False, "needs_setup": False})
-        return Response({"exists": True, "needs_setup": not user.has_usable_password()})
+
+class StaffAccountSetupCodeRequestView(APIView):
+    """
+    POST /api/auth/staff-setup/request-code/ — step 1 of first-login setup:
+    emails a 6-digit code to a Staff/Administrator account an admin created and
+    that's still waiting on setup. The code then goes through the ordinary
+    password-reset/verify/ step, and StaffAccountSetupView refuses to set a
+    password without a verified one.
+
+    Why the code exists: an admin-created account has no password, so before this
+    anyone who knew or guessed the email could type it in, choose a password,
+    and be logged in as that account — an Administrator's, if that's the role
+    it was created with. Now the person has to be able to read that inbox.
+
+    Always answers identically whether or not the email matches a pending
+    account, so this can't be used to find out which staff emails exist.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle, ResetRequestEmailThrottle]
+    throttle_scope = "staff_setup_code"
+
+    def post(self, request):
+        user = _pending_setup_account(request.data.get("email"))
+        if user:
+            # Same as Forgot Password: only the newest code works.
+            PasswordResetCode.objects.filter(user=user, used_at__isnull=True).update(used_at=timezone.now())
+            code = generate_code()
+            PasswordResetCode.objects.create(
+                user=user,
+                code=code,
+                expires_at=timezone.now() + timedelta(minutes=PasswordResetCode.CODE_TTL_MINUTES),
+            )
+            send_staff_setup_code_email(user, code, PasswordResetCode.CODE_TTL_MINUTES)
+        return Response({
+            "detail": "If that email belongs to an account waiting on setup, we've sent a code to it."
+        })
 
 
 class StaffAccountSetupView(APIView):
@@ -135,20 +182,37 @@ class StaffAccountSetupView(APIView):
     phone, and password on first login. Logs them straight in afterward —
     same response shape as LoginView — so the frontend can reuse its
     normal post-login redirect (main.js's ROLE_HOME).
+
+    Requires the emailed code from StaffAccountSetupCodeRequestView, already
+    accepted by password-reset/verify/ — see that view for why. Every way of
+    failing (no such account, already set up, missing/wrong/expired code)
+    gets the same answer, again so it can't be used to probe for accounts.
     """
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "staff_setup"
+
+    NOT_ALLOWED = "This setup session has expired or is invalid. Please start again from the login page."
 
     def post(self, request):
-        email = (request.data.get("email") or "").strip()
-        user = get_object_or_404(User, email__iexact=email, role__in=[User.Role.STAFF, User.Role.ADMIN])
-        if user.has_usable_password():
-            return Response(
-                {"detail": "This account has already been set up. Please log in normally."}, status=400
+        user = _pending_setup_account(request.data.get("email"))
+        code = str(request.data.get("code") or "").strip()
+        reset_code = None
+        if user and code:
+            reset_code = (
+                PasswordResetCode.objects.filter(
+                    user=user, code=code, used_at__isnull=True, verified_at__isnull=False
+                )
+                .order_by("-created_at")
+                .first()
             )
+        if not reset_code or not reset_code.is_valid():
+            return Response({"detail": self.NOT_ALLOWED}, status=400)
 
         serializer = StaffAccountSetupSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        reset_code.expire()
 
         LoginSession.objects.create(user=user)
         log_action(user, "Completed account setup and logged in")
