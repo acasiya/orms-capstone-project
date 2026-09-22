@@ -2354,6 +2354,40 @@ button {
   overflow-x: auto;
 }
 
+/* Per-row action buttons (Ordinance Authors) — .btn/.btn-muted are full-width
+   block buttons meant for forms/modals, too bulky to sit inline in a table
+   cell, hence this smaller, inline-sized variant instead of reusing them. */
+.table-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-row-actions button {
+  width: auto;
+  display: inline-block;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--white);
+  background: var(--navy);
+}
+
+.table-row-actions button:hover {
+  background: var(--navy-dark);
+}
+
+.table-row-actions button.table-row-actions__danger {
+  background: #f07167;
+}
+
+.table-row-actions button.table-row-actions__danger:hover {
+  background: #e35c51;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -2530,6 +2564,13 @@ button {
 
 .edit-account-btn--disable {
   background: #e2726b;
+}
+
+/* Same button, opposite action once the account is already disabled — see
+   manage-accounts.js's populateEditModal, which swaps both this class and
+   the label/icon together so a restorative action doesn't stay styled red. */
+.edit-account-btn--enable {
+  background: #4caf6b;
 }
 
 .edit-account-btn--type {

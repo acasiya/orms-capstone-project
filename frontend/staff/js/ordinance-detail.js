@@ -101,6 +101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const numberInput = document.getElementById("editNumberInput");
   const titleInput = document.getElementById("editTitleInput");
   const authorInput = document.getElementById("editAuthorInput");
+  const authorSuggestions = document.getElementById("editAuthorSuggestions");
   const categoryInput = document.getElementById("editCategoryInput");
   const dateInput = document.getElementById("editDateInput");
   const descriptionInput = document.getElementById("editDescriptionInput");
@@ -109,6 +110,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const saveBtn = document.getElementById("editOrdinanceSave");
   const cancelBtn = document.getElementById("editOrdinanceCancel");
   const editError = document.getElementById("editOrdinanceError");
+
+  // Category is a controlled dropdown (an Administrator maintains that list —
+  // see ordinances/models.py's OrdinanceCategory), loaded up front rather than
+  // on first "Edit" click so a slow request doesn't stall the click; failing
+  // disables Edit entirely, since editing without it would mean falling back
+  // to free text for a field meant to stay consistent. Author is free text
+  // either way, so a failed suggestions fetch there just means no
+  // autocomplete — not worth blocking Edit over.
+  try {
+    populateCategorySelect(categoryInput, await fetchOrdinanceCategories());
+  } catch (err) {
+    editBtn.hidden = true;
+    return;
+  }
+  try {
+    populateAuthorDatalist(authorSuggestions, await fetchOrdinanceAuthors());
+  } catch {
+    // No suggestions is a minor loss, not worth blocking Edit over.
+  }
 
   // detailDocPreview/detailDownload are excluded here — their visibility
   // depends on whether ordinance.pdf exists, which renderDisplay() already
@@ -120,6 +140,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     numberInput.value = ordinance.number;
     titleInput.value = ordinance.title;
     authorInput.value = ordinance.author;
+    // Category was chosen from this same list at upload time, so it's a
+    // direct match unless an Administrator has since renamed/retired it —
+    // in that rare case this just leaves the placeholder selected, and
+    // saving requires picking a currently-valid one (same as any other
+    // required field here).
     categoryInput.value = ordinance.category;
     dateInput.value = ordinance.dateApprovedRaw;
     descriptionInput.value = ordinance.description;
@@ -155,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       number: numberInput.value.trim(),
       title: titleInput.value.trim(),
       author: authorInput.value.trim(),
-      category: categoryInput.value.trim(),
+      category: categoryInput.value,
       dateApproved: dateInput.value,
       description: descriptionInput.value.trim(),
       pdfFile: pdfInput.files[0],

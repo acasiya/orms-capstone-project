@@ -5,7 +5,7 @@
 // directly, same reasoning as OrdinanceListCreateView's IsSecretaryOrAdmin
 // check on the backend.
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const currentUser = getAdminUser();
   if (!currentUser || currentUser.position !== "Secretary") {
     window.location.href = "ordinances.html";
@@ -25,6 +25,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadError = document.getElementById("uploadOrdinanceError");
 
   const extractStatus = document.getElementById("ordExtractStatus");
+  const authorSuggestions = document.getElementById("ordAuthorSuggestions");
+
+  // Author stays free text (see ordAuthorSuggestions' datalist) — the roster
+  // is just an autocomplete aid. Category IS a controlled dropdown (an
+  // Administrator maintains that list — see accounts.views.IsAdmin and
+  // ordinances/models.py's OrdinanceCategory), so it needs loading before
+  // the form is usable; a failed author-suggestions fetch isn't fatal the
+  // same way, since typing still works with no suggestions at all.
+  try {
+    populateCategorySelect(categoryInput, await fetchOrdinanceCategories());
+  } catch (err) {
+    uploadError.textContent = err.message;
+    uploadError.hidden = false;
+    uploadConfirm.disabled = true;
+  }
+  try {
+    populateAuthorDatalist(authorSuggestions, await fetchOrdinanceAuthors());
+  } catch {
+    // No suggestions is a minor loss, not worth blocking the form over.
+  }
 
   // Picking a PDF triggers an OCR pass that prefills the form. It's a
   // convenience only: it fills fields that are still empty (never overwrites
@@ -42,21 +62,33 @@ document.addEventListener("DOMContentLoaded", () => {
       const guesses = await extractOrdinanceFields(file);
       if (run !== extractRun) return;
 
-      const targets = [
+      const simpleTargets = [
         [numberInput, guesses.number],
         [titleInput, guesses.title],
         [authorInput, guesses.author],
-        [categoryInput, guesses.category],
         [dateInput, guesses.dateApproved],
         [descriptionInput, guesses.description],
       ];
       let filled = 0;
-      for (const [input, value] of targets) {
+      for (const [input, value] of simpleTargets) {
         if (value && !input.value.trim()) {
           input.value = value;
           filled++;
         }
       }
+
+      // Category's guess is one of the current dropdown's exact strings (see
+      // extraction.py's OCR-category test, checked against the *starting*
+      // list — an Administrator may since have renamed/removed one), so it's
+      // a direct <option> match rather than anything fuzzy.
+      if (guesses.category && !categoryInput.value) {
+        const hasOption = Array.from(categoryInput.options).some((o) => o.value === guesses.category);
+        if (hasOption) {
+          categoryInput.value = guesses.category;
+          filled++;
+        }
+      }
+
       extractStatus.textContent = filled
         ? `Filled in ${filled} field${filled === 1 ? "" : "s"} from the scan. Please check them against the document — scanned text can be misread.`
         : "Couldn't read details from this scan — please fill them in manually.";
@@ -85,11 +117,17 @@ document.addEventListener("DOMContentLoaded", () => {
       number: numberInput.value.trim(),
       title: titleInput.value.trim(),
       author: authorInput.value.trim(),
-      category: categoryInput.value.trim(),
+      category: categoryInput.value,
       dateApproved: dateInput.value,
       description: descriptionInput.value.trim(),
       pdfFile: pdfInput.files[0],
     };
+
+    if (!fields.author || !fields.category) {
+      uploadError.textContent = "Please fill in the author and select a category.";
+      uploadError.hidden = false;
+      return;
+    }
 
     if (!fields.pdfFile) {
       uploadError.textContent = "Please attach the ordinance PDF.";

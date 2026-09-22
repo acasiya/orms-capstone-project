@@ -629,6 +629,20 @@ document.addEventListener("DOMContentLoaded", () => {
       notifBell.classList.add("navbar__bell--flash");
     }
 
+    // Only raise a notification for a section this role can actually reach
+    // from the nav (see STAFF_NAV_ACCESS above) — a Secretary has no path to
+    // reports.html, an Investigator none to concerns.html/concerns-dashboard.html,
+    // and the backend's own /staff/ list endpoints allow any Staff/Admin
+    // regardless (they're meant for cross-referencing, not gated the same
+    // way), so this has to be enforced here rather than assumed from a 403.
+    // Derived from STAFF_NAV_ACCESS rather than a separate role list so this
+    // can't quietly drift from what the sidebar actually shows.
+    const staffPosition = (getAdminUser() || {}).position;
+    const canSeeReports = STAFF_NAV_ACCESS["reports.html"].includes(staffPosition);
+    const canSeeConcerns =
+      STAFF_NAV_ACCESS["concerns.html"].includes(staffPosition) ||
+      STAFF_NAV_ACCESS["concerns-dashboard.html"].includes(staffPosition);
+
     // Check immediately on page load, then keep polling — there's no
     // real-time push here, so this is what makes new report/concern
     // submissions show up as notifications without a full page reload. A
@@ -638,7 +652,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // click on the bell (same reasoning as notifications not being opt-in
     // at all — see the file header comment above).
     function pollNotifications() {
-      return Promise.all([checkForNewReports(), checkForNewConcerns()]).then(([newReports, newConcerns]) => {
+      return Promise.all([
+        canSeeReports ? checkForNewReports() : Promise.resolve(0),
+        canSeeConcerns ? checkForNewConcerns() : Promise.resolve(0),
+      ]).then(([newReports, newConcerns]) => {
         renderNotifications();
         if (newReports + newConcerns > 0) {
           notifDropdown.hidden = false;

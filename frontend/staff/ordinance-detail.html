@@ -140,11 +140,14 @@
                 </div>
                 <div class="field">
                   <label for="editAuthorInput">Authored by</label>
-                  <input type="text" id="editAuthorInput" />
+                  <input type="text" id="editAuthorInput" list="editAuthorSuggestions" />
+                  <datalist id="editAuthorSuggestions"></datalist>
                 </div>
                 <div class="field">
                   <label for="editCategoryInput">Category</label>
-                  <input type="text" id="editCategoryInput" />
+                  <select id="editCategoryInput">
+                    <option value="" selected disabled>Select category</option>
+                  </select>
                 </div>
                 <div class="field">
                   <label for="editDateInput">Date Approved</label>

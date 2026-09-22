@@ -1434,8 +1434,9 @@ button {
 
 .upload-drop__icons {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
-  font-size: 1rem;
   margin-top: 2px;
 }
 
@@ -2447,7 +2448,7 @@ button {
     margin-bottom: 14px;
   }
 
-  /* Ordinance repository: the 4-column table can't fit a phone, so each row
+  /* Ordinance repository: the 3-column table can't fit a phone, so each row
      collapses into a stacked card with the column header shown as a label
      (via each td's data-label attribute set in ordinances-list.js). */
   .ordinances-table-wrap {
@@ -2504,11 +2505,11 @@ button {
     flex-shrink: 0;
   }
 
-  .ordinances-table td[data-label="Ordinance Name"] {
+  .ordinances-table td[data-label="Title"] {
     display: block;
   }
 
-  .ordinances-table td[data-label="Ordinance Name"]::before {
+  .ordinances-table td[data-label="Title"]::before {
     display: block;
     margin-bottom: 2px;
     font-size: 0.78rem;

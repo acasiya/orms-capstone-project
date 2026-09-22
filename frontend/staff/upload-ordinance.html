@@ -109,11 +109,15 @@
               </div>
               <div class="field">
                 <label for="ordAuthorInput">Authored by</label>
-                <input type="text" id="ordAuthorInput" placeholder="e.g. Hon. Juan Dela Cruz" required />
+                <input type="text" id="ordAuthorInput" list="ordAuthorSuggestions" placeholder="e.g. Hon. Juan Dela Cruz" required />
+                <datalist id="ordAuthorSuggestions"></datalist>
+                <p class="field-hint">Suggestions are drawn from the current Councilors/Kagawad/Barangay Captain roster (Ordinance Setup, Admin Portal) — you can still type any other name.</p>
               </div>
               <div class="field">
                 <label for="ordCategoryInput">Category</label>
-                <input type="text" id="ordCategoryInput" placeholder="e.g. Public Safety" required />
+                <select id="ordCategoryInput" required>
+                  <option value="" selected disabled>Select category</option>
+                </select>
               </div>
               <div class="field">
                 <label for="ordDateInput">Date Approved</label>

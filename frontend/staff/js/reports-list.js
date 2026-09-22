@@ -24,7 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pageSizeSelect = document.getElementById("reportsPageSize");
 
   let page = 1;
-  let statusFilterTouched = false;
 
   list.innerHTML = `<div class="ordinances-empty">Loading reports...</div>`;
   try {
@@ -53,23 +52,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     Resolved: "status-badge--resolved",
   };
 
-  // No check-in/check-out picked yet: default to today's reports plus any
-  // older report that's still unresolved, rather than the whole queue —
-  // this is what an Investigator needs to see first thing on login, without
-  // having to remember to filter for it.
-  function isSameDay(a, b) {
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  }
-
-  function getDefaultRows() {
-    const today = new Date();
-    return liveReports().filter((r) => isSameDay(r.dateSubmitted, today) || r.status !== "Resolved");
-  }
-
   function getFiltered() {
     let rows;
     if (!dateFrom.value && !dateTo.value) {
-      rows = getDefaultRows();
+      // No check-in/check-out picked: no date restriction either — with the
+      // Status filter defaulting to "all" (see reports.html), that's just
+      // every report, ordered by the priority sort below.
+      rows = liveReports();
     } else {
       rows = liveReports().filter((r) => {
         if (dateFrom.value && r.dateSubmitted < new Date(`${dateFrom.value}T00:00:00`)) return false;
@@ -81,13 +70,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeFilter.value !== "all") {
       rows = rows.filter((r) => r.incidentType === typeFilter.value);
     }
-    // Resolved reports stay out of the queue until the status filter is
-    // actually touched — even re-picking "Status" (all) counts, since
-    // that's an explicit "yes, show everything" action.
-    if (!statusFilterTouched && statusFilter.value === "all") {
-      rows = rows.filter((r) => r.status !== "Resolved");
-    } else if (statusFilter.value !== "all") {
+
+    if (statusFilter.value !== "all") {
       rows = rows.filter((r) => r.status === statusFilter.value);
+    } else {
+      // "all" — the default on load, and also selectable explicitly: every
+      // status shows, but ranked so whatever isn't Resolved yet (New
+      // Submission/Under Review/In Action) comes ahead of Resolved reports,
+      // newest first within each group — so a backlog of old resolved
+      // reports doesn't bury what's still active.
+      rows = rows.slice().sort((a, b) => {
+        const aResolved = a.status === "Resolved" ? 1 : 0;
+        const bResolved = b.status === "Resolved" ? 1 : 0;
+        if (aResolved !== bResolved) return aResolved - bResolved;
+        return b.dateSubmitted - a.dateSubmitted;
+      });
     }
 
     const query = searchInput.value.trim().toLowerCase();
@@ -205,7 +202,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   });
   statusFilter.addEventListener("change", () => {
-    statusFilterTouched = true;
     page = 1;
     render();
   });

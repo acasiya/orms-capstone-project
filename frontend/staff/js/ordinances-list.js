@@ -18,11 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   let appliedQuery = "";
   let appliedField = filterField.value;
 
-  tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">Loading ordinances...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
     await ensureOrdinancesLoaded();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
     return;
   }
 
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rows = allRows.slice(start, start + pageSize);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="ordinances-empty">${
+      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${
         liveOrdinances().length ? "No ordinances match your search." : "No ordinances uploaded yet."
       }</td></tr>`;
     } else {
@@ -54,11 +54,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         .map(
           (o) => `
           <tr data-id="${o.id}" tabindex="0">
-            <td><span class="ordinance-name">${escapeHtml(o.title)}</span></td>
-            <td>${escapeHtml(o.author)}</td>
             <td>${escapeHtml(o.number)}</td>
-            <td>${escapeHtml(o.dateApproved)}</td>
-            <td>${escapeHtml(o.uploadedBy || "—")}</td>
+            <td>${escapeHtml(o.dateApprovedRaw)}</td>
+            <td><span class="ordinance-name">${escapeHtml(o.title)}</span></td>
             <td>${
               o.isArchived
                 ? `<span class="status-badge status-badge--submitted">Archived</span>`

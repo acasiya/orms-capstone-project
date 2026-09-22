@@ -7,12 +7,18 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from accounts.models import User, log_action
-from accounts.views import IsSecretaryOrAdmin
+from accounts.views import IsAdmin, IsSecretaryOrAdmin
 
 from .extraction import extract_fields
 from .matching import suggest_ordinances
-from .models import Ordinance, OrdinanceDownload
-from .serializers import OrdinanceCreateSerializer, OrdinanceSerializer, OrdinanceUpdateSerializer
+from .models import Ordinance, OrdinanceAuthor, OrdinanceCategory, OrdinanceDownload
+from .serializers import (
+    OrdinanceAuthorSerializer,
+    OrdinanceCategorySerializer,
+    OrdinanceCreateSerializer,
+    OrdinanceSerializer,
+    OrdinanceUpdateSerializer,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -91,6 +97,109 @@ class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
         ordinance = serializer.save()
         log_action(request.user, f"Updated ordinance {ordinance.number} — {ordinance.title}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)
+
+
+class OrdinanceCategoryListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/ordinances/categories/ — the category list, for Upload/Edit
+    Ordinance's Category dropdown (Secretary/Admin) and the Admin Portal's
+    Ordinance Setup page (Admin only, via ?include_inactive=1 — same
+    active-only-unless-you're-an-Admin rule as OrdinanceAuthorListCreateView,
+    for the same reason: a new upload shouldn't be assignable to a retired
+    category). POST — Administrator adds a new one. Unlike the author roster,
+    this list *is* enforced on upload/edit — see OrdinanceCategory's docstring.
+    """
+
+    serializer_class = OrdinanceCategorySerializer
+
+    def get_queryset(self):
+        queryset = OrdinanceCategory.objects.all()
+        include_inactive = self.request.query_params.get("include_inactive") == "1"
+        if not (include_inactive and self.request.user.role == User.Role.ADMIN):
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
+    def get_permissions(self):
+        return [IsAdmin()] if self.request.method == "POST" else [IsSecretaryOrAdmin()]
+
+    def perform_create(self, serializer):
+        category = serializer.save()
+        log_action(self.request.user, f"Added ordinance category {category.name}")
+
+
+class OrdinanceCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    PATCH /api/ordinances/categories/<id>/ — rename a category or toggle
+    is_active when it's retired (kept, not deleted, by default — see the
+    model). DELETE — only for removing one added by mistake; existing
+    ordinances keep their category's name regardless (see Ordinance.category's
+    docstring), so this can't corrupt them. Administrator only.
+    """
+
+    queryset = OrdinanceCategory.objects.all()
+    serializer_class = OrdinanceCategorySerializer
+    permission_classes = [IsAdmin]
+
+    def perform_update(self, serializer):
+        category = serializer.save()
+        log_action(self.request.user, f"Updated ordinance category {category.name}")
+
+    def perform_destroy(self, instance):
+        log_action(self.request.user, f"Removed ordinance category {instance.name}")
+        instance.delete()
+
+
+class OrdinanceAuthorListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/ordinances/authors/ — the author roster, for Upload/Edit
+    Ordinance's Author autocomplete suggestions (Secretary/Admin) and the
+    Admin Portal's Ordinance Setup page (Admin only, via ?include_inactive=1 —
+    Secretary never needs a term-ended official suggested for a new upload,
+    so that param is silently ignored for anyone who isn't an Administrator).
+    POST — Administrator adds a new author. Amending the roster (who counts
+    as a Kagawad/Barangay Captain and how many seats there are) is an
+    Admin-only act — see accounts.views.IsAdmin and OrdinanceAuthor's
+    docstring for the full scope (Sangguniang Barangay seats only).
+    """
+
+    serializer_class = OrdinanceAuthorSerializer
+
+    def get_queryset(self):
+        queryset = OrdinanceAuthor.objects.all()
+        include_inactive = self.request.query_params.get("include_inactive") == "1"
+        if not (include_inactive and self.request.user.role == User.Role.ADMIN):
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
+    def get_permissions(self):
+        return [IsAdmin()] if self.request.method == "POST" else [IsSecretaryOrAdmin()]
+
+    def perform_create(self, serializer):
+        author = serializer.save()
+        log_action(self.request.user, f"Added ordinance author {author.name} ({author.get_position_display()})")
+
+
+class OrdinanceAuthorDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    PATCH /api/ordinances/authors/<id>/ — edit a roster entry's name/position,
+    or toggle is_active when a term ends (kept rather than deleted, so past
+    ordinances' "who was on the roster" history survives — see the model).
+    DELETE — only for removing an entry added by mistake; existing ordinances
+    keep their author's name regardless (see Ordinance.author's docstring),
+    so this can't corrupt them. Administrator only.
+    """
+
+    queryset = OrdinanceAuthor.objects.all()
+    serializer_class = OrdinanceAuthorSerializer
+    permission_classes = [IsAdmin]
+
+    def perform_update(self, serializer):
+        author = serializer.save()
+        log_action(self.request.user, f"Updated ordinance author {author.name} ({author.get_position_display()})")
+
+    def perform_destroy(self, instance):
+        log_action(self.request.user, f"Removed ordinance author {instance.name} ({instance.get_position_display()})")
+        instance.delete()
 
 
 class OrdinanceExtractView(APIView):

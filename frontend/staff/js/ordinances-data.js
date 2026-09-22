@@ -106,6 +106,69 @@ async function readFirstError(response, fallback) {
   throw new Error(`${fallback} (server responded ${response.status})`);
 }
 
+// Fetches the author roster — Upload/Edit Ordinance's Author field is a plain
+// text input, but suggests these names via a <datalist> as a typing aid (see
+// populateAuthorDatalist). Secretary/Admin only get back active authors
+// (whoever's serving right now); an Administrator managing the roster itself
+// passes includeInactive to also see term-ended entries (see
+// OrdinanceAuthorListCreateView). Nothing here is enforced — an ordinance's
+// author never has to match a roster entry (see Ordinance.author's docstring
+// on the backend for why: not every ordinance in this repository comes from
+// the barangay/city council).
+async function fetchOrdinanceAuthors(includeInactive) {
+  const query = includeInactive ? "?include_inactive=1" : "";
+  const response = await authFetch(`/api/ordinances/authors/${query}`);
+  if (!response.ok) throw new Error("Could not load the author list.");
+  return response.json();
+}
+
+// The active category list (admin-managed — see ordinances/models.py's
+// OrdinanceCategory) Upload/Edit Ordinance's Category dropdown is built from.
+// Unlike authors, a category IS enforced server-side (see
+// OrdinanceCreateSerializer's validate_category), so this returns just the
+// plain name strings populateCategorySelect needs.
+async function fetchOrdinanceCategories() {
+  const response = await authFetch("/api/ordinances/categories/");
+  if (!response.ok) throw new Error("Could not load the category list.");
+  return (await response.json()).map((c) => c.name);
+}
+
+// Fills `datalistEl` with the author roster's names, so a plain text input
+// (list="...") suggests them as the Secretary types without forcing an exact
+// pick — free text is still accepted either way.
+function populateAuthorDatalist(datalistEl, authors) {
+  datalistEl.innerHTML = "";
+  authors.forEach((a) => {
+    const option = document.createElement("option");
+    option.value = a.name;
+    option.label = a.position_display;
+    datalistEl.appendChild(option);
+  });
+}
+
+// Builds <option>s inside `selectEl` from the category list. Keeps whatever
+// was already selected if it's still valid, so re-populating after a refetch
+// doesn't clobber a user's choice.
+function populateCategorySelect(selectEl, categories) {
+  const previous = selectEl.value;
+  selectEl.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.disabled = true;
+  placeholder.textContent = "Select category";
+  selectEl.appendChild(placeholder);
+
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    selectEl.appendChild(option);
+  });
+
+  selectEl.value = categories.includes(previous) ? previous : "";
+}
+
 // fields: { number, title, author, category, dateApproved (YYYY-MM-DD), description, pdfFile }
 async function createOrdinance(fields) {
   const formData = new FormData();

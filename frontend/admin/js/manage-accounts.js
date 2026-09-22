@@ -66,8 +66,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             a.setupPending
               ? '<span class="status-pending">Setup Pending</span>'
               : a.active
-                ? '<span class="status-active">Online</span>'
-                : '<span class="status-inactive">Offline</span>'
+                ? '<span class="status-active">Active</span>'
+                : '<span class="status-inactive">Disabled</span>'
           }</td>
         </tr>`
       )
@@ -118,6 +118,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     editDisableBtn.innerHTML = account.active
       ? `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg> Disable User`
       : `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Enable User`;
+    // Swap the color too — "Enable User" is a restorative action and
+    // shouldn't stay styled like the red "Disable"/"Delete" buttons.
+    editDisableBtn.classList.toggle("edit-account-btn--disable", account.active);
+    editDisableBtn.classList.toggle("edit-account-btn--enable", !account.active);
 
     // Admins can't disable, re-role, or delete their own account — see the
     // matching safeguards in AdminAccountDetailView.patch/delete. Shown as
@@ -161,13 +165,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const updated = await updateAccount(activeAccount.id, { active: !activeAccount.active });
       Object.assign(activeAccount, updated);
+      // Sets the correct label, color, and disabled state for the new
+      // active/disabled status — restoring `previousLabel` here instead (as
+      // this used to, unconditionally, in a `finally`) would overwrite that
+      // with the pre-click label, leaving the button's text/icon out of
+      // sync with its now-updated color.
       populateEditModal(activeAccount);
       render();
     } catch (err) {
-      alert(err.message);
-    } finally {
-      editDisableBtn.disabled = false;
+      // Nothing changed — put the button back exactly as it was.
       editDisableBtn.innerHTML = previousLabel;
+      editDisableBtn.disabled = false;
+      alert(err.message);
     }
   });
 
