@@ -120,6 +120,10 @@ async function updateReportStatus(id, patch) {
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
+    // A permission/claim rejection comes back as {detail: "..."} (a plain
+    // string, e.g. "Claim this report before updating its status."), field
+    // validation errors as {field: ["..."]} — surface either one.
+    if (typeof data.detail === "string") throw new Error(data.detail);
     const firstError = Object.values(data)[0];
     throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not update this report.");
   }

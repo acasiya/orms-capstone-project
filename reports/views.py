@@ -221,7 +221,8 @@ class StaffReportDetailView(APIView):
     PATCH /api/reports/staff/<id>/ — updates status/remarks only (see
     StaffReportUpdateSerializer for why nothing else is writable here).
     Investigator/Admin only — Reports is the Investigator's section (see
-    IsInvestigatorOrAdmin); Captain's dashboard is read-only.
+    IsInvestigatorOrAdmin); Captain's dashboard is read-only. An Investigator
+    can only do this on a report they've claimed themselves.
     """
     permission_classes = [IsStaffOrAdmin]
 
@@ -239,6 +240,20 @@ class StaffReportDetailView(APIView):
             )
 
         report = self.get_object(pk)
+
+        # Working a report — status and remarks are saved together — belongs
+        # to whichever Investigator claimed it (see StaffReportClaimView), so
+        # an unclaimed report, or one another Investigator holds, is
+        # read-only to everyone else. Admin is exempt, same as forfeiting
+        # (see StaffReportForfeitView): a way to step in on someone's behalf.
+        if request.user.role != User.Role.ADMIN and report.assigned_investigator_id != request.user.id:
+            if report.assigned_investigator_id:
+                holder = report.assigned_investigator.get_full_name() or report.assigned_investigator.username
+                detail = f"This report is claimed by {holder} — only they can update it."
+            else:
+                detail = "Claim this report before updating its status."
+            return Response({"detail": detail}, status=403)
+
         previous_status = report.status
         serializer = StaffReportUpdateSerializer(report, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)

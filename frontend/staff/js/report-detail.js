@@ -109,9 +109,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const claimLabel = document.getElementById("claimLabel");
   const claimBtn = document.getElementById("claimBtn");
   const forfeitBtn = document.getElementById("forfeitBtn");
+  const claimHint = document.getElementById("claimHint");
   const currentUser = getAdminUser();
   const isInvestigator = currentUser && currentUser.position === "Investigator";
 
+  // Status/remarks editing is Investigator-only, and even then only on a
+  // report this Investigator has claimed — an unclaimed report, or one
+  // someone else holds, is read-only (enforced server-side too, see
+  // StaffReportDetailView.patch). Barangay Captain always gets a read-only
+  // view. Re-run on every claim/forfeit so editing turns on/off with it.
   function renderClaim() {
     const isMine = report.assignedInvestigatorId && currentUser && report.assignedInvestigatorId === currentUser.id;
     claimLabel.textContent = report.assignedInvestigator
@@ -119,6 +125,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       : "Unclaimed";
     claimBtn.hidden = !isInvestigator || !!report.assignedInvestigator;
     forfeitBtn.hidden = !isInvestigator || !isMine;
+
+    const canEdit = !!(isInvestigator && isMine);
+    statusEditBtn.hidden = !canEdit;
+    remarksInput.disabled = !canEdit;
+    saveBtn.hidden = !canEdit;
+    if (!canEdit) {
+      // Drop an in-progress status pick if the claim was just given up.
+      statusPill.hidden = false;
+      statusSelect.hidden = true;
+    }
+
+    if (isInvestigator && !isMine) {
+      claimHint.textContent = report.assignedInvestigator
+        ? `Only ${report.assignedInvestigator} can update this report — it's claimed by them.`
+        : "Claim this report to update its status or remarks.";
+      claimHint.hidden = false;
+    } else {
+      claimHint.hidden = true;
+    }
   }
   renderClaim();
 
@@ -138,20 +163,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       report = await forfeitReport(report.id);
       renderClaim();
+      // Editing just turned off — discard remarks typed but not saved, so
+      // the "unsaved changes" prompt doesn't offer to save what can no
+      // longer be saved.
+      remarksInput.value = savedRemarks;
     } catch (err) {
       alert(err.message);
     } finally {
       forfeitBtn.disabled = false;
     }
   });
-
-  // Status/remarks editing is Investigator-only too (see
-  // StaffReportDetailView.patch) — Barangay Captain gets a read-only view.
-  if (!isInvestigator) {
-    statusEditBtn.hidden = true;
-    remarksInput.disabled = true;
-    saveBtn.hidden = true;
-  }
 
   STATUSES_ORDERED.forEach((s) => statusSelect.append(new Option(s, s)));
 

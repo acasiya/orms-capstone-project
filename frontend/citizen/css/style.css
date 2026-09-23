@@ -1939,7 +1939,7 @@ button {
 }
 
 .reports-toolbar .page-heading {
-  margin: 0;
+  margin: 0 auto 0 0;
 }
 
 .reports-filter {

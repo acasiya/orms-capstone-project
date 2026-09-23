@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 from orms_backend.codes import MAX_CODE_ATTEMPTS
 
-from .models import ReportVerificationCode
+from .models import Report, ReportVerificationCode
 
 REAL_CACHE = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
@@ -94,3 +94,85 @@ class ReportVerificationThrottleTests(APITestCase):
         other = User.objects.create_user(username="maria", email="maria@test.com", password="x", is_verified=True)
         self.client.force_authenticate(other)
         self.assertEqual(self.client.post("/api/reports/send-verification/").status_code, 200)
+
+
+class ReportStatusClaimGateTests(APITestCase):
+    """An Investigator can only work (status/remarks) a report they've claimed themselves."""
+
+    def setUp(self):
+        self.citizen = User.objects.create_user(username="cit", email="cit@test.com", password="x", is_verified=True)
+        self.investigator = User.objects.create_user(
+            username="inv1", email="inv1@test.com", password="x", role=User.Role.STAFF, position="Investigator"
+        )
+        self.other_investigator = User.objects.create_user(
+            username="inv2", email="inv2@test.com", password="x", role=User.Role.STAFF, position="Investigator"
+        )
+        self.admin = User.objects.create_user(username="adm", email="adm@test.com", password="x", role=User.Role.ADMIN)
+        self.report = Report.objects.create(
+            citizen=self.citizen, location="Purok 1", ordinance="Anti-Littering", incident_date="2026-09-01",
+            nature_of_violation="Dumping garbage",
+        )
+        self.url = f"/api/reports/staff/{self.report.id}/"
+
+    def _patch(self, **body):
+        return self.client.patch(self.url, body or {"status": "under_review"}, format="json")
+
+    def test_unclaimed_report_cannot_be_updated(self):
+        self.client.force_authenticate(self.investigator)
+        response = self._patch(status="under_review")
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("Claim this report", response.data["detail"])
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.status, Report.Status.SUBMITTED)
+
+    def test_report_claimed_by_someone_else_cannot_be_updated(self):
+        self.report.assigned_investigator = self.other_investigator
+        self.report.save()
+        self.client.force_authenticate(self.investigator)
+        response = self._patch(status="under_review")
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("inv2", response.data["detail"])
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.status, Report.Status.SUBMITTED)
+
+    def test_remarks_only_edit_is_also_blocked_without_the_claim(self):
+        self.client.force_authenticate(self.investigator)
+        self.assertEqual(self._patch(remarks="Looking into it").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.remarks, "")
+
+    def test_claiming_it_first_lets_the_investigator_update_it(self):
+        self.client.force_authenticate(self.investigator)
+        self.assertEqual(self.client.post(f"{self.url}claim/").status_code, 200)
+        response = self._patch(status="under_review", remarks="On it")
+        self.assertEqual(response.status_code, 200)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.status, Report.Status.UNDER_REVIEW)
+        self.assertEqual(self.report.remarks, "On it")
+
+    def test_forfeiting_takes_the_ability_to_update_away_again(self):
+        self.client.force_authenticate(self.investigator)
+        self.client.post(f"{self.url}claim/")
+        self.client.post(f"{self.url}forfeit/")
+        self.assertEqual(self._patch(status="in_action").status_code, 403)
+
+    def test_second_investigator_cannot_update_after_the_first_claims_it(self):
+        self.client.force_authenticate(self.investigator)
+        self.client.post(f"{self.url}claim/")
+        self.client.force_authenticate(self.other_investigator)
+        self.assertEqual(self._patch(status="resolved").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertNotEqual(self.report.status, Report.Status.RESOLVED)
+
+    def test_admin_can_still_update_on_someones_behalf(self):
+        self.report.assigned_investigator = self.other_investigator
+        self.report.save()
+        self.client.force_authenticate(self.admin)
+        self.assertEqual(self._patch(status="under_review").status_code, 200)
+
+    def test_non_investigator_staff_are_still_refused_outright(self):
+        secretary = User.objects.create_user(
+            username="sec", email="sec@test.com", password="x", role=User.Role.STAFF, position="Secretary"
+        )
+        self.client.force_authenticate(secretary)
+        self.assertEqual(self._patch(status="under_review").status_code, 403)
