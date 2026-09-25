@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeSpace — About Us</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <span class="navbar__logo" aria-hidden="true"></span>
+      SafeSpace
+    </div>
+    <ul class="navbar__links">
+      <li><a href="ordinances.html">Ordinances</a></li>
+      <li><a href="file-report.html" data-auth-gate="report">File Report</a></li>
+      <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit Suggestion</a></li>
+      <li data-auth-only><a href="my-reports.html">My Reports</a></li>
+      <li data-auth-only><a href="my-concerns.html">My Concerns/Suggestions</a></li>
+      <li><a href="faqs.html">FAQs</a></li>
+      <li><a href="about.html" class="active">About Us</a></li>
+    </ul>
+    <span class="navbar__bell" data-auth-only role="button" tabindex="0" id="notifBell">
+      <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5 5 0 00-5 5v3.5c0 .8-.3 1.6-.9 2.2L5 16h14l-1.1-1.3a3.2 3.2 0 01-.9-2.2V9a5 5 0 00-5-5z"/><path d="M10 19a2.2 2.2 0 004 0"/></svg><span class="navbar__badge" id="notifBadge" hidden></span>
+      <div class="notif-dropdown" id="notifDropdown" hidden>
+        <div class="notif-dropdown__header">
+                <h3 class="notif-dropdown__title">Notifications</h3>
+                <button type="button" class="notif-dropdown__clear-all" id="notifClearAll">Clear All</button>
+              </div>
+        <ul class="notif-dropdown__list" id="notifList"></ul>
+        <a class="notif-dropdown__view-all" href="notifications.html">View All Notifications</a>
+      </div>
+    </span>
+    <div class="navbar__profile" role="button" tabindex="0"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></div>
+  </nav>
+
+  <main class="about-page">
+    <section class="about-intro">
+      <h1 class="about-title">About Us</h1>
+
+      <div class="about-card about-card--barangay">
+        <h2 class="about-card__name">Barangay Platero</h2>
+        <ul class="about-card__contact">
+          <li>
+            <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>
+            <span data-barangay="address" data-barangay-link></span>
+          </li>
+          <li>
+            <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z"/></svg>
+            <span data-barangay="phone" data-barangay-link></span>
+          </li>
+          <li>
+            <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 7l8 6 8-6"/></svg>
+            <span data-barangay="email" data-barangay-link></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="about-pair">
+        <div class="about-card">
+          <h2 class="about-card__title">What is SafeSpace</h2>
+          <p>SafeSpace is a web-based system that is designed to help barangay citizens report violations, submit concerns and suggestions, ask questions, and view ordinances in order to promote collaborative and safe communities.</p>
+        </div>
+        <div class="about-card">
+          <h2 class="about-card__title">Our Mission</h2>
+          <p>SafeSpace gives barangay citizens a way to check what happens to their reports, concerns and suggestions. It also helps promote local government accountability and action.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-logos" aria-label="Barangay seals">
+      <img src="drawables/logo-jun-aurelio.png" alt="Kapitan Jun Aurelio — Tatak Aurelio, Serbisyong Makatao" width="180" height="180" />
+      <img src="drawables/logo-barangay-platero.png" alt="Barangay Platero, City of Biñan seal" width="180" height="180" />
+      <img src="drawables/logo-city-of-binan.png" alt="City of Biñan seal" width="180" height="180" />
+    </section>
+
+    <section class="council" aria-labelledby="councilHeading">
+      <h2 class="council__heading" id="councilHeading">Sangguniang Barangay</h2>
+
+      <div class="council__row council__row--lead">
+        <figure class="council-member">
+          <img src="drawables/eliseo-aurelio.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Eliseo "Jun" Aurelio Jr.</span>
+            <span class="council-member__role">Barangay Chairman</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="council__row">
+        <figure class="council-member">
+          <img src="drawables/albert-anasao.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Albert C. Anasao</span>
+            <span class="council-member__role">Committee Chairman on Health, Senior Citizens, Women and Children Affairs</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/melvin-belan.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Melvin L. Belan</span>
+            <span class="council-member__role">Committee Chairman on Peace and Order</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/enriqueta-lacson.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Enriqueta C. Lacson</span>
+            <span class="council-member__role">Committee Chairman on Disaster Risk Reduction and Management</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/rommel-almendral.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Rommel N. Almendral</span>
+            <span class="council-member__role">Committee Chairman on Education</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/lualhatic-narvaez.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Lualhati C. Narvaez</span>
+            <span class="council-member__role">Committee Chairman on Livelihood, Festivity and Events</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="council__row">
+        <figure class="council-member">
+          <img src="drawables/ruel-alonte.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Ruel Paolo C. Alonte</span>
+            <span class="council-member__role">Committee Chairman on Infrastructure</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/joana-marica.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Joana Marie R. Marica</span>
+            <span class="council-member__role">Committee Chairman on Appropriation</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/anthony-perez.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Hon. Anthony Rinmark A. Perez</span>
+            <span class="council-member__role">Committee Chairman on Youth and Sports Development</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="council__row">
+        <figure class="council-member">
+          <img src="drawables/dan-tarzona.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Dan Paul V. Tarzona</span>
+            <span class="council-member__role">Barangay Secretary</span>
+          </figcaption>
+        </figure>
+        <figure class="council-member">
+          <img src="drawables/maria-norte.png" alt="" width="150" height="150" loading="lazy" />
+          <figcaption>
+            <span class="council-member__name">Maria Cristel D. Norte</span>
+            <span class="council-member__role">Barangay Treasurer</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <footer id="siteFooter"></footer>
+
+  <script src="js/site-footer.js"></script>
+  <script src="js/main.js"></script>
+
+  <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->
+  <div class="modal-overlay" id="authGateModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2 id="authGateTitle">Want to Submit a Report?</h2>
+      <div class="auth-gate__row">
+        <p class="auth-gate__label">Don't Have An Account?</p>
+        <a class="btn" href="signup.html">Sign Up now</a>
+      </div>
+      <div class="auth-gate__row">
+        <p class="auth-gate__label">Already Have An Account?</p>
+        <a class="btn" href="index.html">Login now</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile popup: Guest Account, or the logged-in account card -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div id="profileGuestView">
+        <div class="profile-card__row">
+          <span class="profile-avatar profile-avatar--guest"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></span>
+          <p class="profile-card__name">Guest Account</p>
+        </div>
+        <a class="btn btn-muted" href="index.html">Login</a>
+      </div>
+      <div id="profileUserView" hidden>
+        <div class="profile-card__row">
+          <span class="profile-avatar" id="profileUserInitials"></span>
+          <p class="profile-card__name" id="profileUserName"></p>
+        </div>
+        <a class="btn btn-muted" href="profile.html">View Details</a>
+        <button type="button" class="btn btn-muted" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

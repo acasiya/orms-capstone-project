@@ -18,9 +18,40 @@ document.addEventListener("DOMContentLoaded", async () => {
   let appliedQuery = "";
   let appliedField = filterField.value;
 
+  // Search box placeholder follows the selected filter, suggesting example
+  // keywords for that field. Author/No./Category examples are pulled from the
+  // loaded ordinances so they always match real data; the static lists are
+  // just the fallback while loading (or when there's nothing loaded yet).
+  const PLACEHOLDER_FALLBACKS = {
+    title: ["curfew", "business permit", "garbage"],
+    author: ["Hon. Dela Cruz"],
+    number: ["No. 1-(2026)"],
+    category: ["Public Order", "Business"],
+  };
+
+  function placeholderExamples(field) {
+    if (field === "title") return PLACEHOLDER_FALLBACKS.title;
+    const seen = [];
+    for (const o of liveOrdinances()) {
+      const value = String(o[field] || "").trim();
+      if (value && value.length <= 30 && !seen.includes(value)) seen.push(value);
+      if (seen.length === 2) break;
+    }
+    return seen.length ? seen : PLACEHOLDER_FALLBACKS[field] || [];
+  }
+
+  function updateSearchPlaceholder() {
+    const examples = placeholderExamples(filterField.value);
+    searchInput.placeholder = examples.length ? `e.g. ${examples.join(", ")}` : "Search...";
+  }
+
+  filterField.addEventListener("change", updateSearchPlaceholder);
+  updateSearchPlaceholder();
+
   tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
     await ensureOrdinancesLoaded();
+    updateSearchPlaceholder();
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
     return;

@@ -473,3 +473,70 @@ class PasswordResetEnumerationTests(APITestCase):
         self.assertEqual(unknown.status_code, 400)
         self.assertEqual(known_wrong.status_code, 400)
         self.assertEqual(unknown.data, known_wrong.data)
+
+
+class DisableDeleteWithClaimsTests(APITestCase):
+    """Disabling/deleting an Investigator who holds claimed reports — and the audit trail for it."""
+
+    def setUp(self):
+        from reports.models import Report
+
+        self.Report = Report
+        self.admin = User.objects.create_user(
+            username="adm", email="adm@test.com", password="x", role=User.Role.ADMIN, first_name="Ana", last_name="Admin"
+        )
+        self.inv = User.objects.create_user(
+            username="inv", email="inv@test.com", password="x", role=User.Role.STAFF, position="Investigator",
+            first_name="Juan", last_name="Cruz",
+        )
+        citizen = User.objects.create_user(username="cit", email="cit@test.com", password="x", is_verified=True)
+        self.reports = [
+            Report.objects.create(
+                citizen=citizen, location="Purok 1", ordinance=f"Ordinance {i}", incident_date="2026-09-01",
+                nature_of_violation="x", assigned_investigator=self.inv,
+            )
+            for i in range(2)
+        ]
+        self.url = f"/api/auth/admin/users/{self.inv.id}/"
+        self.client.force_authenticate(self.admin)
+
+    def _claimed(self):
+        return self.Report.objects.filter(assigned_investigator=self.inv).count()
+
+    def _logs(self):
+        return list(AuditLog.objects.filter(user=self.admin).values_list("action", flat=True))
+
+    def test_disable_and_release_frees_claims_and_logs_each_one(self):
+        response = self.client.patch(self.url, {"active": False, "release_claims": True}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._claimed(), 0)
+        logs = self._logs()
+        self.assertIn("Disabled Juan Cruz's account — 2 claimed reports released", logs)
+        self.assertEqual(sum("Released Juan Cruz's claim" in a and "(account disabled)" in a for a in logs), 2)
+
+    def test_disable_keeping_claims_leaves_them_assigned_and_says_so(self):
+        response = self.client.patch(self.url, {"active": False}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._claimed(), 2)
+        self.assertIn("Disabled Juan Cruz's account — 2 claimed reports still assigned to them", self._logs())
+
+    def test_disabling_someone_with_no_claims_logs_plainly(self):
+        self.Report.objects.update(assigned_investigator=None)
+        self.client.patch(self.url, {"active": False, "release_claims": True}, format="json")
+        self.assertIn("Disabled Juan Cruz's account", self._logs())
+
+    def test_delete_frees_claims_and_logs_who_did_it(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(all(r.assigned_investigator_id is None for r in self.Report.objects.all()))
+        logs = self._logs()
+        self.assertIn("Deleted Juan Cruz's account — 2 claimed reports released", logs)
+        self.assertEqual(sum("Released Juan Cruz's claim" in a and "(account deleted)" in a for a in logs), 2)
+
+    def test_long_log_entries_are_trimmed_not_dropped(self):
+        self.reports[0].ordinance = "A" * 255
+        self.reports[0].save()
+        self.client.delete(self.url)
+        entries = [a for a in self._logs() if a.startswith("Released")]
+        self.assertEqual(len(entries), 2)
+        self.assertTrue(all(len(a) <= 255 for a in entries))

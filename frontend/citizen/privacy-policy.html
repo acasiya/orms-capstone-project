@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeSpace — Privacy Policy</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <span class="navbar__logo" aria-hidden="true"></span>
+      SafeSpace
+    </div>
+    <ul class="navbar__links">
+      <li><a href="ordinances.html">Ordinances</a></li>
+      <li><a href="file-report.html" data-auth-gate="report">File Report</a></li>
+      <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit Suggestion</a></li>
+      <li data-auth-only><a href="my-reports.html">My Reports</a></li>
+      <li data-auth-only><a href="my-concerns.html">My Concerns/Suggestions</a></li>
+      <li><a href="faqs.html">FAQs</a></li>
+      <li><a href="about.html">About Us</a></li>
+    </ul>
+    <span class="navbar__bell" data-auth-only role="button" tabindex="0" id="notifBell">
+      <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5 5 0 00-5 5v3.5c0 .8-.3 1.6-.9 2.2L5 16h14l-1.1-1.3a3.2 3.2 0 01-.9-2.2V9a5 5 0 00-5-5z"/><path d="M10 19a2.2 2.2 0 004 0"/></svg><span class="navbar__badge" id="notifBadge" hidden></span>
+      <div class="notif-dropdown" id="notifDropdown" hidden>
+        <div class="notif-dropdown__header">
+                <h3 class="notif-dropdown__title">Notifications</h3>
+                <button type="button" class="notif-dropdown__clear-all" id="notifClearAll">Clear All</button>
+              </div>
+        <ul class="notif-dropdown__list" id="notifList"></ul>
+        <a class="notif-dropdown__view-all" href="notifications.html">View All Notifications</a>
+      </div>
+    </span>
+    <div class="navbar__profile" role="button" tabindex="0"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></div>
+  </nav>
+
+  <main class="legal-page">
+    <article class="legal-page__inner">
+      <h1 class="legal-page__title">Privacy Policy</h1>
+      <p class="legal-page__meta">Effective date: [date]</p>
+
+      <h2>1. Who we are</h2>
+      <p>Barangay Platero, City of Biñan, Laguna ("the Barangay", "we") is the personal information controller for SafeSpace, the Barangay's Online Reporting and Management System. We follow the Data Privacy Act of 2012 (Republic Act No. 10173), its Implementing Rules and Regulations, and issuances of the National Privacy Commission (NPC).</p>
+      <p>Data Protection Officer: [DPO name], [email address], [phone number], <span data-barangay="address"></span>.</p>
+
+      <h2>2. What we collect, why, and who sees it</h2>
+      <div class="legal-table-wrap">
+        <table class="legal-table">
+          <thead>
+            <tr><th>Data</th><th>When collected</th><th>Why we use it</th><th>Who can see it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>First and last name, email, mobile number, address (street and block/lot)</td><td>Sign-up</td><td>Create your account, confirm you live in Barangay Platero, contact you</td><td>You, Administrators; staff see your name and contact number on reports you file</td></tr>
+            <tr><td>Password</td><td>Sign-up, password reset</td><td>Log you in</td><td>No one: stored only as a one-way hash</td></tr>
+            <tr><td>Voter's ID photo</td><td>Account verification</td><td>Confirm you are a registered voter of Barangay Platero</td><td>Administrators who review accounts</td></tr>
+            <tr><td>Profile picture (optional)</td><td>Profile page</td><td>Show on your account</td><td>You, Administrators</td></tr>
+            <tr><td>Reports: street, date and time of incident, description, ordinance violated, photos and videos</td><td>Filing a report</td><td>Investigate and act on ordinance violations; show where incidents happen on staff dashboards</td><td>You, Barangay Captain, Investigators</td></tr>
+            <tr><td>Concerns and suggestions, with any photos or videos</td><td>Submitting a concern</td><td>Review and respond to community concerns</td><td>You, Barangay Captain, Secretary</td></tr>
+            <tr><td>Questions</td><td>Asking a question</td><td>Answer you; common questions may become public FAQs without your name</td><td>You, Barangay staff, Administrators</td></tr>
+            <tr><td>One-time verification codes</td><td>Password reset, filing a report</td><td>Confirm it is really you</td><td>No one (sent only to your email)</td></tr>
+            <tr><td>Login and logout times, audit log of actions, failed login attempts</td><td>Using the system</td><td>Security, preventing misuse, accountability of officials</td><td>Administrators</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The voter's ID is sensitive personal information under Section 3(l) of RA 10173 because it is issued by a government agency and is peculiar to you. We collect it only with your consent and use it only for verification.</p>
+      <p>We do not collect your precise location (GPS). We do not use tracking cookies, advertising or analytics tools.</p>
+
+      <h2>3. Our legal basis</h2>
+      <ul>
+        <li><strong>Your consent</strong> (Sections 12(a) and 13(a)), given at sign-up, including for your voter's ID.</li>
+        <li><strong>Functions of public authority</strong> (Section 12(e)): receiving complaints and enforcing barangay ordinances.</li>
+        <li><strong>Compliance with a legal obligation</strong> (Section 12(c)), when a law or court order requires us to keep or disclose data.</li>
+      </ul>
+
+      <h2>4. How we share your data</h2>
+      <p>We do not sell, rent or trade personal data. We share it only:</p>
+      <ul>
+        <li><strong>Inside the Barangay:</strong> with officials and staff whose role needs it, as shown in the table above.</li>
+        <li><strong>With service providers</strong> that run the system for us, under our instructions: [hosting provider] runs the application; [database provider] stores accounts, reports, concerns and logs; Cloudinary stores uploaded photos, videos, voter's IDs and profile pictures; and Brevo sends system emails such as verification codes and status updates.</li>
+        <li><strong>With authorities</strong> when required by law, a subpoena or a court order, or to protect someone's life or safety.</li>
+      </ul>
+      <p>Some of these providers store data outside the Philippines. Under Section 21 of RA 10173, the Barangay stays accountable for your data and requires these providers to protect it at a comparable level.</p>
+      <p>We do not reveal a reporter's identity to the person being reported, except when required by law or legal proceedings.</p>
+
+      <h2>5. How long we keep it</h2>
+      <div class="legal-table-wrap">
+        <table class="legal-table">
+          <thead><tr><th>Data</th><th>Kept for</th></tr></thead>
+          <tbody>
+            <tr><td>Account details</td><td>While your account is active, then [X years] after it is closed</td></tr>
+            <tr><td>Voter's ID photo</td><td>Until your account is approved or rejected, then [deleted within X days / kept X years]</td></tr>
+            <tr><td>Reports and concerns, with attachments</td><td>[X years] after they are resolved, or longer if needed for a legal case</td></tr>
+            <tr><td>Audit logs and login records</td><td>[X years]</td></tr>
+            <tr><td>Verification codes</td><td>Expire within minutes; deleted after use</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>When the retention period ends, we delete or anonymize the data securely.</p>
+
+      <h2>6. How we protect it</h2>
+      <ul>
+        <li>All connections to the system are encrypted (HTTPS).</li>
+        <li>Passwords are stored only as one-way hashes.</li>
+        <li>Access is limited by role: each official sees only what their position needs.</li>
+        <li>Accounts lock for 30 minutes after 10 failed login attempts.</li>
+        <li>Filing a report or resetting a password requires a one-time code sent to your email.</li>
+        <li>Login sessions expire automatically, and actions by officials are recorded in an audit log.</li>
+        <li>Officials with access are bound by confidentiality.</li>
+      </ul>
+
+      <h2 id="your-rights">7. Your rights</h2>
+      <p>Under Sections 16 to 18 of RA 10173, you have the right to:</p>
+      <ol>
+        <li><strong>Be informed</strong> whether and how your personal data is being processed.</li>
+        <li><strong>Access</strong> your personal data and learn where it came from and who received it.</li>
+        <li><strong>Correct</strong> inaccurate or outdated data. You can edit most account details on your Profile page.</li>
+        <li><strong>Object</strong> to processing, or <strong>withdraw your consent</strong>. Some services, such as filing reports, cannot work without the data they need.</li>
+        <li><strong>Erasure or blocking</strong> of data that is inaccurate, unlawfully obtained or no longer needed.</li>
+        <li><strong>Data portability:</strong> receive a copy of your data in a common electronic format.</li>
+        <li><strong>Damages</strong> for harm caused by inaccurate or unlawfully used data.</li>
+        <li><strong>File a complaint</strong> with the National Privacy Commission (<a href="https://privacy.gov.ph" target="_blank" rel="noopener">privacy.gov.ph</a>).</li>
+      </ol>
+      <p>To use these rights, contact the Data Protection Officer. We will reply within [15] working days. We may ask you to prove your identity first.</p>
+
+      <h2>8. Data breaches</h2>
+      <p>If a breach is likely to put you at real risk of harm, we will notify the National Privacy Commission and affected users within 72 hours of learning of it, as required by NPC rules. The notice will say what happened, what data was involved, and what we are doing about it.</p>
+
+      <h2>9. Children</h2>
+      <p>Accounts are for registered voters of Barangay Platero, so users must be at least 18 years old.</p>
+
+      <h2>10. Changes to this policy</h2>
+      <p>We will post any changes here with a new effective date. For significant changes, we will notify you by email or when you next log in.</p>
+    </article>
+  </main>
+
+  <footer id="siteFooter"></footer>
+
+  <script src="js/site-footer.js"></script>
+  <script src="js/main.js"></script>
+
+  <!-- Guests are prompted to sign up / log in before filing a report or suggestion -->
+  <div class="modal-overlay" id="authGateModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2 id="authGateTitle">Want to Submit a Report?</h2>
+      <div class="auth-gate__row">
+        <p class="auth-gate__label">Don't Have An Account?</p>
+        <a class="btn" href="signup.html">Sign Up now</a>
+      </div>
+      <div class="auth-gate__row">
+        <p class="auth-gate__label">Already Have An Account?</p>
+        <a class="btn" href="index.html">Login now</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile popup: Guest Account, or the logged-in account card -->
+  <div class="modal-overlay" id="profileModal" hidden>
+    <div class="modal-card profile-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div id="profileGuestView">
+        <div class="profile-card__row">
+          <span class="profile-avatar profile-avatar--guest"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></span>
+          <p class="profile-card__name">Guest Account</p>
+        </div>
+        <a class="btn btn-muted" href="index.html">Login</a>
+      </div>
+      <div id="profileUserView" hidden>
+        <div class="profile-card__row">
+          <span class="profile-avatar" id="profileUserInitials"></span>
+          <p class="profile-card__name" id="profileUserName"></p>
+        </div>
+        <a class="btn btn-muted" href="profile.html">View Details</a>
+        <button type="button" class="btn btn-muted" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

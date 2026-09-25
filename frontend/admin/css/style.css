@@ -43,21 +43,26 @@
 }
 
 :root {
-  --navy: #14213d;
-  --navy-dark: #0d1626;
-  --cream: #f6e7c4;
-  --cream-dark: #efd9a3;
+  --navy: #057a12;
+  --navy-dark: #045c0e;
+  --cream: #e3f7e5;
+  --cream-dark: #c2ecc7;
   --white: #ffffff;
   --text: #1f2430;
   --text-muted: #6b7280;
-  --link: #2f6fed;
-  --border: #d9dce3;
+  --link: #04700f;
+  --border: #cde8d0;
   --heart: #e63946;
   --radius: 10px;
-  --shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  --shadow: 0 10px 35px rgba(5, 122, 18, 0.15);
   --max-width: 1180px;
   --serif: Georgia, "Times New Roman", Times, serif;
-  --plain-bg: #e9e5dc;
+  --plain-bg: #f2fbf3;
+  --navy-hover: #068f15;
+  --sage: #4a6b52;
+  --sage-dark: #3a5641;
+  --highlight: #d9f7dc;
+  --accent: #03ac13;
 }
 
 * {
@@ -108,6 +113,7 @@ button {
   background: var(--navy);
   color: var(--white);
   padding: 12px 28px;
+  border-bottom: 4px solid var(--accent);
 }
 
 .navbar__brand {
@@ -163,8 +169,11 @@ button {
 
 .navbar__links a.active {
   opacity: 1;
-  color: #f2994a;
+  color: var(--highlight);
   text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
 }
 
 /* Inverted chip: the topbar itself is white, so the bell's own background
@@ -219,7 +228,7 @@ button {
   padding: 60px 20px;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(10, 14, 26, 0.5) 0%, rgba(10, 14, 26, 0.12) 45%, rgba(10, 14, 26, 0.5) 100%),
+    linear-gradient(180deg, rgba(4, 40, 8, 0.5) 0%, rgba(4, 40, 8, 0.12) 45%, rgba(4, 40, 8, 0.5) 100%),
     url("../assets/background.jpg") center / cover no-repeat;
 }
 
@@ -313,7 +322,7 @@ button {
 .field input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .password-hint {
@@ -454,7 +463,7 @@ button {
 .upload-drop:hover,
 .upload-drop--dragover {
   border-color: var(--navy);
-  background: rgba(20, 33, 61, 0.03);
+  background: rgba(5, 122, 18, 0.03);
 }
 
 .upload-drop__icon {
@@ -557,7 +566,7 @@ button {
 }
 
 .btn:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 .btn:active {
@@ -670,7 +679,7 @@ button {
   padding: 11px 40px 11px 18px;
   border: none;
   border-radius: 10px;
-  background-color: #8a7d91;
+  background-color: var(--navy);
   background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
   background-repeat: no-repeat;
   background-position: right 14px center;
@@ -683,7 +692,7 @@ button {
 
 .sort-select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(119, 107, 130, 0.35);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.4);
 }
 
 .ordinances-search {
@@ -711,7 +720,7 @@ button {
 }
 
 .ordinances-search button:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 .ordinances-table-wrap {
@@ -953,7 +962,7 @@ button {
 }
 
 .download-btn:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 /* ---------- Plain page (File Report / Submit Suggestion) ---------- */
@@ -1010,7 +1019,7 @@ button {
 .field textarea:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .field select {
@@ -1026,7 +1035,7 @@ button {
 .field select:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .upload-drop--compact {
@@ -1078,12 +1087,12 @@ button {
 
 .btn-clear,
 .btn-success {
-  background: #4caf50;
+  background: var(--navy);
 }
 
 .btn-clear:hover,
 .btn-success:hover {
-  background: #429a46;
+  background: var(--navy-hover);
 }
 
 /* ---------- Modal ---------- */
@@ -1091,7 +1100,7 @@ button {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 14, 26, 0.55);
+  background: rgba(4, 40, 8, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1520,7 +1529,7 @@ button {
 .reports-search-input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .reports-search-btn {
@@ -1764,21 +1773,21 @@ button {
   -webkit-appearance: none;
   -moz-appearance: none;
   padding: 10px 36px 10px 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--navy);
   border-radius: 8px;
-  background-color: var(--white);
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTU1NTU1IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSI2IDkgMTIgMTUgMTggOSI+PC9wb2x5bGluZT48L3N2Zz4=");
+  background-color: var(--navy);
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 12px;
-  color: var(--text);
+  color: var(--white);
   font-size: 0.85rem;
   cursor: pointer;
 }
 
 .reports-filter:focus {
   outline: none;
-  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.4);
 }
 
 /* "Show [5/10/25/50/100]" — how many rows a paginated list renders per page. */
@@ -1810,11 +1819,11 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: #eef1fb;
+  background: var(--cream);
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 0.76rem;
-  color: #4a5a9e;
+  color: var(--navy);
   margin: 6px 0 20px;
 }
 
@@ -1909,7 +1918,7 @@ button {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #7c6a99;
+  background: var(--accent);
   margin-top: 5px;
   flex-shrink: 0;
   position: relative;
@@ -2220,7 +2229,7 @@ button {
 .admin-sidebar__nav a.active {
   color: var(--white);
   background: rgba(255, 255, 255, 0.07);
-  border-left-color: #f2994a;
+  border-left-color: var(--accent);
 }
 
 .admin-sidebar__logout {
@@ -2377,7 +2386,7 @@ button {
 }
 
 .table-row-actions button:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 .table-row-actions button.table-row-actions__danger {
@@ -2460,9 +2469,18 @@ button {
   box-shadow: var(--shadow);
   max-width: 340px;
   width: 100%;
+  /* Never taller than the screen (minus .modal-overlay's 20px padding on
+     each side): the header stays put and the body scrolls instead — an
+     Investigator's Claimed Reports section otherwise pushes the card past
+     the viewport, cutting off both ends since the overlay centers it. */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
 }
 
 .edit-account-card__header {
+  flex-shrink: 0;
   padding: 8px 18px;
   background: var(--navy-dark);
   color: rgba(255, 255, 255, 0.65);
@@ -2474,6 +2492,8 @@ button {
   position: relative;
   padding: 30px 24px 24px;
   text-align: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .edit-account-card__back {
@@ -2570,7 +2590,7 @@ button {
    manage-accounts.js's populateEditModal, which swaps both this class and
    the label/icon together so a restorative action doesn't stay styled red. */
 .edit-account-btn--enable {
-  background: #4caf6b;
+  background: var(--navy);
 }
 
 .edit-account-btn--type {
@@ -2578,11 +2598,122 @@ button {
 }
 
 .edit-account-btn--reset {
-  background: #4caf6b;
+  background: var(--sage);
 }
 
 .edit-account-btn--delete {
   background: #b3261e;
+}
+
+/* Claimed-reports warning before disabling/deleting an account. */
+.claims-warning {
+  max-width: 420px;
+}
+
+.claims-warning h2 {
+  margin-bottom: 10px;
+}
+
+.claims-warning__text {
+  margin: 0 0 20px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.claims-warning .stacked-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Claimed Reports (Manage Accounts -> Edit Account): an Investigator's claims,
+   which only an Administrator can release — see manage-accounts.js. */
+.claimed-reports {
+  margin: 22px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.claimed-reports__title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.claimed-reports__hint {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.claimed-reports__list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  /* ~3 rows; longer lists scroll here so the action buttons below stay close. */
+  max-height: 170px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.claimed-reports__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+.claimed-reports__item + .claimed-reports__item {
+  border-top: 1px solid var(--border);
+}
+
+.claimed-reports__name {
+  display: block;
+  font-weight: 600;
+}
+
+.claimed-reports__meta {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.claimed-reports__release {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--navy);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--navy);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.claimed-reports__release:hover {
+  background: var(--cream);
+}
+
+.claimed-reports__release:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.claimed-reports__empty {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.edit-account-btn--release {
+  width: 100%;
+  background: var(--navy);
 }
 
 .edit-account-btn:disabled {
@@ -2591,11 +2722,56 @@ button {
 }
 
 .edit-account-btn--approve {
-  background: #4caf6b;
+  background: var(--navy);
 }
 
 .edit-account-btn--reject {
   background: #e2726b;
+}
+
+/* Short screens (laptops, landscape phones): tighten the top of the card so
+   more of the details/actions fit before anything has to scroll. */
+@media (max-height: 760px) {
+  .edit-account-card__body {
+    padding: 20px 20px 18px;
+  }
+
+  .edit-account-card__back {
+    top: 14px;
+    left: 14px;
+  }
+
+  .edit-account-card__avatar {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 10px;
+  }
+
+  .edit-account-card__avatar svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .edit-account-card__email {
+    margin-bottom: 12px;
+  }
+
+  .edit-account-card__details {
+    margin-bottom: 16px;
+  }
+
+  .claimed-reports {
+    margin-top: 16px;
+    padding-top: 14px;
+  }
+
+  .edit-account-card__row {
+    padding: 8px 14px;
+  }
+
+  .edit-account-btn {
+    padding: 10px;
+  }
 }
 
 /* ---------- ID Photo preview popup ---------- */
@@ -2735,7 +2911,7 @@ button {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(10, 14, 26, 0.45);
+    background: rgba(4, 40, 8, 0.45);
     z-index: 55;
   }
 

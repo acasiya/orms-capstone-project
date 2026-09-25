@@ -43,21 +43,28 @@
 }
 
 :root {
-  --navy: #14213d;
-  --navy-dark: #0d1626;
-  --cream: #f6e7c4;
-  --cream-dark: #efd9a3;
+  --navy: #057a12;
+  --navy-dark: #045c0e;
+  --green-soft: #e3f7e5;
+  --green-mist: #f7fdf8;
+  --cream: #e3f7e5;
+  --cream-dark: #c2ecc7;
   --white: #ffffff;
-  --text: #1f2430;
-  --text-muted: #6b7280;
-  --link: #2f6fed;
-  --border: #d9dce3;
-  --heart: #e63946;
+  --text: #2b2a27;
+  --text-muted: #5e665c;
+  --link: #04700f;
+  --border: #cde8d0;
+  --heart: #d66b52;
   --radius: 10px;
-  --shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  --shadow: 0 10px 35px rgba(5, 122, 18, 0.15);
   --max-width: 1360px;
   --serif: Georgia, "Times New Roman", Times, serif;
-  --plain-bg: #e9e5dc;
+  --plain-bg: #f2fbf3;
+  --navy-hover: #068f15;
+  --sage: #4a6b52;
+  --sage-dark: #3a5641;
+  --highlight: #d9f7dc;
+  --accent: #03ac13;
 }
 
 * {
@@ -81,7 +88,7 @@ body {
 body {
   font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-  background: var(--white);
+  background: var(--green-mist);
 }
 
 a {
@@ -108,6 +115,7 @@ button {
   background: var(--navy);
   color: var(--white);
   padding: 12px 28px;
+  border-bottom: 4px solid var(--accent);
 }
 
 .navbar__brand {
@@ -173,11 +181,11 @@ button {
 /* Same idea as the Staff/Admin sidebar's active link (a solid bar in an
    accent color) — a left border there, a bottom border here since this
    navbar runs horizontally instead of vertically. Yellow rather than the
-   sidebar's orange (#f2994a), per request. */
+   brand green (#03ac13), per request. */
 .navbar__links a.active {
   opacity: 1;
-  color: #f2c94c;
-  border-bottom-color: #f2c94c;
+  color: var(--highlight);
+  border-bottom-color: var(--accent);
 }
 
 /* Inverted chip: navbar itself is navy, so the bell's own background flips
@@ -240,9 +248,7 @@ button {
   justify-content: center;
   padding: 60px 20px;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(10, 14, 26, 0.5) 0%, rgba(10, 14, 26, 0.12) 45%, rgba(10, 14, 26, 0.5) 100%),
-    url("../assets/background.jpg") center / cover no-repeat;
+  background: url("../assets/background.jpg") center / cover no-repeat;
 }
 
 /* ---------- Plain section (Forgot Password flow) ---------- */
@@ -279,8 +285,8 @@ button {
 }
 
 .auth-card--outline {
-  border: 1.5px solid #2a2a2a;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1.5px solid rgba(5, 122, 18, 0.25);
+  box-shadow: 0 2px 10px rgba(5, 122, 18, 0.08);
 }
 
 .auth-card--outline .auth-card__title {
@@ -335,7 +341,7 @@ button {
 .field input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .combobox {
@@ -467,7 +473,7 @@ button {
 .upload-drop:hover,
 .upload-drop--dragover {
   border-color: var(--navy);
-  background: rgba(20, 33, 61, 0.03);
+  background: rgba(5, 122, 18, 0.03);
 }
 
 .upload-drop__icon {
@@ -693,7 +699,7 @@ button {
 }
 
 .btn:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 .btn:active {
@@ -769,6 +775,13 @@ button {
   color: var(--navy);
 }
 
+.info-card {
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(5, 122, 18, 0.08);
+  border-radius: 12px;
+  padding: 22px 18px;
+}
+
 .info-card p {
   margin: 0;
   font-size: 0.88rem;
@@ -819,7 +832,7 @@ button {
 
 .sort-select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.35);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.4);
 }
 
 .ordinances-search {
@@ -847,7 +860,7 @@ button {
 }
 
 .ordinances-search button:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 .ordinances-table-wrap {
@@ -1158,7 +1171,7 @@ button {
 }
 
 .download-btn:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
 }
 
 /* ---------- Plain page (File Report / Submit Suggestion) ---------- */
@@ -1311,7 +1324,7 @@ button {
 }
 
 .fab-ask-question:hover {
-  background: var(--navy-dark);
+  background: var(--navy-hover);
   transform: scale(1.06);
 }
 
@@ -1402,7 +1415,7 @@ button {
 .field textarea:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .field select {
@@ -1418,7 +1431,7 @@ button {
 .field select:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(20, 33, 61, 0.12);
+  box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
 .upload-drop--compact {
@@ -1499,11 +1512,11 @@ button {
 }
 
 .btn-success {
-  background: #2e8b57;
+  background: var(--navy);
 }
 
 .btn-success:hover {
-  background: #26724a;
+  background: var(--navy-hover);
 }
 
 /* ---------- Modal ---------- */
@@ -1511,7 +1524,7 @@ button {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 14, 26, 0.55);
+  background: rgba(4, 40, 8, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1631,8 +1644,8 @@ button {
 }
 
 .profile-avatar--guest {
-  background: #d9dce3;
-  color: #6b7280;
+  background: var(--cream);
+  color: var(--navy);
   font-size: 1.6rem;
 }
 
@@ -1656,7 +1669,7 @@ button {
   padding: 12px 16px;
   border: none;
   border-radius: 8px;
-  background: #6b7280;
+  background: var(--sage);
   color: var(--white);
   font-size: 0.92rem;
   font-weight: 600;
@@ -1664,7 +1677,7 @@ button {
 }
 
 .btn-muted:hover {
-  background: #565d68;
+  background: var(--sage-dark);
 }
 
 .btn-danger {
@@ -1947,21 +1960,21 @@ button {
   -webkit-appearance: none;
   -moz-appearance: none;
   padding: 10px 36px 10px 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--navy);
   border-radius: 8px;
-  background-color: var(--white);
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTU1NTU1IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSI2IDkgMTIgMTUgMTggOSI+PC9wb2x5bGluZT48L3N2Zz4=");
+  background-color: var(--navy);
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 12px;
-  color: var(--text);
+  color: var(--white);
   font-size: 0.85rem;
   cursor: pointer;
 }
 
 .reports-filter:focus {
   outline: none;
-  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.4);
 }
 
 /* "Show [5/10/25/50/100]" — how many rows a paginated list renders per page. */
@@ -2061,11 +2074,11 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: #eef1fb;
+  background: var(--cream);
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 0.76rem;
-  color: #4a5a9e;
+  color: var(--navy);
   margin: 6px 0 20px;
 }
 
@@ -2166,7 +2179,7 @@ button {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #7c6a99;
+  background: var(--accent);
   margin-top: 5px;
   flex-shrink: 0;
   position: relative;
@@ -2750,4 +2763,419 @@ button {
    same way tables do on the Admin/Staff portals. */
 .ordinances-table-wrap {
   overflow-x: auto;
+}
+
+/* ---------- About Us (about.html) ---------- */
+
+.about-page {
+  background: var(--white);
+}
+
+.about-intro {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 28px 52px;
+}
+
+.about-title,
+.council__heading {
+  margin: 0 0 28px;
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+}
+
+.about-title {
+  font-size: 2.4rem;
+}
+
+.about-card {
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 14px;
+  padding: 24px 28px;
+  box-shadow: var(--shadow);
+}
+
+.about-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.about-card--barangay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 44px;
+  margin-bottom: 28px;
+}
+
+.about-card__name {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.about-card__contact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.about-card__contact li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.about-card__contact .nav-icon {
+  flex-shrink: 0;
+}
+
+.about-card__contact a {
+  color: var(--white);
+  text-decoration: none;
+}
+
+.about-card__contact a:hover,
+.about-card__contact a:focus-visible {
+  text-decoration: underline;
+}
+
+.about-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.about-card__title {
+  margin: 0 0 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.about-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px clamp(24px, 7vw, 96px);
+  padding: 36px 20px;
+  background: var(--navy);
+}
+
+.about-logos img {
+  width: clamp(110px, 16vw, 180px);
+  height: auto;
+}
+
+.council {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 52px 20px 64px;
+  text-align: center;
+}
+
+.council__heading {
+  font-size: 2rem;
+  margin-bottom: 36px;
+}
+
+.council__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 36px;
+}
+
+.council__row:last-child {
+  margin-bottom: 0;
+}
+
+.council-member {
+  width: 180px;
+  margin: 0;
+}
+
+.council-member img {
+  display: block;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+}
+
+.council__row--lead .council-member {
+  width: 260px;
+}
+
+.council__row--lead .council-member img {
+  width: 170px;
+  height: 170px;
+}
+
+.council-member__name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.council-member__role {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* ---------- Legal pages (privacy-policy.html, terms.html) ---------- */
+
+.legal-page {
+  background: var(--plain-bg);
+  padding: 40px 20px 64px;
+}
+
+.legal-page__inner {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 48px;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.legal-page__title {
+  margin: 0 0 4px;
+  font-family: "Poppins", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.legal-page__meta {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.legal-page__inner h2 {
+  margin: 28px 0 8px;
+  font-size: 1.15rem;
+  color: var(--navy);
+  scroll-margin-top: 20px;
+}
+
+.legal-page__inner p {
+  margin: 0 0 12px;
+}
+
+.legal-page__inner ul,
+.legal-page__inner ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.legal-page__inner li {
+  margin-bottom: 6px;
+}
+
+.legal-table-wrap {
+  overflow-x: auto;
+  margin: 0 0 14px;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.legal-table th,
+.legal-table td {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal-table th {
+  background: var(--cream);
+  font-weight: 700;
+}
+
+/* ---------- Site footer (js/site-footer.js) ---------- */
+
+.site-footer {
+  background: var(--navy-dark);
+  border-top: 4px solid var(--accent);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.88rem;
+}
+
+.site-footer__inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 44px 28px 32px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+  gap: 32px;
+}
+
+.site-footer__brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.site-footer__brand img {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+}
+
+.site-footer__name {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.site-footer__sub,
+.site-footer__tagline {
+  margin: 2px 0 0;
+}
+
+.site-footer__tagline {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.site-footer__heading {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--highlight);
+}
+
+.site-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-footer li {
+  margin-bottom: 8px;
+  line-height: 1.45;
+}
+
+.site-footer a {
+  color: var(--white);
+  text-decoration: none;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  text-decoration: underline;
+}
+
+.site-footer__emergency {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.site-footer__emergency a {
+  color: var(--highlight);
+  font-weight: 700;
+}
+
+.site-footer__bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 16px 28px;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.site-footer__bottom p {
+  margin: 2px 0;
+}
+
+@media (max-width: 860px) {
+  .about-card--barangay {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 26px 28px;
+  }
+
+  .about-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .site-footer__inner {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .about-intro {
+    padding: 28px 16px 36px;
+  }
+
+  .about-title {
+    font-size: 1.9rem;
+  }
+
+  .about-card__name {
+    font-size: 1.6rem;
+  }
+
+  .council {
+    padding: 40px 16px 48px;
+  }
+
+  .council__row {
+    gap: 24px 12px;
+  }
+
+  .council-member {
+    width: calc(50% - 6px);
+  }
+
+  .council-member img,
+  .council__row--lead .council-member img {
+    width: 120px;
+    height: 120px;
+  }
+
+  .legal-page {
+    padding: 20px 12px 40px;
+  }
+
+  .legal-page__inner {
+    padding: 24px 18px;
+  }
+
+  .site-footer__inner {
+    grid-template-columns: 1fr;
+    padding: 36px 20px 24px;
+    gap: 24px;
+  }
 }

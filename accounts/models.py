@@ -161,6 +161,11 @@ def log_action(user, action):
     logging hiccup can never turn into a 500 for the actual request (same
     reasoning as send_templated_email's try/except in orms_backend/emails.py).
     """
+    # Trimmed to fit rather than failing (and being silently swallowed below)
+    # when it embeds a long user-supplied value like an ordinance name.
+    max_length = AuditLog._meta.get_field("action").max_length
+    if len(action) > max_length:
+        action = action[: max_length - 1] + "…"
     try:
         AuditLog.objects.create(user=user, action=action)
     except Exception:

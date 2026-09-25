@@ -150,11 +150,25 @@ class ReportStatusClaimGateTests(APITestCase):
         self.assertEqual(self.report.status, Report.Status.UNDER_REVIEW)
         self.assertEqual(self.report.remarks, "On it")
 
-    def test_forfeiting_takes_the_ability_to_update_away_again(self):
+    def test_investigator_cannot_forfeit_their_own_claim(self):
         self.client.force_authenticate(self.investigator)
         self.client.post(f"{self.url}claim/")
-        self.client.post(f"{self.url}forfeit/")
-        self.assertEqual(self._patch(status="in_action").status_code, 403)
+        self.assertEqual(self.client.post(f"{self.url}forfeit/").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.assigned_investigator, self.investigator)
+        # Still theirs, so they can keep working it.
+        self.assertEqual(self._patch(status="in_action").status_code, 200)
+
+    def test_admin_can_release_a_claim(self):
+        self.report.assigned_investigator = self.investigator
+        self.report.save()
+        self.client.force_authenticate(self.admin)
+        self.assertEqual(self.client.post(f"{self.url}forfeit/").status_code, 200)
+        self.report.refresh_from_db()
+        self.assertIsNone(self.report.assigned_investigator)
+        # Freed up, so another Investigator can now claim it.
+        self.client.force_authenticate(self.other_investigator)
+        self.assertEqual(self.client.post(f"{self.url}claim/").status_code, 200)
 
     def test_second_investigator_cannot_update_after_the_first_claims_it(self):
         self.client.force_authenticate(self.investigator)
@@ -176,3 +190,86 @@ class ReportStatusClaimGateTests(APITestCase):
         )
         self.client.force_authenticate(secretary)
         self.assertEqual(self._patch(status="under_review").status_code, 403)
+
+
+class BarangayCaptainReportsReadOnlyTests(APITestCase):
+    """Barangay Captain can view reports but never claim, change status, or leave remarks."""
+
+    def setUp(self):
+        self.citizen = User.objects.create_user(username="cit", email="cit@test.com", password="x", is_verified=True)
+        self.captain = User.objects.create_user(
+            username="cap", email="cap@test.com", password="x", role=User.Role.STAFF, position="Barangay Captain"
+        )
+        self.investigator = User.objects.create_user(
+            username="inv1", email="inv1@test.com", password="x", role=User.Role.STAFF, position="Investigator"
+        )
+        self.report = Report.objects.create(
+            citizen=self.citizen, location="Purok 1", ordinance="Anti-Littering", incident_date="2026-09-01",
+            nature_of_violation="Dumping garbage",
+        )
+        self.url = f"/api/reports/staff/{self.report.id}/"
+        self.client.force_authenticate(self.captain)
+
+    def test_captain_can_view_the_list_and_a_report(self):
+        self.assertEqual(self.client.get("/api/reports/staff/").status_code, 200)
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+
+    def test_captain_cannot_claim(self):
+        self.assertEqual(self.client.post(f"{self.url}claim/").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertIsNone(self.report.assigned_investigator)
+
+    def test_captain_cannot_change_status(self):
+        self.assertEqual(self.client.patch(self.url, {"status": "resolved"}, format="json").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.status, Report.Status.SUBMITTED)
+
+    def test_captain_cannot_leave_remarks(self):
+        self.assertEqual(self.client.patch(self.url, {"remarks": "Noted"}, format="json").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.remarks, "")
+
+    def test_captain_cannot_forfeit_someone_elses_claim(self):
+        self.report.assigned_investigator = self.investigator
+        self.report.save()
+        self.assertEqual(self.client.post(f"{self.url}forfeit/").status_code, 403)
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.assigned_investigator, self.investigator)
+
+
+class ClaimedReportsFilterTests(APITestCase):
+    """Manage Accounts lists one Investigator's claims via ?assigned_to=<user id>."""
+
+    def setUp(self):
+        citizen = User.objects.create_user(username="cit", email="cit@test.com", password="x", is_verified=True)
+        self.inv1 = User.objects.create_user(
+            username="inv1", email="inv1@test.com", password="x", role=User.Role.STAFF, position="Investigator"
+        )
+        inv2 = User.objects.create_user(
+            username="inv2", email="inv2@test.com", password="x", role=User.Role.STAFF, position="Investigator"
+        )
+        self.admin = User.objects.create_user(username="adm", email="adm@test.com", password="x", role=User.Role.ADMIN)
+
+        def make(holder):
+            return Report.objects.create(
+                citizen=citizen, location="Purok 1", ordinance="Anti-Littering", incident_date="2026-09-01",
+                nature_of_violation="Dumping garbage", assigned_investigator=holder,
+            )
+
+        self.mine = [make(self.inv1), make(self.inv1)]
+        make(inv2)
+        make(None)
+        self.client.force_authenticate(self.admin)
+
+    def test_filter_returns_only_that_investigators_claims(self):
+        response = self.client.get(f"/api/reports/staff/?assigned_to={self.inv1.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({r["id"] for r in response.data}, {str(r.id) for r in self.mine})
+
+    def test_no_filter_still_returns_everything(self):
+        self.assertEqual(len(self.client.get("/api/reports/staff/").data), 4)
+
+    def test_malformed_id_returns_nothing_rather_than_erroring(self):
+        response = self.client.get("/api/reports/staff/?assigned_to=not-a-uuid")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])

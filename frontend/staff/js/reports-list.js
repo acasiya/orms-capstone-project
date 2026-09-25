@@ -1,7 +1,7 @@
 // SafeSpace — Reports Management: search + filter (type/date/status) +
 // paginate across real reports from reports-data.js (GET /api/reports/staff/).
 // Reports is the Investigator's claimable work queue — see reports-data.js's
-// claimReport/forfeitReport.
+// claimReport. Claims are permanent (no forfeiting), so claiming confirms first.
 
 function escapeReportHtml(str) {
   const div = document.createElement("div");
@@ -108,6 +108,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pageRows = rows.slice(start, start + pageSize);
 
     const currentUser = getAdminUser();
+    // Claiming is Investigator-only (same rule as report-detail.js and
+    // the backend's IsInvestigatorOrAdmin) — Barangay Captain can reach this
+    // page but only gets a read-only view of who's working what.
+    const isInvestigator = currentUser && currentUser.position === "Investigator";
 
     list.innerHTML = pageRows.length
       ? pageRows
@@ -117,11 +121,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               ? `Claimed by ${isMine ? "you" : escapeReportHtml(r.assignedInvestigator)}`
               : "Unclaimed";
             const claimAction =
-              !r.assignedInvestigator
+              isInvestigator && !r.assignedInvestigator
                 ? `<button type="button" class="btn report-row__claim-btn" data-claim="${r.id}">Claim</button>`
-                : isMine
-                  ? `<button type="button" class="btn btn-muted report-row__claim-btn" data-forfeit="${r.id}">Forfeit</button>`
-                  : "";
+                : "";
             return `
         <div class="report-row">
           <div class="report-row__top">
@@ -141,21 +143,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     list.querySelectorAll("[data-claim]").forEach((btn) => {
       btn.addEventListener("click", async () => {
+        if (!confirm(CLAIM_CONFIRM_MESSAGE)) return;
         btn.disabled = true;
         try {
           await claimReport(btn.dataset.claim);
-          render();
-        } catch (err) {
-          alert(err.message);
-          btn.disabled = false;
-        }
-      });
-    });
-    list.querySelectorAll("[data-forfeit]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        btn.disabled = true;
-        try {
-          await forfeitReport(btn.dataset.forfeit);
           render();
         } catch (err) {
           alert(err.message);

@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth.tokens import default_token_generator
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, serializers
@@ -347,20 +348,51 @@ class AdminListUsersView(generics.ListAPIView):
     permission_classes = [IsAdmin]
 
 
+def _release_claims(actor, holder, reason):
+    """
+    Frees every report `holder` has claimed (see Report.assigned_investigator)
+    so another Investigator can claim it, writing one audit log entry per
+    report under the Administrator who did it. Used when an account is
+    disabled with "release claims" or deleted. Returns how many were freed.
+    """
+    holder_name = holder.get_full_name() or holder.username
+    claimed = list(holder.claimed_reports.all())
+    for report in claimed:
+        report.assigned_investigator = None
+        report.save(update_fields=["assigned_investigator"])
+        log_action(actor, f"Released {holder_name}'s claim on a report — {report.ordinance} ({reason})")
+    return len(claimed)
+
+
+def _claims_note(count, released):
+    if not count:
+        return ""
+    noun = "report" if count == 1 else "reports"
+    return f" — {count} claimed {noun} {'released' if released else 'still assigned to them'}"
+
+
 class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET/PATCH/DELETE /api/auth/admin/users/<id>/ — backs the Manage Accounts
     "Edit Account" modal: viewing details, toggling active/disabled,
     changing account type (role/position), and deleting the account all go
     through here.
+
+    Claimed reports: disabling accepts `release_claims: true` to free every
+    report the account has claimed in the same request (otherwise they stay
+    assigned until released from Manage Accounts' Claimed Reports); deleting
+    always frees them (Report.assigned_investigator is SET_NULL). Either way
+    the audit log records who did it and what happened to the claims.
     """
     queryset = User.objects.all()
     serializer_class = AdminAccountSerializer
     permission_classes = [IsAdmin]
 
+    @transaction.atomic
     def patch(self, request, *args, **kwargs):
         user = self.get_object()
         is_self = user.id == request.user.id
+        was_active = user.is_active
 
         # Prevent an admin from disabling their own account — a simple
         # mis-click here would otherwise lock them out instantly (is_active
@@ -413,7 +445,14 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         name = user.get_full_name() or user.username
         if "active" in request.data:
-            log_action(request.user, f"{'Enabled' if user.is_active else 'Disabled'} {name}'s account")
+            if user.is_active:
+                log_action(request.user, f"Enabled {name}'s account")
+            else:
+                claim_count = user.claimed_reports.count()
+                release = bool(request.data.get("release_claims")) and was_active
+                if release and claim_count:
+                    _release_claims(request.user, user, "account disabled")
+                log_action(request.user, f"Disabled {name}'s account{_claims_note(claim_count, release)}")
         if "staff_role" in request.data:
             log_action(request.user, f"Changed {name}'s role to {user.position}")
 
@@ -429,9 +468,12 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": "Can't remove the last remaining Administrator."}, status=400)
 
         name = user.get_full_name() or user.username
-        log_action(request.user, f"Deleted {name}'s account")
-
-        user.delete()
+        # Released explicitly (rather than left to SET_NULL) so each freed
+        # report gets its own audit entry naming who deleted the account.
+        with transaction.atomic():
+            claim_count = _release_claims(request.user, user, "account deleted")
+            log_action(request.user, f"Deleted {name}'s account{_claims_note(claim_count, True)}")
+            user.delete()
         return Response(status=204)
 
 

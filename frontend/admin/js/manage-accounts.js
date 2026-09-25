@@ -152,6 +152,151 @@ document.addEventListener("DOMContentLoaded", async () => {
     activeAccount = account;
     populateEditModal(account);
     editModal.hidden = false;
+    loadClaimedReports(account);
+  });
+
+  // Claimed Reports: an Investigator can't give up a report once they've
+  // claimed it, so if they leave or go inactive the Administrator releases
+  // their claims here (POST .../forfeit/, Admin-only — see
+  // StaffReportForfeitView). Shown for any Staff account holding claims
+  // (e.g. someone re-roled away from Investigator), and always for
+  // Investigators so "no claims" is visible too.
+  const claimedSection = document.getElementById("claimedReports");
+  const claimedList = document.getElementById("claimedReportsList");
+  const releaseAllBtn = document.getElementById("releaseAllClaimsBtn");
+  let claimedReports = [];
+
+  function escapeClaimHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderClaimedReports(account) {
+    const isInvestigator = account.position === "Investigator";
+    claimedSection.hidden = !claimedReports.length && !isInvestigator;
+    releaseAllBtn.hidden = claimedReports.length < 2;
+    claimedList.innerHTML = claimedReports.length
+      ? claimedReports
+          .map(
+            (r) => `
+        <li class="claimed-reports__item">
+          <div>
+            <span class="claimed-reports__name">${escapeClaimHtml(r.ordinance)}</span>
+            <span class="claimed-reports__meta">${escapeClaimHtml(r.location)} · ${CLAIM_STATUS_LABELS[r.status] || r.status}</span>
+          </div>
+          <button type="button" class="claimed-reports__release" data-release="${r.id}">Release</button>
+        </li>`
+          )
+          .join("")
+      : `<li class="claimed-reports__empty">No claimed reports.</li>`;
+  }
+
+  async function loadClaimedReports(account) {
+    claimedReports = [];
+    claimedSection.hidden = true;
+    if (account.type === "Barangay Citizen") return;
+    try {
+      const reports = await getClaimedReports(account.id);
+      // The popup may have moved on to another account while this loaded.
+      if (activeAccount !== account) return;
+      claimedReports = reports;
+      renderClaimedReports(account);
+    } catch (err) {
+      if (activeAccount !== account) return;
+      claimedSection.hidden = false;
+      claimedList.innerHTML = `<li class="claimed-reports__empty">${escapeClaimHtml(err.message)}</li>`;
+      releaseAllBtn.hidden = true;
+    }
+  }
+
+  // Fresh count right before disabling/deleting — the popup's list may still
+  // be loading, or be stale if someone claimed something meanwhile. Citizens
+  // can't hold claims, so skip the request for them.
+  async function countClaims(account) {
+    if (account.type === "Barangay Citizen") return 0;
+    try {
+      return (await getClaimedReports(account.id)).length;
+    } catch {
+      return claimedReports.length;
+    }
+  }
+
+  const claimsModal = document.getElementById("claimsWarningModal");
+  const claimsTitle = document.getElementById("claimsWarningTitle");
+  const claimsText = document.getElementById("claimsWarningText");
+  const claimsPrimary = document.getElementById("claimsWarningPrimary");
+  const claimsSecondary = document.getElementById("claimsWarningSecondary");
+  const claimsCancel = document.getElementById("claimsWarningCancel");
+
+  // Resolves "primary", "secondary", or null (Cancel / backdrop click).
+  function askAboutClaims({ title, text, primary, secondary }) {
+    claimsTitle.textContent = title;
+    claimsText.textContent = text;
+    claimsPrimary.textContent = primary;
+    claimsSecondary.textContent = secondary || "";
+    claimsSecondary.hidden = !secondary;
+    claimsModal.hidden = false;
+    return new Promise((resolve) => {
+      function finish(choice) {
+        claimsModal.hidden = true;
+        claimsPrimary.removeEventListener("click", onPrimary);
+        claimsSecondary.removeEventListener("click", onSecondary);
+        claimsCancel.removeEventListener("click", onCancel);
+        claimsModal.removeEventListener("click", onBackdrop);
+        resolve(choice);
+      }
+      const onPrimary = () => finish("primary");
+      const onSecondary = () => finish("secondary");
+      const onCancel = () => finish(null);
+      const onBackdrop = (e) => {
+        if (e.target === claimsModal) finish(null);
+      };
+      claimsPrimary.addEventListener("click", onPrimary);
+      claimsSecondary.addEventListener("click", onSecondary);
+      claimsCancel.addEventListener("click", onCancel);
+      claimsModal.addEventListener("click", onBackdrop);
+    });
+  }
+
+  async function releaseClaims(ids) {
+    const account = activeAccount;
+    for (const id of ids) {
+      await releaseReportClaim(id);
+      claimedReports = claimedReports.filter((r) => r.id !== id);
+    }
+    if (activeAccount === account) renderClaimedReports(account);
+  }
+
+  claimedList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-release]");
+    if (!btn || !activeAccount) return;
+    const report = claimedReports.find((r) => r.id === btn.dataset.release);
+    if (!report) return;
+    if (!window.confirm(`Release ${activeAccount.owner}'s claim on "${report.ordinance}"? Another Investigator will be able to claim it.`)) return;
+    btn.disabled = true;
+    try {
+      await releaseClaims([report.id]);
+    } catch (err) {
+      btn.disabled = false;
+      alert(err.message);
+    }
+  });
+
+  releaseAllBtn.addEventListener("click", async () => {
+    if (!activeAccount || !claimedReports.length) return;
+    const count = claimedReports.length;
+    if (!window.confirm(`Release all ${count} of ${activeAccount.owner}'s claimed reports? Other Investigators will be able to claim them.`)) return;
+    releaseAllBtn.disabled = true;
+    try {
+      await releaseClaims(claimedReports.map((r) => r.id));
+    } catch (err) {
+      // Whatever was released before the failure is already gone from the list.
+      renderClaimedReports(activeAccount);
+      alert(err.message);
+    } finally {
+      releaseAllBtn.disabled = false;
+    }
   });
 
   // Disable/Enable User: PATCHes is_active on the real account. A disabled
@@ -159,12 +304,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   // hidden here — see AdminAccountDetailView.patch in accounts/views.py.
   editDisableBtn.addEventListener("click", async () => {
     if (!activeAccount) return;
+    const account = activeAccount;
+
+    // Disabling someone who still holds claimed reports would leave those
+    // reports stuck (they can't log in to work them, and nobody else can
+    // while they're claimed) — so ask whether to release them first.
+    let shouldRelease = false;
+    if (account.active) {
+      const count = await countClaims(account);
+      if (count) {
+        const noun = count === 1 ? "report" : "reports";
+        const choice = await askAboutClaims({
+          title: "Disable this account?",
+          text: `${account.owner} still has ${count} claimed ${noun}. Release ${count === 1 ? "it" : "them"} so another Investigator can take over, or keep ${count === 1 ? "it" : "them"} assigned (e.g. for a short leave)?`,
+          primary: "Release & Disable",
+          secondary: "Disable, Keep Claims",
+        });
+        if (!choice) return;
+        shouldRelease = choice === "primary";
+      }
+    }
+
     const previousLabel = editDisableBtn.innerHTML;
     editDisableBtn.disabled = true;
     editDisableBtn.textContent = "Saving...";
     try {
-      const updated = await updateAccount(activeAccount.id, { active: !activeAccount.active });
+      const updated = account.active
+        ? await disableAccount(account.id, { releaseClaims: shouldRelease })
+        : await updateAccount(account.id, { active: true });
       Object.assign(activeAccount, updated);
+      if (shouldRelease) loadClaimedReports(account);
       // Sets the correct label, color, and disabled state for the new
       // active/disabled status — restoring `previousLabel` here instead (as
       // this used to, unconditionally, in a `finally`) would overwrite that
@@ -229,7 +398,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Administrator check — see AdminAccountDetailView.delete.
   editDeleteBtn.addEventListener("click", async () => {
     if (!activeAccount) return;
-    if (!window.confirm(`Permanently delete ${activeAccount.owner}'s account? This can't be undone.`)) return;
+    const count = await countClaims(activeAccount);
+    if (count) {
+      const noun = count === 1 ? "report" : "reports";
+      const choice = await askAboutClaims({
+        title: "Delete this account?",
+        text: `${activeAccount.owner} still has ${count} claimed ${noun}. Deleting the account releases ${count === 1 ? "it" : "them"} so another Investigator can claim ${count === 1 ? "it" : "them"}. This can't be undone.`,
+        primary: "Release & Delete",
+      });
+      if (!choice) return;
+    } else if (!window.confirm(`Permanently delete ${activeAccount.owner}'s account? This can't be undone.`)) {
+      return;
+    }
 
     editDeleteBtn.disabled = true;
     try {

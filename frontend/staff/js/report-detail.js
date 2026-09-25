@@ -102,13 +102,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const unsavedDiscardBtn = document.getElementById("unsavedDiscardBtn");
   const unsavedCancelBtn = document.getElementById("unsavedCancelBtn");
 
-  // ---- Claim / Forfeit (Investigator only — Reports is their section, see
+  // ---- Claim (Investigator only — Reports is their section, see
   // frontend/staff/js/admin.js's STAFF_NAV_ACCESS). Barangay Captain/
   // Secretary reaching this page (e.g. Captain's dashboard "View Details")
-  // just see who's on it, read-only. ----
+  // just see who's on it, read-only. A claim is permanent: Investigators
+  // can't forfeit it (only an Administrator can release one server-side,
+  // see StaffReportForfeitView), so claiming asks for confirmation first. ----
   const claimLabel = document.getElementById("claimLabel");
   const claimBtn = document.getElementById("claimBtn");
-  const forfeitBtn = document.getElementById("forfeitBtn");
   const claimHint = document.getElementById("claimHint");
   const currentUser = getAdminUser();
   const isInvestigator = currentUser && currentUser.position === "Investigator";
@@ -117,24 +118,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   // report this Investigator has claimed — an unclaimed report, or one
   // someone else holds, is read-only (enforced server-side too, see
   // StaffReportDetailView.patch). Barangay Captain always gets a read-only
-  // view. Re-run on every claim/forfeit so editing turns on/off with it.
+  // view. Re-run after claiming so editing turns on with it.
   function renderClaim() {
     const isMine = report.assignedInvestigatorId && currentUser && report.assignedInvestigatorId === currentUser.id;
     claimLabel.textContent = report.assignedInvestigator
       ? `${report.assignedInvestigator}${isMine ? " (you)" : ""}`
       : "Unclaimed";
     claimBtn.hidden = !isInvestigator || !!report.assignedInvestigator;
-    forfeitBtn.hidden = !isInvestigator || !isMine;
 
     const canEdit = !!(isInvestigator && isMine);
     statusEditBtn.hidden = !canEdit;
     remarksInput.disabled = !canEdit;
+    remarksInput.placeholder = canEdit ? "Enter remarks to be shown to reportee." : "No remarks yet.";
     saveBtn.hidden = !canEdit;
-    if (!canEdit) {
-      // Drop an in-progress status pick if the claim was just given up.
-      statusPill.hidden = false;
-      statusSelect.hidden = true;
-    }
 
     if (isInvestigator && !isMine) {
       claimHint.textContent = report.assignedInvestigator
@@ -148,6 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderClaim();
 
   claimBtn.addEventListener("click", async () => {
+    if (!confirm(CLAIM_CONFIRM_MESSAGE)) return;
     claimBtn.disabled = true;
     try {
       report = await claimReport(report.id);
@@ -156,21 +153,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       alert(err.message);
     } finally {
       claimBtn.disabled = false;
-    }
-  });
-  forfeitBtn.addEventListener("click", async () => {
-    forfeitBtn.disabled = true;
-    try {
-      report = await forfeitReport(report.id);
-      renderClaim();
-      // Editing just turned off — discard remarks typed but not saved, so
-      // the "unsaved changes" prompt doesn't offer to save what can no
-      // longer be saved.
-      remarksInput.value = savedRemarks;
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      forfeitBtn.disabled = false;
     }
   });
 

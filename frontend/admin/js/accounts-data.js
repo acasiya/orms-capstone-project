@@ -48,6 +48,12 @@ async function resetAccountPassword(id) {
   return response.json();
 }
 
+// Disable an account, optionally freeing every report it has claimed in the
+// same request (see AdminAccountDetailView.patch) — logged either way.
+async function disableAccount(id, { releaseClaims = false } = {}) {
+  return updateAccount(id, { active: false, release_claims: releaseClaims });
+}
+
 // Used by the "Delete Account" button.
 async function deleteAccount(id) {
   const response = await authFetch(`${ADMIN_API_BASE}/users/${id}/`, {
@@ -96,6 +102,34 @@ async function createCitizenAccount({ email, password, firstName, lastName, cont
     const data = await response.json().catch(() => ({}));
     const firstError = Object.values(data)[0];
     throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not create this account.");
+  }
+  return response.json();
+}
+
+// Investigator claims: once an Investigator claims a report only an
+// Administrator can release it (see reports/views.py's
+// StaffReportForfeitView) — for when that Investigator has left or gone
+// inactive. Manage Accounts lists an account's claims with these.
+const CLAIM_STATUS_LABELS = {
+  submitted: "New Submission",
+  under_review: "Under Review",
+  in_action: "In Action",
+  resolved: "Resolved",
+};
+
+async function getClaimedReports(userId) {
+  const response = await authFetch(`/api/reports/staff/?assigned_to=${encodeURIComponent(userId)}`);
+  if (!response.ok) {
+    throw new Error("Could not load this account's claimed reports.");
+  }
+  return response.json();
+}
+
+async function releaseReportClaim(reportId) {
+  const response = await authFetch(`/api/reports/staff/${encodeURIComponent(reportId)}/forfeit/`, { method: "POST" });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Could not release this claim.");
   }
   return response.json();
 }

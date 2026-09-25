@@ -1,3 +1,4 @@
+import uuid
 from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
@@ -204,10 +205,24 @@ class ConcernDetailView(generics.RetrieveAPIView):
 
 
 class StaffReportListView(generics.ListAPIView):
-    """GET /api/reports/staff/ — every citizen's filed reports (Staff/Admin Reports Dashboard)."""
-    queryset = Report.objects.select_related("citizen").all()
+    """
+    GET /api/reports/staff/ — every citizen's filed reports (Staff/Admin Reports Dashboard).
+    ?assigned_to=<user id> narrows it to the reports that user has claimed —
+    what Manage Accounts uses to list an Investigator's claims for release
+    (see StaffReportForfeitView).
+    """
     serializer_class = StaffReportSerializer
     permission_classes = [IsStaffOrAdmin]
+
+    def get_queryset(self):
+        queryset = Report.objects.select_related("citizen", "assigned_investigator").all()
+        assigned_to = self.request.query_params.get("assigned_to")
+        if assigned_to:
+            try:
+                queryset = queryset.filter(assigned_investigator_id=uuid.UUID(assigned_to))
+            except ValueError:
+                return queryset.none()
+        return queryset
 
     def get_serializer_context(self):
         return {"request": self.request}
@@ -244,8 +259,9 @@ class StaffReportDetailView(APIView):
         # Working a report — status and remarks are saved together — belongs
         # to whichever Investigator claimed it (see StaffReportClaimView), so
         # an unclaimed report, or one another Investigator holds, is
-        # read-only to everyone else. Admin is exempt, same as forfeiting
-        # (see StaffReportForfeitView): a way to step in on someone's behalf.
+        # read-only to everyone else. Admin is exempt (and is the only one who
+        # can release a claim, see StaffReportForfeitView): a way to step in
+        # on someone's behalf.
         if request.user.role != User.Role.ADMIN and report.assigned_investigator_id != request.user.id:
             if report.assigned_investigator_id:
                 holder = report.assigned_investigator.get_full_name() or report.assigned_investigator.username
@@ -300,20 +316,22 @@ class StaffReportClaimView(APIView):
 
 class StaffReportForfeitView(APIView):
     """
-    POST /api/reports/staff/<id>/forfeit/ — the Investigator who claimed a
-    report gives it up, freeing it for anyone else to claim. Only the
-    Investigator who actually holds the claim can forfeit it (Admin can
-    too, as a way to free up a report on someone's behalf).
+    POST /api/reports/staff/<id>/forfeit/ — frees a claimed report so
+    another Investigator can claim it. Administrator-only: once an
+    Investigator claims a report it's theirs for good (they can't give it
+    up themselves), so this is only the escape hatch for a report stuck
+    with someone who's left or gone inactive.
     """
-    permission_classes = [IsInvestigatorOrAdmin]
+    permission_classes = [IsAdmin]
 
     def post(self, request, pk):
         report = get_object_or_404(Report.objects.select_related("citizen", "assigned_investigator"), pk=pk)
-        if report.assigned_investigator_id and report.assigned_investigator_id != request.user.id and request.user.role != User.Role.ADMIN:
-            return Response({"detail": "You can only forfeit a report you've claimed yourself."}, status=403)
+        holder = report.assigned_investigator
         report.assigned_investigator = None
         report.save(update_fields=["assigned_investigator"])
-        log_action(request.user, f"Forfeited a report — {report.ordinance}")
+        if holder:
+            holder_name = holder.get_full_name() or holder.username
+            log_action(request.user, f"Released {holder_name}'s claim on a report — {report.ordinance}")
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
 

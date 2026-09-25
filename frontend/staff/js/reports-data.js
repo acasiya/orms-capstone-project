@@ -147,21 +147,11 @@ async function claimReport(id) {
   return updated;
 }
 
-// Investigator gives up a report they'd claimed, freeing it for anyone else
-// to claim — see StaffReportForfeitView.
-async function forfeitReport(id) {
-  const response = await authFetch(`/api/reports/staff/${encodeURIComponent(id)}/forfeit/`, { method: "POST" });
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.detail || "Could not forfeit this report.");
-  }
-  const updated = mapReport(await response.json());
-  if (_reportsCache) {
-    const idx = _reportsCache.findIndex((r) => r.id === id);
-    if (idx !== -1) _reportsCache[idx] = updated;
-  }
-  return updated;
-}
+// Claims are permanent for Investigators (only an Administrator can release
+// one — see StaffReportForfeitView), so both Claim buttons (reports-list.js,
+// report-detail.js) confirm first with this message.
+const CLAIM_CONFIRM_MESSAGE =
+  "Claim this report? Once claimed, it's assigned to you and can't be forfeited or handed to another Investigator.";
 
 // ---- Date/period helpers — kept from the old mock generator, since
 // filtering real created_at timestamps by week/month is still legitimate,
