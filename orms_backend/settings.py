@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "accounts",
     "reports",
     "ordinances",
+    "siteinfo",
 ]
 
 MIDDLEWARE = [

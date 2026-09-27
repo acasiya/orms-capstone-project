@@ -1,42 +1,58 @@
-// SafeSpace — site footer (About Us, Privacy Policy, Terms and Agreements).
-// Renders into <footer id="siteFooter"> and fills any [data-barangay="..."]
-// element on the page (About Us' contact card) from BARANGAY_INFO, so the
-// barangay's contact details live in exactly one place.
+// SafeSpace — site footer (About Us, Privacy Policy, Terms and Agreements),
+// plus the shared loader for the barangay's details.
+//
+// The details (address, phone, email, About Us text, council, logos) are
+// Admin-editable from the Admin Portal's About Us Setup page and served by
+// GET /api/site/about/ — loadSiteAbout() fetches them once per page and
+// fills the footer's contact column and every [data-barangay="<field>"]
+// element (About Us' cards, the legal pages' contact lines). Add
+// data-barangay-link to make a phone/email/address a tap-to-call/email/map link.
 //
 // Load this BEFORE main.js: the footer's File Report / Submit Suggestion
 // links carry data-auth-gate, which main.js wires up on load.
 
-// `address` is a Google Maps Plus Code for the Barangay Hall. Leave
-// officeHours empty until the Barangay confirms them — the footer skips it.
-const BARANGAY_INFO = {
-  name: "Barangay Platero",
-  city: "City of Biñan, Laguna",
-  address: "83CV+X8P, Platero, Biñan, Laguna",
-  phone: "0995 167 1070",
-  email: "brgy.platero0@gmail.com",
-  officeHours: "",
-  emergency: "911",
-};
+let _siteAboutPromise = null;
 
-const BARANGAY_PHONE_HREF = `tel:+63${BARANGAY_INFO.phone.replace(/\D/g, "").replace(/^0/, "")}`;
-const BARANGAY_MAP_HREF = `https://maps.google.com/?q=${encodeURIComponent(BARANGAY_INFO.address)}`;
+function loadSiteAbout() {
+  if (!_siteAboutPromise) {
+    _siteAboutPromise = fetch("/api/site/about/").then((response) => {
+      if (!response.ok) throw new Error("Could not load the barangay's details. Try refreshing the page.");
+      return response.json();
+    });
+  }
+  return _siteAboutPromise;
+}
 
-(function renderSiteFooter() {
-  const footer = document.getElementById("siteFooter");
+function escapeSiteHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : String(str);
+  return div.innerHTML;
+}
 
-  // Filled as links where it helps: tap-to-call, tap-to-email, open in Maps.
-  const LINKS = {
-    phone: BARANGAY_PHONE_HREF,
-    email: `mailto:${BARANGAY_INFO.email}`,
-    address: BARANGAY_MAP_HREF,
+function barangayLinks(profile) {
+  const digits = (profile.phone || "").replace(/\D/g, "");
+  return {
+    phone: digits ? `tel:${digits.startsWith("0") ? `+63${digits.slice(1)}` : digits}` : "",
+    email: profile.email ? `mailto:${profile.email}` : "",
+    address: profile.address ? `https://maps.google.com/?q=${encodeURIComponent(profile.address)}` : "",
   };
+}
+
+function fillBarangayFields(profile) {
+  const links = barangayLinks(profile);
   document.querySelectorAll("[data-barangay]").forEach((el) => {
     const key = el.dataset.barangay;
-    const value = BARANGAY_INFO[key];
-    if (!value) return;
-    if (LINKS[key] && el.hasAttribute("data-barangay-link")) {
+    const value = profile[key];
+    // An empty field hides its whole line (e.g. office hours not set yet).
+    const line = el.closest("[data-barangay-line]");
+    if (line) line.hidden = !value;
+    if (!value) {
+      el.textContent = "";
+      return;
+    }
+    if (links[key] && el.hasAttribute("data-barangay-link")) {
       const a = document.createElement("a");
-      a.href = LINKS[key];
+      a.href = links[key];
       a.textContent = value;
       if (key === "address") {
         a.target = "_blank";
@@ -47,55 +63,71 @@ const BARANGAY_MAP_HREF = `https://maps.google.com/?q=${encodeURIComponent(BARAN
       el.textContent = value;
     }
   });
+}
 
-  if (!footer) return;
-  const year = new Date().getFullYear();
-  footer.className = "site-footer";
-  footer.innerHTML = `
-    <div class="site-footer__inner">
-      <div class="site-footer__brand">
-        <img src="drawables/logo-barangay-platero.png" alt="Barangay Platero seal" width="64" height="64" />
-        <div>
-          <p class="site-footer__name">${BARANGAY_INFO.name}</p>
-          <p class="site-footer__sub">${BARANGAY_INFO.city}</p>
-          <p class="site-footer__tagline">SafeSpace — Online Reporting and Management System</p>
+(function renderSiteFooter() {
+  const footer = document.getElementById("siteFooter");
+  if (footer) {
+    footer.className = "site-footer";
+    footer.innerHTML = `
+      <div class="site-footer__inner">
+        <div class="site-footer__brand">
+          <img src="drawables/logo-barangay-platero.png" alt="Barangay Platero seal" width="64" height="64" />
+          <div>
+            <p class="site-footer__name" data-barangay="name">Barangay Platero</p>
+            <p class="site-footer__sub" data-barangay="city"></p>
+            <p class="site-footer__tagline">SafeSpace — Online Reporting and Management System</p>
+          </div>
+        </div>
+
+        <nav class="site-footer__col" aria-label="Quick links">
+          <h2 class="site-footer__heading">Quick Links</h2>
+          <ul>
+            <li><a href="ordinances.html">Ordinances</a></li>
+            <li><a href="file-report.html" data-auth-gate="report">File a Report</a></li>
+            <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit a Suggestion</a></li>
+            <li><a href="faqs.html">FAQs</a></li>
+            <li><a href="about.html">About Us</a></li>
+          </ul>
+        </nav>
+
+        <nav class="site-footer__col" aria-label="Legal">
+          <h2 class="site-footer__heading">Legal</h2>
+          <ul>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms and Agreements</a></li>
+            <li><a href="privacy-policy.html#your-rights">Your Data Privacy Rights</a></li>
+          </ul>
+        </nav>
+
+        <div class="site-footer__col">
+          <h2 class="site-footer__heading">Contact Us</h2>
+          <ul class="site-footer__contact">
+            <li data-barangay-line hidden><span data-barangay="address" data-barangay-link></span></li>
+            <li data-barangay-line hidden><span data-barangay="phone" data-barangay-link></span></li>
+            <li data-barangay-line hidden><span data-barangay="email" data-barangay-link></span></li>
+            <li data-barangay-line hidden><span data-barangay="office_hours"></span></li>
+          </ul>
+          <p class="site-footer__emergency">Emergency? Call <a id="footerEmergencyLink" href="tel:911">911</a>. SafeSpace is not an emergency service.</p>
         </div>
       </div>
 
-      <nav class="site-footer__col" aria-label="Quick links">
-        <h2 class="site-footer__heading">Quick Links</h2>
-        <ul>
-          <li><a href="ordinances.html">Ordinances</a></li>
-          <li><a href="file-report.html" data-auth-gate="report">File a Report</a></li>
-          <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit a Suggestion</a></li>
-          <li><a href="faqs.html">FAQs</a></li>
-          <li><a href="about.html">About Us</a></li>
-        </ul>
-      </nav>
+      <div class="site-footer__bottom">
+        <p>&copy; ${new Date().getFullYear()} <span data-barangay="name">Barangay Platero</span>, <span data-barangay="city">City of Biñan, Laguna</span>. All rights reserved.</p>
+        <p>Personal data is processed under the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+      </div>`;
+  }
 
-      <nav class="site-footer__col" aria-label="Legal">
-        <h2 class="site-footer__heading">Legal</h2>
-        <ul>
-          <li><a href="privacy-policy.html">Privacy Policy</a></li>
-          <li><a href="terms.html">Terms and Agreements</a></li>
-          <li><a href="privacy-policy.html#your-rights">Your Data Privacy Rights</a></li>
-        </ul>
-      </nav>
-
-      <div class="site-footer__col">
-        <h2 class="site-footer__heading">Contact Us</h2>
-        <ul class="site-footer__contact">
-          <li><a href="${BARANGAY_MAP_HREF}" target="_blank" rel="noopener">${BARANGAY_INFO.address}</a></li>
-          <li><a href="${BARANGAY_PHONE_HREF}">${BARANGAY_INFO.phone}</a></li>
-          <li><a href="mailto:${BARANGAY_INFO.email}">${BARANGAY_INFO.email}</a></li>
-          ${BARANGAY_INFO.officeHours ? `<li>${BARANGAY_INFO.officeHours}</li>` : ""}
-        </ul>
-        <p class="site-footer__emergency">Emergency? Call <a href="tel:${BARANGAY_INFO.emergency}">${BARANGAY_INFO.emergency}</a>. SafeSpace is not an emergency service.</p>
-      </div>
-    </div>
-
-    <div class="site-footer__bottom">
-      <p>&copy; ${year} ${BARANGAY_INFO.name}, ${BARANGAY_INFO.city}. All rights reserved.</p>
-      <p>Personal data is processed under the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
-    </div>`;
+  loadSiteAbout()
+    .then(({ profile }) => {
+      fillBarangayFields(profile);
+      const emergency = document.getElementById("footerEmergencyLink");
+      if (emergency && profile.emergency_hotline) {
+        emergency.textContent = profile.emergency_hotline;
+        emergency.href = `tel:${profile.emergency_hotline.replace(/[^\d+]/g, "")}`;
+      }
+    })
+    .catch(() => {
+      // Footer links still work; only the contact details are missing.
+    });
 })();

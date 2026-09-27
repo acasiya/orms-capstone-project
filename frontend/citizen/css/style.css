@@ -2924,6 +2924,50 @@ button {
   height: 170px;
 }
 
+/* Member without a photo yet: a ringed silhouette-free circle. */
+.council-member__placeholder {
+  display: block;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 12px;
+  border: 5px solid var(--navy);
+  border-radius: 50%;
+  background: var(--cream);
+}
+
+.council__row--lead .council-member__placeholder {
+  width: 170px;
+  height: 170px;
+}
+
+.council-member img {
+  object-fit: cover;
+}
+
+/* Uploaded portraits get the green ring the seeded ones have drawn in
+   (same colour, ~2.6% of the width — 8px on the 306px originals). */
+.council-member img.council-member__photo--framed {
+  box-sizing: border-box;
+  border: 4px solid var(--navy);
+  background: var(--white);
+}
+
+.council__loading,
+.about-error {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.about-error {
+  margin-bottom: 20px;
+  color: #c0392b;
+}
+
+.about-card__contact li[hidden] {
+  display: none;
+}
+
 .council-member__name {
   display: block;
   font-size: 0.9rem;
