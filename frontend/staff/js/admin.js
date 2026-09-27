@@ -66,7 +66,9 @@ function getAdminUser() {
 // ---- Role-based section access ----
 // Each Barangay Staff role sees a different slice of the Staff Portal:
 // Barangay Captain gets read-only dashboards + Ordinances + Questions,
-// Secretary gets Concerns/Suggestions + Ordinances + Questions, Investigator
+// Secretary gets Concerns/Suggestions + Ordinances + Questions, Barangay
+// Treasurer gets Ordinances (managing the resolutions in it) + Questions,
+// with Ordinances as their landing page since they have no dashboard, Investigator
 // gets Reports (claim/work reports — see reports-list.js) + a read-only
 // Ordinances (citing one is part of filing/reviewing a report) + Questions.
 // Detail pages reached by navigating from an allowed page (report-detail.html
@@ -90,8 +92,8 @@ const STAFF_NAV_ACCESS = {
   "concerns-dashboard.html": ["Barangay Captain"],
   "secretary-dashboard.html": ["Secretary"],
   "concerns.html": ["Secretary"],
-  "ordinances.html": ["Barangay Captain", "Secretary", "Investigator"],
-  "questions.html": ["Barangay Captain", "Secretary", "Investigator"],
+  "ordinances.html": ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator"],
+  "questions.html": ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator"],
 };
 
 (function enforceStaffSectionAccess() {

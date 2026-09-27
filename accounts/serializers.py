@@ -64,18 +64,22 @@ class RegisterSerializer(serializers.ModelSerializer):
 # AdminAccountDetailView.patch. Each role also determines which sections of
 # the Staff Portal that account can see — see
 # frontend/staff/js/admin.js's STAFF_NAV_ACCESS.
-STAFF_ROLE_CHOICES = ["Barangay Captain", "Secretary", "Investigator", "Administrator"]
+#
+# Barangay Treasurer manages resolutions (Ordinance.kind == RESOLUTION) the
+# way the Secretary manages ordinances — see accounts.views.can_manage_document_kind.
+STAFF_ROLE_CHOICES = ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator", "Administrator"]
 STAFF_ROLE_TO_ROLE_FIELD = {
     "Barangay Captain": User.Role.STAFF,
     "Secretary": User.Role.STAFF,
+    "Barangay Treasurer": User.Role.STAFF,
     "Investigator": User.Role.STAFF,
     "Administrator": User.Role.ADMIN,
 }
-UNIQUE_STAFF_ROLES = {"Barangay Captain", "Secretary"}
+UNIQUE_STAFF_ROLES = {"Barangay Captain", "Secretary", "Barangay Treasurer"}
 
 
 def validate_staff_role_uniqueness(staff_role, exclude_user=None):
-    """Shared by account creation and Update Role — one active Barangay Captain/Secretary at a time."""
+    """Shared by account creation and Update Role — one active Barangay Captain/Secretary/Treasurer at a time."""
     if staff_role not in UNIQUE_STAFF_ROLES:
         return
     clash = User.objects.filter(position__iexact=staff_role, is_active=True)

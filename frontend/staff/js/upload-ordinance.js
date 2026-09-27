@@ -1,16 +1,28 @@
-// SafeSpace — Upload Ordinance: a dedicated page (not a modal) for the
-// Secretary to add a new ordinance. Ordinances is a full-edit section for
-// the Secretary only — Barangay Captain/Investigator (the other roles with
-// nav access to ordinances.html) get redirected back if they land here
-// directly, same reasoning as OrdinanceListCreateView's IsSecretaryOrAdmin
-// check on the backend.
+// SafeSpace — Upload Ordinance/Resolution: a dedicated page (not a modal).
+// The Secretary uploads ordinances, the Barangay Treasurer resolutions (see
+// ordinances-data.js's managedDocumentKinds); the page relabels itself for
+// whichever the uploader files. Everyone else with access to
+// ordinances.html is sent back, same as OrdinanceListCreateView's
+// IsDocumentManager check on the backend.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const currentUser = getAdminUser();
-  if (!currentUser || currentUser.position !== "Secretary") {
+  const kinds = managedDocumentKinds(getAdminUser());
+  if (!kinds.length) {
     window.location.href = "ordinances.html";
     return;
   }
+  const kind = kinds[0];
+  const kindLabel = DOCUMENT_KIND_LABELS[kind];
+  const kindWord = kindLabel.toLowerCase();
+
+  document.title = `SafeSpace — Upload ${kindLabel}`;
+  document.getElementById("uploadHeading").textContent = `Upload ${kindLabel}`;
+  document.getElementById("ordNumberLabel").textContent = `${kindLabel} No.`;
+  document.getElementById("ordNumberInput").placeholder =
+    kind === "resolution" ? "e.g. Res. No. 12-(2026)" : "e.g. No. 31-(2026)";
+  document.getElementById("ordTitleInput").placeholder = `${kindLabel} title`;
+  document.getElementById("ordDescriptionInput").placeholder = `Full ${kindWord} text/summary...`;
+  document.getElementById("ordPdfLabelText").textContent = `Click to browse for the ${kindWord} PDF`;
 
   const form = document.getElementById("uploadOrdinanceForm");
   const numberInput = document.getElementById("ordNumberInput");
@@ -100,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   pdfInput.addEventListener("change", () => {
     const file = pdfInput.files[0];
-    pdfLabelText.textContent = file ? file.name : "Click to browse for the ordinance PDF";
+    pdfLabelText.textContent = file ? file.name : `Click to browse for the ${kindWord} PDF`;
     if (!file) {
       extractRun++;
       extractStatus.hidden = true;
@@ -114,6 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     uploadError.hidden = true;
 
     const fields = {
+      kind,
       number: numberInput.value.trim(),
       title: titleInput.value.trim(),
       author: authorInput.value.trim(),
@@ -130,7 +143,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!fields.pdfFile) {
-      uploadError.textContent = "Please attach the ordinance PDF.";
+      uploadError.textContent = `Please attach the ${kindWord} PDF.`;
       uploadError.hidden = false;
       return;
     }

@@ -631,6 +631,7 @@ button {
 .ordinances-toolbar {
   display: flex;
   gap: 14px;
+  flex-wrap: wrap;
   margin-bottom: 20px;
 }
 
@@ -3792,4 +3793,25 @@ button {
   .admin-table {
     font-size: 0.82rem;
   }
+}
+
+/* ---------- Ordinance / Resolution type badge (ordinances list) ---------- */
+
+.doc-kind {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.doc-kind--ordinance {
+  background: var(--cream);
+  color: var(--navy-dark);
+}
+
+.doc-kind--resolution {
+  background: #e7eef8;
+  color: #1f4e8c;
 }

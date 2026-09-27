@@ -3167,8 +3167,56 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 4px 0 8px;
+  margin: 6px 0 0;
   font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.setup-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--navy);
+}
+
+/* Spacing inside About Us Setup's popups and details form. The shared
+   .field-hint rule pulls hints up under the input (margin-top: -8px), and
+   .modal-card .btn's auto margins push a button row apart — both undone here. */
+.setup-modal .field,
+.setup-card .field {
+  margin-bottom: 18px;
+}
+
+.setup-modal .field .field-hint,
+.setup-card .field .field-hint {
+  margin: 6px 0 0;
+}
+
+.setup-modal input,
+.setup-modal select,
+.setup-modal textarea,
+.setup-card input,
+.setup-card textarea {
+  font-family: inherit;
+}
+
+.setup-modal .setup-photo {
+  margin-bottom: 20px;
+}
+
+.setup-modal .setup-photo .field-hint {
+  line-height: 1.45;
+}
+
+.setup-modal .btn-row {
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.setup-modal .btn-row .btn {
+  flex: 1;
+  margin: 0;
+  padding: 12px 16px;
 }
 
 @media (max-width: 760px) {

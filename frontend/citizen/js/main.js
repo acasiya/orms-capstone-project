@@ -79,6 +79,7 @@ const STAFF_POSITION_HOME = {
   "Barangay Captain": "/staff/reports-dashboard.html",
   Secretary: "/staff/concerns.html",
   Investigator: "/staff/reports.html",
+  "Barangay Treasurer": "/staff/ordinances.html",
 };
 
 // Works out where to send someone right after apiLogin/apiCompleteStaffSetup

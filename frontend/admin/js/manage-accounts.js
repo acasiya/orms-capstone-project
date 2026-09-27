@@ -355,7 +355,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const updateTypeModal = document.getElementById("updateTypeModal");
   const updateTypeSelect = document.getElementById("updateTypeSelect");
   const updateTypeSave = document.getElementById("updateTypeSave");
-  const STAFF_ROLES = ["Barangay Captain", "Secretary", "Investigator", "Administrator"];
+  const STAFF_ROLES = ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator", "Administrator"];
 
   editTypeBtn.addEventListener("click", () => {
     if (!activeAccount) return;

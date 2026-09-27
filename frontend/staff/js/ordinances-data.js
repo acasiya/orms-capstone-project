@@ -7,6 +7,23 @@
 
 let _ordinancesCache = null;
 
+// Ordinances and resolutions share this list (ordinances.models.Ordinance.kind).
+// Who manages which kind mirrors accounts.views.managed_document_kinds —
+// the server enforces it; this just decides which controls to show.
+const DOCUMENT_KIND_LABELS = { ordinance: "Ordinance", resolution: "Resolution" };
+const DOCUMENT_MANAGER_KINDS = {
+  Secretary: ["ordinance"],
+  "Barangay Treasurer": ["resolution"],
+};
+
+function managedDocumentKinds(user) {
+  return (user && DOCUMENT_MANAGER_KINDS[user.position]) || [];
+}
+
+function canManageDocument(user, doc) {
+  return managedDocumentKinds(user).includes(doc.kind);
+}
+
 // Keeps a safety margin under the server's DATA_UPLOAD_MAX_MEMORY_SIZE
 // (25MB, see settings.py) so an oversize PDF fails fast with a clear
 // message instead of a network round trip that ends in a generic 400.
@@ -28,6 +45,8 @@ function mapOrdinance(o) {
   const numberMatch = o.number.match(/\d+/);
   return {
     id: o.id,
+    kind: o.kind || "ordinance",
+    kindLabel: DOCUMENT_KIND_LABELS[o.kind] || "Ordinance",
     number: o.number,
     numberSort: numberMatch ? parseInt(numberMatch[0], 10) : 0,
     title: o.title,
@@ -169,9 +188,11 @@ function populateCategorySelect(selectEl, categories) {
   selectEl.value = categories.includes(previous) ? previous : "";
 }
 
-// fields: { number, title, author, category, dateApproved (YYYY-MM-DD), description, pdfFile }
+// fields: { kind ("ordinance" | "resolution"), number, title, author, category,
+// dateApproved (YYYY-MM-DD), description, pdfFile }
 async function createOrdinance(fields) {
   const formData = new FormData();
+  if (fields.kind) formData.append("kind", fields.kind);
   formData.append("number", fields.number);
   formData.append("title", fields.title);
   formData.append("author", fields.author);
@@ -181,7 +202,7 @@ async function createOrdinance(fields) {
   formData.append("pdf_file", fields.pdfFile);
 
   const response = await authFetch("/api/ordinances/", { method: "POST", body: formData });
-  if (!response.ok) await readFirstError(response, "Could not upload this ordinance.");
+  if (!response.ok) await readFirstError(response, `Could not upload this ${(DOCUMENT_KIND_LABELS[fields.kind] || "document").toLowerCase()}.`);
   const created = mapOrdinance(await response.json());
   if (_ordinancesCache) _ordinancesCache.unshift(created);
   return created;

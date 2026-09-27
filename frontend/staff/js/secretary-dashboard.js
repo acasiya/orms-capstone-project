@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("statOpenConcerns").textContent = concerns.filter((c) => c.status === "Submitted").length;
     document.getElementById("statResolvedConcerns").textContent = concerns.filter((c) => c.status === "Resolved").length;
     document.getElementById("statUnansweredQuestions").textContent = questions.filter((q) => !q.is_answered).length;
-    document.getElementById("statActiveOrdinances").textContent = liveOrdinances().filter((o) => !o.isArchived).length;
+    document.getElementById("statActiveOrdinances").textContent = liveOrdinances().filter((o) => !o.isArchived && o.kind === "ordinance").length;
   }
 
   // ---- Concerns by Folder pie (same technique as concerns-dashboard.js's

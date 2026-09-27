@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from accounts.views import managed_document_kinds
+
 from .models import Ordinance, OrdinanceAuthor, OrdinanceCategory
 
 
@@ -13,11 +15,12 @@ class OrdinanceSerializer(serializers.ModelSerializer):
 
     pdf_url = serializers.SerializerMethodField()
     uploaded_by_name = serializers.SerializerMethodField()
+    kind_display = serializers.CharField(source="get_kind_display", read_only=True)
 
     class Meta:
         model = Ordinance
         fields = [
-            "id", "number", "title", "author", "category", "date_approved",
+            "id", "kind", "kind_display", "number", "title", "author", "category", "date_approved",
             "description", "pdf_url", "uploaded_by_name", "is_archived",
             "created_at", "updated_at",
         ]
@@ -99,19 +102,51 @@ class _ValidateCategoryMixin:
         return value
 
 
-class OrdinanceCreateSerializer(_ValidateCategoryMixin, serializers.ModelSerializer):
-    """POST — Staff/Admin uploading a new ordinance. The PDF is required on creation."""
+class _ValidateKindMixin:
+    """
+    The uploader may only file the kind(s) they manage — Secretary ordinances,
+    Barangay Treasurer resolutions, Administrator either (see
+    accounts.views.managed_document_kinds). Needs the request in context.
+    """
+
+    def validate_kind(self, value):
+        request = self.context.get("request")
+        if value not in managed_document_kinds(request.user if request else None):
+            label = Ordinance.Kind(value).label.lower()
+            raise serializers.ValidationError(f"You can't file a {label}.")
+        return value
+
+
+class OrdinanceCreateSerializer(_ValidateCategoryMixin, _ValidateKindMixin, serializers.ModelSerializer):
+    """
+    POST — Staff/Admin uploading a new ordinance or resolution. The PDF is
+    required on creation. `kind` may be left out: it then defaults to the
+    one kind the uploader manages (Administrators default to ordinance).
+    """
+
+    kind = serializers.ChoiceField(choices=Ordinance.Kind.choices, required=False)
 
     class Meta:
         model = Ordinance
-        fields = ["number", "title", "author", "category", "date_approved", "description", "pdf_file"]
+        fields = ["kind", "number", "title", "author", "category", "date_approved", "description", "pdf_file"]
         extra_kwargs = {"pdf_file": {"required": True}}
 
+    def validate(self, attrs):
+        if "kind" not in attrs:
+            request = self.context.get("request")
+            kinds = managed_document_kinds(request.user if request else None)
+            attrs["kind"] = next(iter(kinds)) if len(kinds) == 1 else Ordinance.Kind.ORDINANCE
+        return attrs
 
-class OrdinanceUpdateSerializer(_ValidateCategoryMixin, serializers.ModelSerializer):
-    """PATCH — Staff/Admin editing an existing ordinance. Replacing the PDF is optional."""
+
+class OrdinanceUpdateSerializer(_ValidateCategoryMixin, _ValidateKindMixin, serializers.ModelSerializer):
+    """
+    PATCH — Staff/Admin editing an existing ordinance or resolution. Replacing
+    the PDF is optional. Changing `kind` is effectively Administrator-only
+    (the new kind must also be one the editor manages).
+    """
 
     class Meta:
         model = Ordinance
-        fields = ["number", "title", "author", "category", "date_approved", "description", "pdf_file"]
+        fields = ["kind", "number", "title", "author", "category", "date_approved", "description", "pdf_file"]
         extra_kwargs = {"pdf_file": {"required": False}}

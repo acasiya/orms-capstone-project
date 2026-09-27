@@ -150,7 +150,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const select = document.getElementById("ordinanceSelect");
   try {
     await ensureOrdinancesLoaded();
-    select.append(...liveOrdinances().map((o) => new Option(`${o.number} — ${o.title}`, o.id)));
+    // Only ordinances can be violated — resolutions share the list but not this dropdown.
+    const ordinances = liveOrdinances().filter((o) => o.kind === "ordinance");
+    select.append(...ordinances.map((o) => new Option(`${o.number} — ${o.title}`, o.id)));
   } catch {
     select.append(new Option("Could not load ordinances — try reloading the page.", ""));
   }

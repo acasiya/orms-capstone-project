@@ -305,6 +305,42 @@ class IsSecretaryOrAdmin(permissions.BasePermission):
         return user.role == User.Role.ADMIN or (user.role == User.Role.STAFF and user.position == "Secretary")
 
 
+# Who manages which kind of legislative document (ordinances.models.Ordinance.kind):
+# the Secretary uploads/edits/archives ordinances, the Barangay Treasurer
+# resolutions; an Administrator can do either. Everyone else is read-only.
+DOCUMENT_MANAGER_KINDS = {
+    "Secretary": {"ordinance"},
+    "Barangay Treasurer": {"resolution"},
+}
+
+
+def managed_document_kinds(user):
+    """The Ordinance.kind values this user may create/edit/archive (empty = read-only)."""
+    if not (user and user.is_authenticated):
+        return set()
+    if user.role == User.Role.ADMIN:
+        return {"ordinance", "resolution"}
+    if user.role == User.Role.STAFF:
+        return DOCUMENT_MANAGER_KINDS.get(user.position, set())
+    return set()
+
+
+def can_manage_document_kind(user, kind):
+    return kind in managed_document_kinds(user)
+
+
+class IsDocumentManager(permissions.BasePermission):
+    """
+    Secretary, Barangay Treasurer or Administrator — anyone who manages at
+    least one kind of legislative document. Views still check the specific
+    kind (can_manage_document_kind), since the Secretary can't touch a
+    resolution and the Treasurer can't touch an ordinance.
+    """
+
+    def has_permission(self, request, view):
+        return bool(managed_document_kinds(request.user))
+
+
 class AdminCreateUserView(generics.CreateAPIView):
     """
     POST /api/auth/admin/create-user/ — Administrator-only endpoint for

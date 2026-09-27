@@ -1,5 +1,6 @@
-// SafeSpace — Ordinance detail: view real info, and (Staff/Admin) edit it —
-// including optionally replacing the PDF — via PATCH /api/ordinances/<id>/.
+// SafeSpace — Ordinance/Resolution detail: view real info, and (whoever
+// manages its kind — Secretary: ordinances, Barangay Treasurer: resolutions)
+// edit it, including optionally replacing the PDF, via PATCH /api/ordinances/<id>/.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const id = new URLSearchParams(window.location.search).get("id");
@@ -15,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let ordinance = getOrdinanceById(id);
 
   if (!ordinance) {
-    document.getElementById("detailTitle").textContent = "Ordinance not found";
+    document.getElementById("detailTitle").textContent = "Document not found";
     document.getElementById("editOrdinanceBtn").hidden = true;
     return;
   }
@@ -31,7 +32,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderDisplay() {
     document.title = `${ordinance.number} — SafeSpace`;
-    detailTitle.textContent = `City Ordinance ${ordinance.number}`;
+    // Ordinances keep their long-standing "City Ordinance" heading.
+    detailTitle.textContent = `${ordinance.kind === "resolution" ? "Resolution" : "City Ordinance"} ${ordinance.number}`;
+    document.getElementById("editNumberLabel").textContent = `${ordinance.kindLabel} No.`;
     document.getElementById("detailAuthor").textContent = ordinance.author;
     document.getElementById("detailDate").textContent = ordinance.dateApproved;
     document.getElementById("detailOrdinanceTitle").textContent = ordinance.title;
@@ -64,18 +67,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderDisplay();
 
-  // ---- Edit mode (Secretary only — see ordinances-list.js) ----
+  // ---- Edit mode (only whoever manages this kind — see ordinances-data.js) ----
 
-  const currentUser = getAdminUser();
-  const isSecretary = currentUser && currentUser.position === "Secretary";
+  const canEdit = canManageDocument(getAdminUser(), ordinance);
 
   const editBtn = document.getElementById("editOrdinanceBtn");
-  editBtn.hidden = !isSecretary;
+  editBtn.hidden = !canEdit;
+  editBtn.setAttribute("aria-label", `Edit ${ordinance.kindLabel.toLowerCase()}`);
 
   const archiveToggleBtn = document.getElementById("archiveToggleBtn");
 
   function renderArchiveToggle() {
-    archiveToggleBtn.hidden = !isSecretary;
+    archiveToggleBtn.hidden = !canEdit;
     archiveToggleBtn.textContent = ordinance.isArchived ? "Restore" : "Archive";
   }
   renderArchiveToggle();
@@ -95,7 +98,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  if (!isSecretary) return;
+  if (!canEdit) return;
 
   const editForm = document.getElementById("editOrdinanceForm");
   const numberInput = document.getElementById("editNumberInput");

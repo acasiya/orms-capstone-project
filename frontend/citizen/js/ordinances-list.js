@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const paginationInfo = document.getElementById("paginationInfo");
   const pagination = document.getElementById("ordinancesPagination");
   const pageSizeSelect = document.getElementById("ordinancesPageSize");
+  const kindFilter = document.getElementById("kindFilter");
 
   let pageSize = 5;
   let currentPage = 1;
@@ -47,18 +48,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   filterField.addEventListener("change", updateSearchPlaceholder);
   updateSearchPlaceholder();
 
-  tbody.innerHTML = `<tr><td colspan="3" class="ordinances-empty">Loading ordinances...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
     await ensureOrdinancesLoaded();
     updateSearchPlaceholder();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="3" class="ordinances-empty">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
     return;
   }
 
+  // Ordinances / Resolutions / both — applies immediately, unlike the search.
+  function ofSelectedKind() {
+    const kind = kindFilter.value;
+    return kind === "all" ? liveOrdinances() : liveOrdinances().filter((o) => o.kind === kind);
+  }
+
   function getFiltered() {
-    if (!appliedQuery) return liveOrdinances();
-    return liveOrdinances().filter((o) => String(o[appliedField] || "").toLowerCase().includes(appliedQuery));
+    const rows = ofSelectedKind();
+    if (!appliedQuery) return rows;
+    return rows.filter((o) => String(o[appliedField] || "").toLowerCase().includes(appliedQuery));
+  }
+
+  function emptyMessage() {
+    const noun = { all: "ordinances or resolutions", ordinance: "ordinances", resolution: "resolutions" }[kindFilter.value];
+    return ofSelectedKind().length ? `No ${noun} match your search.` : `No ${noun} have been posted yet.`;
   }
 
   function escapeHtml(str) {
@@ -76,15 +89,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rows = allRows.slice(start, start + pageSize);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="3" class="ordinances-empty">${
-        liveOrdinances().length ? "No ordinances match your search." : "No ordinances uploaded yet."
-      }</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${emptyMessage()}</td></tr>`;
     } else {
       tbody.innerHTML = rows
         .map(
           (o) => `
           <tr data-id="${o.id}" tabindex="0">
-            <td data-label="Ordinance No.">${escapeHtml(o.number)}</td>
+            <td data-label="Type"><span class="doc-kind doc-kind--${o.kind}">${o.kindLabel}</span></td>
+            <td data-label="No.">${escapeHtml(o.number)}</td>
             <td data-label="Date">${escapeHtml(o.dateApprovedRaw)}</td>
             <td data-label="Title"><span class="ordinance-name">${escapeHtml(o.title)}</span></td>
           </tr>`
@@ -121,6 +133,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     appliedField = filterField.value;
     appliedQuery = searchInput.value.trim().toLowerCase();
+    currentPage = 1;
+    render();
+  });
+
+  kindFilter.addEventListener("change", () => {
     currentPage = 1;
     render();
   });
