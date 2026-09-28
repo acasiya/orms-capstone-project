@@ -877,7 +877,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
         if (!fileInput.files.length) {
-          showFormError(form, "Please upload a photo of your Barangay ID.");
+          showFormError(form, "Please upload a photo of your Voter's ID.");
           return;
         }
 
@@ -1207,7 +1207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     revealOnScroll.observe(infoSection);
   }
 
-  // Barangay ID upload preview (Sign Up verification step)
+  // Voter's ID upload preview (Sign Up verification step)
   const idInput = document.getElementById("idPhoto");
   if (idInput) {
     const preview = document.getElementById("idPreview");
@@ -1232,7 +1232,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // filename(s), restores the placeholder copy on form reset, and actually
   // implements the "drag & drop" the dropzone copy invites (browsers don't
   // populate a hidden file input from a drop event on their own). Covers
-  // Barangay ID, report, and suggestion uploads.
+  // Voter's ID, report, and suggestion uploads.
   //
   // Selects the LABEL first, then resolves its input via `.control` —
   // these labels reference their input through for="…"/id="…" as siblings,
@@ -1259,7 +1259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // button, so a resident can drop the wrong file and swap just that one
     // instead of clearing the whole selection. `picked` is the source of
     // truth; input.files is rebuilt from it via DataTransfer after every
-    // add/remove. Single-file inputs (Barangay ID) keep the old behavior.
+    // add/remove. Single-file inputs (Voter's ID) keep the old behavior.
     const isMulti = input.multiple;
     let picked = [];
     let tray = null;
