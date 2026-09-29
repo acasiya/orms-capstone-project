@@ -595,6 +595,34 @@ button {
   color: var(--white);
 }
 
+/* File Report: opt-in "pin my current location" under the Street field. */
+.geo-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.geo-toggle input {
+  width: auto;
+  margin: 3px 0 0;
+  accent-color: var(--navy);
+}
+
+.geo-status {
+  margin: 6px 0 0 24px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.geo-status--ok {
+  color: var(--navy);
+}
+
 .field-hint {
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -720,6 +748,20 @@ button {
 
 .form-footer a:hover {
   text-decoration: underline;
+}
+
+/* Login's "Don't Have an Account?" / Sign Up's "Login" — a lighter green
+   than --link so it reads apart from the dark-green submit button right
+   above it. #0a881b is about as light as this green can go and still pass
+   WCAG AA (4.6:1) as small text on the white card; the brand --accent
+   (#03ac13) is only ~3:1 there. */
+.auth-card .form-footer a {
+  color: #0a881b;
+  font-weight: 700;
+}
+
+.auth-card .form-footer a:hover {
+  color: var(--accent);
 }
 
 .form-back {
@@ -1503,13 +1545,13 @@ button {
 }
 
 .btn-clear {
-  background: #eef2f6;
+  background: var(--plain-bg);
   color: var(--text);
   border: 1px solid var(--border);
 }
 
 .btn-clear:hover {
-  background: #e5e7eb;
+  background: var(--highlight);
 }
 
 .btn-success {
@@ -1682,11 +1724,11 @@ button {
 }
 
 .btn-danger {
-  background: #f07167;
+  background: #c0392b;
 }
 
 .btn-danger:hover {
-  background: #e35c51;
+  background: #a93226;
 }
 
 /* ---------- Notifications dropdown ---------- */
@@ -2132,8 +2174,8 @@ button {
 
 .field input[disabled],
 .field textarea[disabled] {
-  background: #dcdcdc;
-  color: #555;
+  background: var(--plain-bg);
+  color: var(--text-muted);
   cursor: default;
 }
 
@@ -2233,7 +2275,7 @@ button {
 }
 
 .profile-sidebar {
-  background: #bdbdbd;
+  background: var(--cream);
   border-radius: var(--radius);
   padding: 24px 22px;
   min-height: 320px;
@@ -2254,7 +2296,7 @@ button {
   margin-bottom: 10px;
   border: 2px solid transparent;
   border-radius: 4px;
-  background: #d4d4d4;
+  background: var(--white);
   color: var(--text);
   font-weight: 700;
   font-size: 0.95rem;
@@ -2262,12 +2304,13 @@ button {
 }
 
 .profile-tab:hover {
-  background: #dcdcdc;
+  background: var(--highlight);
 }
 
 .profile-tab.active {
-  background: #ededed;
-  border-color: #1f2430;
+  background: var(--white);
+  border-color: var(--navy);
+  color: var(--navy);
 }
 
 .profile-sidebar__cancel {

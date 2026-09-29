@@ -1,10 +1,11 @@
 // SafeSpace — shared incident heatmap for the staff dashboards.
 //
 // Renders a real Leaflet + OpenStreetMap map with a heat layer whose
-// intensity is the number of reports (or concerns) per street. Incident
-// points are the street centroids in street-coordinates.js — the citizen
-// only picks a street name when filing, never a precise pin, so this is a
-// street-level density map, not exact incident locations.
+// intensity is the number of reports (or concerns) per point. A report
+// filed with the citizen's device location (see file-report.js) is plotted
+// at that exact position; everything else — reports where location wasn't
+// shared, and all concerns — falls back to its street's centroid in
+// street-coordinates.js.
 //
 // Depends (load order): vendor/leaflet/leaflet.js, vendor/leaflet/leaflet-heat.js,
 // js/street-coordinates.js — then this file.
@@ -42,12 +43,17 @@ if (window.L && L.Icon && L.Icon.Default) {
   L.Icon.Default.imagePath = "vendor/leaflet/images/";
 }
 
-// Tallies reports/concerns by their `location` string for the given list.
-// Returns { "Ferrari Street": 3, ... }.
+// Tallies reports/concerns by where they happened for the given list.
+// Returns { "Ferrari Street": 3, "@14.31234,121.08765": 1, ... } — an "@"
+// key is an exact device position (rounded to ~1m so repeat filings from
+// the same spot stack), used whenever the item carries one.
 function countByLocation(items) {
   const counts = {};
   items.forEach((it) => {
-    const name = (it.location || "").trim();
+    const hasCoords = typeof it.latitude === "number" && typeof it.longitude === "number";
+    const name = hasCoords
+      ? `@${it.latitude.toFixed(5)},${it.longitude.toFixed(5)}`
+      : (it.location || "").trim();
     if (!name) return;
     counts[name] = (counts[name] || 0) + 1;
   });
@@ -61,6 +67,10 @@ function countByLocation(items) {
 // street the location ends with, on a ", " boundary so "Blueberry Street"
 // can't accidentally match something like "New Blueberry Street".
 function resolveStreetCoord(locationName) {
+  if (locationName.startsWith("@")) {
+    const [lat, lng] = locationName.slice(1).split(",").map(Number);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+  }
   if (STREET_COORDINATES[locationName]) return STREET_COORDINATES[locationName];
   const match = Object.keys(STREET_COORDINATES).find((street) => locationName.endsWith(`, ${street}`));
   return match ? STREET_COORDINATES[match] : null;
@@ -113,7 +123,7 @@ function createIncidentHeatmap(el, opts = {}) {
     }
   }
 
-  // counts: { streetName: incidentCount }. Unknown street names (not in
+  // counts: see countByLocation. Unknown street names (not in
   // street-coordinates.js) are returned so the caller can surface them.
   function render(counts) {
     const points = [];

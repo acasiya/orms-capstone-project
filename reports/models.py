@@ -24,6 +24,12 @@ class Report(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports")
     location = models.CharField(max_length=255)
+    # The citizen's device position when they filed, if they allowed the
+    # browser's location prompt (see file-report.js). Null when they denied
+    # it, it timed out, or it fell outside the barangay — the staff heatmap
+    # then falls back to the street centroid parsed from `location`.
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     # Free text rather than a FK — Ordinances aren't backed by a real model
     # yet (frontend/citizen/js/ordinances-data.js is still a hardcoded
     # array), so this just stores whichever option label the citizen picked.

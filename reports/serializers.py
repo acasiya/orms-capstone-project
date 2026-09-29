@@ -8,6 +8,14 @@ from .models import FAQ, Concern, ConcernAttachment, ConcernFolder, Question, Re
 MAX_ATTACHMENTS = 5
 MAX_TOTAL_ATTACHMENT_BYTES = 50 * 1024 * 1024
 
+# Rough box around Barangay Platero (the street centroids in
+# frontend/staff/js/street-coordinates.js span 14.303-14.331 N,
+# 121.069-121.098 E) plus ~1km of slack. A device position outside it means
+# the citizen isn't filing from the scene (or the reading is bad), so it's
+# dropped and the report falls back to its street on the heatmap.
+BARANGAY_LAT_RANGE = (14.29, 14.34)
+BARANGAY_LNG_RANGE = (121.06, 121.11)
+
 
 def validate_attachment_files(files):
     if len(files) > MAX_ATTACHMENTS:
@@ -32,7 +40,7 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            "id", "location", "ordinance", "incident_date", "incident_time",
+            "id", "location", "latitude", "longitude", "ordinance", "incident_date", "incident_time",
             "nature_of_violation", "status", "remarks", "created_at", "updated_at",
             "files", "attachments",
         ]
@@ -40,6 +48,20 @@ class ReportSerializer(serializers.ModelSerializer):
 
     def validate_files(self, files):
         return validate_attachment_files(files)
+
+    def validate(self, attrs):
+        lat, lng = attrs.get("latitude"), attrs.get("longitude")
+        in_barangay = (
+            lat is not None and lng is not None
+            and BARANGAY_LAT_RANGE[0] <= lat <= BARANGAY_LAT_RANGE[1]
+            and BARANGAY_LNG_RANGE[0] <= lng <= BARANGAY_LNG_RANGE[1]
+        )
+        # Silently dropped rather than rejected — the coordinates are a bonus
+        # on top of the required street, never a reason to refuse a report.
+        if not in_barangay:
+            attrs.pop("latitude", None)
+            attrs.pop("longitude", None)
+        return attrs
 
     def get_attachments(self, obj):
         request = self.context.get("request")
@@ -107,7 +129,7 @@ class StaffReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            "id", "reporter", "contact_number", "location", "ordinance",
+            "id", "reporter", "contact_number", "location", "latitude", "longitude", "ordinance",
             "incident_date", "incident_time", "nature_of_violation",
             "status", "remarks", "created_at", "updated_at", "attachments",
             "assignedInvestigator", "assignedInvestigatorId",
