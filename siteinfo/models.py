@@ -23,6 +23,12 @@ class BarangayProfile(models.Model):
     # About Us' "What is SafeSpace" and "Our Mission" cards.
     about_text = models.TextField(blank=True)
     mission_text = models.TextField(blank=True)
+    # The barangay's outline on the staff incident heatmap, as a list of
+    # [lat, lng] points (one closed ring; the first point isn't repeated).
+    # Drawn or uploaded by an Administrator on the Map Boundary page. Empty
+    # means no outline. OpenStreetMap has no Platero boundary and the PSA
+    # 2023 polygon is too coarse for the app's street data, hence editable.
+    boundary = models.JSONField(default=list, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):

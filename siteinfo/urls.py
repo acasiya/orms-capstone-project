@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("about/", views.AboutPublicView.as_view(), name="site_about"),
+    path("boundary/", views.BoundaryView.as_view(), name="site_boundary"),
     path("profile/", views.BarangayProfileView.as_view(), name="site_profile"),
     path("council/", views.CouncilMemberListCreateView.as_view(), name="site_council_list_create"),
     path("council/reorder/", views.CouncilMemberReorderView.as_view(), name="site_council_reorder"),

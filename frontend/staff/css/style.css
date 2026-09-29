@@ -3124,6 +3124,69 @@ button {
   pointer-events: none;
 }
 
+/* Hover tooltip on a heat spot (see heatmap.js's heatmapTooltipHtml) —
+   the spot's location, total, and each ordinance violated there with its
+   count. */
+.leaflet-tooltip.heatmap-tip {
+  width: max-content;
+  max-width: 300px;
+  white-space: normal;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.heatmap-tip__title {
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
+.heatmap-tip__total {
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.heatmap-tip__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--border);
+}
+
+.heatmap-tip__hint {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.heatmap-tip__list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.heatmap-tip__list b {
+  flex-shrink: 0;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--highlight);
+  color: var(--navy);
+  text-align: center;
+  font-size: 0.74rem;
+}
+
+.heatmap-tip__more {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .heatmap-legend {
   display: flex;
   align-items: center;

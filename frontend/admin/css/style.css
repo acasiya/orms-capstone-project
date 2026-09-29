@@ -2345,6 +2345,18 @@ button {
   flex-wrap: wrap;
 }
 
+/* A .btn link sitting at the end of an .admin-toolbar (e.g. About Us
+   Setup's "View About Us page") — .btn is a full-width block by default,
+   and the toolbar's default align-items: stretch otherwise pulls it to the
+   full height of the heading/description beside it. */
+.btn-view-page {
+  width: auto;
+  align-self: flex-start;
+  padding: 12px 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .admin-select {
   background: var(--navy);
   color: var(--white);
@@ -3043,6 +3055,77 @@ button {
 .setup-status {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+/* ---------- Map Boundary editor (map-boundary.html) ---------- */
+
+.boundary-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.boundary-toolbar__btn {
+  width: auto;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.boundary-toolbar__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.boundary-toolbar__check {
+  margin-left: auto;
+}
+
+/* z-index: 0 keeps Leaflet's panes (z ~1000) under the page's modals. */
+.boundary-map {
+  position: relative;
+  z-index: 0;
+  height: clamp(380px, 62vh, 680px);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.boundary-map .leaflet-container {
+  font: inherit;
+}
+
+.boundary-handle {
+  background: var(--white);
+  border: 2px solid var(--navy);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: move;
+}
+
+.boundary-handle:hover {
+  background: var(--highlight);
+}
+
+.boundary-help {
+  margin: 14px 0 6px;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.boundary-help code {
+  font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .boundary-toolbar__check {
+    margin-left: 0;
+  }
 }
 
 .setup-table td {

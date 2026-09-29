@@ -10,6 +10,7 @@ from .models import AboutLogo, BarangayProfile, CouncilMember
 from .serializers import (
     AboutLogoSerializer,
     BarangayProfileSerializer,
+    BoundarySerializer,
     CouncilMemberSerializer,
     ReorderSerializer,
 )
@@ -62,6 +63,35 @@ class BarangayProfileView(APIView):
         if changed:
             log_action(request.user, f"Updated About Us details: {', '.join(changed)}")
         return Response(serializer.data)
+
+
+
+class BoundaryView(APIView):
+    """
+    GET/PUT /api/site/boundary/ — the barangay outline drawn on the staff
+    incident heatmap. Anyone can read it (it's a map outline, and the staff
+    dashboard loads it); only an Administrator can replace it.
+    """
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [IsAdmin()]
+
+    def get(self, request):
+        return Response({"boundary": BarangayProfile.load().boundary})
+
+    def put(self, request):
+        serializer = BoundarySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        profile = BarangayProfile.load()
+        profile.boundary = serializer.validated_data["boundary"]
+        profile.save(update_fields=["boundary", "updated_at"])
+        if profile.boundary:
+            log_action(request.user, f"Updated the barangay map boundary ({len(profile.boundary)} points)")
+        else:
+            log_action(request.user, "Removed the barangay map boundary")
+        return Response({"boundary": profile.boundary})
 
 
 def _delete_file(field):
