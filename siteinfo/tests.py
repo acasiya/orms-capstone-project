@@ -183,7 +183,7 @@ class BoundaryTests(APITestCase):
 
     def test_anyone_can_read_the_seeded_outline(self):
         boundary = self.client.get("/api/site/boundary/").json()["boundary"]
-        self.assertGreater(len(boundary), 20)
+        self.assertGreater(len(boundary), 100)
         self.assertTrue(all(14.30 < lat < 14.34 and 121.08 < lng < 121.10 for lat, lng in boundary))
 
     def test_only_admins_can_replace_it(self):
