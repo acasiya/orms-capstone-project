@@ -44,6 +44,8 @@ function mapConcern(c) {
     folderId: c.folder ? c.folder.id : null,
     folderName: c.folder ? c.folder.name : null,
     dateSubmitted: new Date(c.created_at),
+    // When the Secretary marked it Reviewed (null while still Submitted).
+    dateReviewed: c.reviewed_at ? new Date(c.reviewed_at) : null,
     attachments: c.attachments,
   };
 }

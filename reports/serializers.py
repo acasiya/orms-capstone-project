@@ -88,10 +88,10 @@ class ConcernSerializer(serializers.ModelSerializer):
     class Meta:
         model = Concern
         fields = [
-            "id", "location", "description", "status", "remarks", "created_at", "updated_at",
+            "id", "location", "description", "status", "remarks", "created_at", "updated_at", "reviewed_at",
             "files", "attachments",
         ]
-        read_only_fields = ["id", "status", "remarks", "created_at", "updated_at"]
+        read_only_fields = ["id", "status", "remarks", "created_at", "updated_at", "reviewed_at"]
 
     def validate_files(self, files):
         return validate_attachment_files(files)
@@ -202,7 +202,7 @@ class StaffConcernSerializer(serializers.ModelSerializer):
         model = Concern
         fields = [
             "id", "reporter", "contact_number", "location", "description",
-            "status", "remarks", "folder", "created_at", "updated_at", "attachments",
+            "status", "remarks", "folder", "created_at", "updated_at", "reviewed_at", "attachments",
         ]
 
     def get_reporter(self, obj):

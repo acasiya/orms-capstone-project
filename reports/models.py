@@ -102,6 +102,11 @@ class Concern(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     remarks = models.TextField(blank=True)
+    # When the Secretary marked this Reviewed (cleared if it's moved back to
+    # Submitted). updated_at can't stand in for it — assigning a folder or
+    # editing remarks later moves that — and the Captain's dashboard needs
+    # the real figure for "typical time to review".
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     # Optional — staff assign a concern to a folder after reviewing it; a
     # deleted folder just leaves its concerns unfoldered rather than deleting them.
     folder = models.ForeignKey(ConcernFolder, on_delete=models.SET_NULL, null=True, blank=True, related_name="concerns")

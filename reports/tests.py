@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 from orms_backend.codes import MAX_CODE_ATTEMPTS
 
-from .models import Report, ReportVerificationCode
+from .models import Concern, Report, ReportVerificationCode
 
 REAL_CACHE = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
@@ -273,3 +273,30 @@ class ClaimedReportsFilterTests(APITestCase):
         response = self.client.get("/api/reports/staff/?assigned_to=not-a-uuid")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, [])
+
+
+class ConcernReviewedAtTests(APITestCase):
+    def setUp(self):
+        self.citizen = User.objects.create_user(username="cit3", email="cit3@test.com", password="x")
+        self.secretary = User.objects.create_user(
+            username="sec3", email="sec3@test.com", password="x", role=User.Role.STAFF, position="Secretary"
+        )
+        self.concern = Concern.objects.create(citizen=self.citizen, description="Stray dogs near the plaza")
+        self.url = f"/api/concerns/staff/{self.concern.id}/"
+        self.client.force_authenticate(self.secretary)
+
+    def test_marking_reviewed_stamps_the_time_and_reverting_clears_it(self):
+        response = self.client.patch(self.url, {"status": "reviewed"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data["reviewed_at"])
+        self.concern.refresh_from_db()
+        stamped = self.concern.reviewed_at
+
+        # Editing remarks afterwards must not move it.
+        self.client.patch(self.url, {"remarks": "Endorsed to the committee."}, format="json")
+        self.concern.refresh_from_db()
+        self.assertEqual(self.concern.reviewed_at, stamped)
+
+        self.client.patch(self.url, {"status": "submitted"}, format="json")
+        self.concern.refresh_from_db()
+        self.assertIsNone(self.concern.reviewed_at)

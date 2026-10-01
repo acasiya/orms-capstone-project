@@ -60,8 +60,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Two stages, mirroring Concern.Status: Submitted, then Reviewed once the
   // Secretary has read it (their reply, if any, is the Remarks card below).
-  // Only one timestamp exists past submission (updated_at), same
-  // approximation as my-report-detail.js's timeline.
   const formatDateTime = (iso) =>
     new Date(iso).toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   const reviewed = concern.status === "reviewed";
@@ -73,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "A Barangay Official has read your concern/suggestion."
         : "Waiting for a Barangay Official to read your concern/suggestion.",
       pending: !reviewed,
-      at: concern.updated_at,
+      at: concern.reviewed_at || concern.updated_at,
     },
   ];
   document.getElementById("timelineItems").innerHTML = steps
