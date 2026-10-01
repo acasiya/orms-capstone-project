@@ -1806,7 +1806,7 @@ button {
   width: 180px;
   height: 140px;
   border-radius: 8px;
-  background: var(--plain-bg);
+  background: var(--white);
   border: 1px dashed var(--border);
   color: var(--text-muted);
   display: flex;
@@ -1877,7 +1877,7 @@ button {
 
 .field input[disabled],
 .field textarea[disabled] {
-  background: var(--plain-bg);
+  background: var(--white);
   color: var(--text-muted);
   cursor: default;
 }
