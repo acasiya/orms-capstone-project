@@ -122,9 +122,9 @@
               <div class="detail-description" id="detailDescription"></div>
 
               <div class="pdf-preview" id="detailDocPreview" hidden>
-                <iframe class="pdf-preview__frame" id="pdfPreviewFrame" title="Ordinance PDF"></iframe>
+                <div class="pdf-preview__frame" id="pdfPreviewFrame" role="document" aria-label="Ordinance PDF preview" tabindex="0"></div>
               </div>
-              <p class="pdf-preview__note" id="pdfPreviewNote" hidden>If the PDF above doesn't load, use the download button below.</p>
+              <p class="pdf-preview__note" id="pdfPreviewNote" hidden>If the preview above doesn't load, use the download button below.</p>
 
               <a class="download-btn" id="detailDownload" href="#">Download</a>
 
@@ -178,6 +178,8 @@
     </div>
   </div>
 
+  <script src="/citizen/vendor/pdfjs/pdf.min.js"></script>
+  <script src="/citizen/js/pdf-preview.js"></script>
   <script src="js/ordinances-data.js"></script>
   <script src="js/ordinance-detail.js"></script>
   <script src="js/admin.js"></script>

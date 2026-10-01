@@ -1167,7 +1167,7 @@ button {
 .doc-preview__line {
   height: 8px;
   border-radius: 3px;
-  background: #e3e1da;
+  background: var(--cream);
   margin-bottom: 8px;
 }
 
@@ -1185,6 +1185,22 @@ button {
   border: none;
   display: block;
   background: #f2f1ec;
+  /* Pages are canvases drawn by js/pdf-preview.js; the frame scrolls them. */
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.pdf-preview__page {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto 10px;
+  background: var(--white);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.pdf-preview__page:last-child {
+  margin-bottom: 0;
 }
 
 .pdf-preview__fallback {
@@ -1334,10 +1350,10 @@ button {
 }
 
 .reporting-as-card .field input[disabled] {
-  background: var(--cream-dark);
+  background: var(--white);
   color: var(--text);
-  border-color: var(--navy);
-  opacity: 0.85;
+  border-color: var(--border);
+  opacity: 1;
 }
 
 /* ---------- FAQs ---------- */
@@ -2039,7 +2055,8 @@ button {
   min-height: 60px;
   padding: 16px;
   border-radius: 8px;
-  background: #e3e1da;
+  background: var(--plain-bg);
+  border: 1px dashed var(--border);
   color: var(--text-muted);
   font-size: 0.85rem;
   font-style: italic;
@@ -2062,7 +2079,7 @@ button {
   height: 110px;
   border-radius: 8px;
   overflow: hidden;
-  background: #e3e1da;
+  background: var(--cream);
   border: none;
   padding: 0;
   cursor: pointer;

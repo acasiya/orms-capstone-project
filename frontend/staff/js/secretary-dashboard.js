@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderStats() {
     const concerns = liveConcerns();
     document.getElementById("statOpenConcerns").textContent = concerns.filter((c) => c.status === "Submitted").length;
-    document.getElementById("statResolvedConcerns").textContent = concerns.filter((c) => c.status === "Resolved").length;
+    document.getElementById("statResolvedConcerns").textContent = concerns.filter((c) => c.status === "Reviewed").length;
     document.getElementById("statUnansweredQuestions").textContent = questions.filter((q) => !q.is_answered).length;
     document.getElementById("statActiveOrdinances").textContent = liveOrdinances().filter((o) => !o.isArchived && o.kind === "ordinance").length;
   }
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         </tr>`;
           })
           .join("")
-      : `<tr><td colspan="4" class="ordinances-empty">Nothing open — every concern has been resolved.</td></tr>`;
+      : `<tr><td colspan="4" class="ordinances-empty">Nothing open — every concern has been reviewed.</td></tr>`;
   }
 
   renderStats();

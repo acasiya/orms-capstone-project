@@ -163,12 +163,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   viewAllMenu.innerHTML = `
     <li data-status="all" class="active">All Concerns/Suggestions</li>
     <li data-status="Submitted">Submitted</li>
-    <li data-status="Resolved">Resolved</li>`;
+    <li data-status="Reviewed">Reviewed</li>`;
 
   const STATUS_FILTER_LABELS = {
     all: "View All Concerns/Suggestions",
     Submitted: "Submitted",
-    Resolved: "Resolved",
+    Reviewed: "Reviewed",
   };
 
   viewAllMenu.querySelectorAll("li").forEach((li) => {
@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   function statusPillClass(status) {
-    return status === "Resolved" ? "status-pill--resolved" : "status-pill--in-process";
+    return status === "Reviewed" ? "status-pill--resolved" : "status-pill--in-process";
   }
 
   function renderRecentConcerns() {

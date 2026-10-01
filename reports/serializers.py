@@ -88,10 +88,10 @@ class ConcernSerializer(serializers.ModelSerializer):
     class Meta:
         model = Concern
         fields = [
-            "id", "location", "description", "status", "remarks", "created_at",
+            "id", "location", "description", "status", "remarks", "created_at", "updated_at",
             "files", "attachments",
         ]
-        read_only_fields = ["id", "status", "remarks", "created_at"]
+        read_only_fields = ["id", "status", "remarks", "created_at", "updated_at"]
 
     def validate_files(self, files):
         return validate_attachment_files(files)

@@ -90,8 +90,11 @@ class Concern(models.Model):
     """A concern/suggestion filed by a citizen (Submit Suggestion)."""
 
     class Status(models.TextChoices):
+        # "Reviewed" rather than "Resolved": this covers suggestions as well
+        # as concerns, and a suggestion gets read and answered (see remarks),
+        # not resolved — unlike a Report, which is a case that gets closed.
         SUBMITTED = "submitted", "Submitted"
-        RESOLVED = "resolved", "Resolved"
+        REVIEWED = "reviewed", "Reviewed"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="concerns")
