@@ -93,5 +93,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (concern.remarks) {
     document.getElementById("remarksCard").hidden = false;
     document.getElementById("remarksText").textContent = concern.remarks;
+    showRemarksPopupOnce(concern.id, concern.remarks);
   }
 });
+
+// Pops up once per concern/suggestion the first time its remarks are seen —
+// afterwards the remarks stay visible inline in the sidebar, same as always.
+function showRemarksPopupOnce(concernId, remarks) {
+  const SEEN_KEY = "orms_citizen_seen_concern_remarks";
+  let seen;
+  try {
+    seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || [];
+  } catch {
+    seen = [];
+  }
+  if (seen.includes(concernId)) return;
+
+  document.getElementById("remarksPopupText").textContent = remarks;
+  document.getElementById("remarksPopupModal").hidden = false;
+
+  seen.push(concernId);
+  localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+}

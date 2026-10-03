@@ -15,7 +15,7 @@
         <div class="admin-sidebar__brand-text">
           <strong>SafeSpace</strong>
           <small>Barangay Platero</small>
-          <small>Barangay Staff Portal</small>
+          <small id="sidebarPortalLabel">Barangay Staff Portal</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -95,7 +95,7 @@
 
       <div class="admin-content">
         <div class="page-shell page-shell--nested">
-          <h1 class="page-heading" id="uploadHeading">Upload Ordinance</h1>
+          <h1 class="page-heading" id="uploadHeading">Upload Ordinance or Resolution</h1>
 
           <div class="report-card">
             <form id="uploadOrdinanceForm">
@@ -108,10 +108,21 @@
                 <input type="text" id="ordTitleInput" placeholder="Ordinance title" required />
               </div>
               <div class="field">
-                <label for="ordAuthorInput">Authored by</label>
-                <input type="text" id="ordAuthorInput" list="ordAuthorSuggestions" placeholder="e.g. Hon. Juan Dela Cruz" required />
-                <datalist id="ordAuthorSuggestions"></datalist>
-                <p class="field-hint">Suggestions are drawn from the current Councilors/Kagawad/Barangay Captain roster (Ordinance Setup, Admin Portal) — you can still type any other name.</p>
+                <label id="ordAuthorLabel" for="ordAuthorBox">Authored by</label>
+                <div class="author-select" id="ordAuthorCombobox">
+                  <div class="author-select__box" id="ordAuthorBox" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
+                    <div class="author-select__tags" id="ordAuthorTags"></div>
+                    <span class="author-select__placeholder" id="ordAuthorPlaceholder">Select authors...</span>
+                    <span class="author-select__chevron">&#9662;</span>
+                  </div>
+                  <div class="author-select__panel" id="ordAuthorPanel" hidden>
+                    <div class="author-select__custom-row">
+                      <input type="text" id="ordAuthorCustomInput" placeholder="Search author or type a name, and press Enter to add" autocomplete="off" />
+                    </div>
+                    <ul class="author-select__roster" id="ordAuthorRosterList"></ul>
+                  </div>
+                </div>
+                <p class="field-hint">Pick from the current Councilors/Kagawad/Barangay Captain roster (Ordinance Setup, Admin Portal), or type any other name. Add as many authors as needed.</p>
               </div>
               <div class="field">
                 <label for="ordCategoryInput">Category</label>

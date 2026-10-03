@@ -107,6 +107,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const authorSuggestions = document.getElementById("editAuthorSuggestions");
   const categoryInput = document.getElementById("editCategoryInput");
   const dateInput = document.getElementById("editDateInput");
+  // An ordinance can't be approved on a date that hasn't happened yet.
+  dateInput.max = new Date().toLocaleDateString("en-CA");
   const descriptionInput = document.getElementById("editDescriptionInput");
   const pdfInput = document.getElementById("editPdfInput");
   const pdfLabelText = document.getElementById("editPdfLabelText");

@@ -16,7 +16,7 @@
         <div class="admin-sidebar__brand-text">
           <strong>SafeSpace</strong>
           <small>Barangay Platero</small>
-          <small>Barangay Staff Portal</small>
+          <small id="sidebarPortalLabel">Barangay Staff Portal</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -98,7 +98,10 @@
 
       <div class="admin-content">
         <div class="dash-header">
-          <h1 class="dash-header__title">Welcome back, Eliseo Aurelio Jr.</h1>
+          <div>
+            <h1 class="dash-header__title">Welcome back, Eliseo Aurelio Jr.</h1>
+            <p class="cd-subtitle">What incidents are happening, and how quickly the barangay is responding.</p>
+          </div>
           <div class="dash-dropdown" id="dateRangeDropdown">
             <button type="button" class="dash-dropdown__btn" id="dateRangeBtn">
               <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="1.8"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg> <span id="dateRangeLabel"></span> <span class="dash-dropdown__chevron">&#9662;</span>
@@ -212,7 +215,7 @@
                     <th>Days Open</th>
                     <th>Status</th>
                     <th>Investigator</th>
-                    <th>Actions</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="agingReportsBody"></tbody>

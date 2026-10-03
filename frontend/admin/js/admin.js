@@ -80,6 +80,25 @@ function wireFiltersDropdown(toggleBtn, panel) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !panel.hidden) closePanel();
   });
+
+  // Resets every select in the panel back to its original default option
+  // (the one marked `selected` in the HTML, or the first option otherwise)
+  // and re-fires each one's own change handling, so the page's list goes
+  // back to its default order/filter.
+  const clearBtn = panel.querySelector(".filters-dropdown__clear");
+  if (clearBtn) {
+    const defaults = Array.from(panel.querySelectorAll("select")).map((select) => {
+      const defaultOption = select.querySelector("option[selected]") || select.options[0];
+      return { select, value: defaultOption ? defaultOption.value : "" };
+    });
+    clearBtn.addEventListener("click", () => {
+      defaults.forEach(({ select, value }) => {
+        if (select.value === value) return;
+        select.value = value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    });
+  }
 }
 
 // Renders a real uploaded profile picture into an avatar container (the

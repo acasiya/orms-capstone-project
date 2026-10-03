@@ -31,6 +31,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let page = 1;
   let statusFilterTouched = false;
+  // Only re-filters on Search (or pressing Enter in the field), not on every
+  // keystroke — this tracks the query that was actually searched for.
+  let appliedQuery = "";
   let activeFolderId = null; // null = "All Concerns/Suggestions"
   let folderModalMode = "create"; // "create" | "rename"
   let renameTargetId = null;
@@ -201,13 +204,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (statusFilter.value !== "all") {
       rows = rows.filter((c) => c.status === statusFilter.value);
     }
-    const query = searchInput.value.trim().toLowerCase();
-    if (query) {
+    if (appliedQuery) {
       rows = rows.filter(
         (c) =>
-          c.concernText.toLowerCase().includes(query) ||
-          (c.location && c.location.toLowerCase().includes(query)) ||
-          c.reporter.toLowerCase().includes(query)
+          c.concernText.toLowerCase().includes(appliedQuery) ||
+          (c.location && c.location.toLowerCase().includes(appliedQuery)) ||
+          c.reporter.toLowerCase().includes(appliedQuery)
       );
     }
     return rows;
@@ -242,10 +244,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    page = 1;
-    render();
-  });
-  searchInput.addEventListener("input", () => {
+    appliedQuery = searchInput.value.trim().toLowerCase();
     page = 1;
     render();
   });

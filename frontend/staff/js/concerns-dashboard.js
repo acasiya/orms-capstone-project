@@ -10,8 +10,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const OVERDUE_DAYS = 7;
   const TOP_ROWS = 6;
   const DAY_MS = 24 * 60 * 60 * 1000;
+  const MONTHS_BACK_COUNT = 5;
+  const QUARTERS_BACK_COUNT = 3;
+  const YEARS_BACK_COUNT = 2;
 
-  const state = { period: "month" };
+  const state = { period: "month0" };
 
   const dashboardMain = document.querySelector(".admin-content");
 
@@ -37,17 +40,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
   // ---- Periods ----
-  // Each returns the current range, the one before it (for "vs last ..."),
-  // and the buckets the trend chart plots.
+  // Same range of choices as the Reports Dashboard's date filter (This
+  // Week, This Month + previous months, This Quarter + previous quarters,
+  // This Year + previous years). periodRanges() returns the current range,
+  // the one before it (for "vs last ..."), and the buckets the trend chart
+  // plots; periodMeta() returns the noun used in sentences like "Received
+  // this month" / "Received in August 2026".
 
-  const PERIODS = {
-    week: { label: "This Week", noun: "this week", previous: "last week" },
-    month: { label: "This Month", noun: "this month", previous: "last month" },
-    year: { label: "This Year", noun: "this year", previous: "last year" },
-  };
+  function buildPeriodOptions() {
+    const opts = [{ value: "week", label: "This Week" }];
+    for (let m = 0; m <= MONTHS_BACK_COUNT; m++) {
+      const { start } = getMonthRange(m);
+      opts.push({
+        value: `month${m}`,
+        label: m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      });
+    }
+    for (let q = 0; q <= QUARTERS_BACK_COUNT; q++) {
+      const { quarter, year } = getQuarterRange(q);
+      opts.push({ value: `quarter${q}`, label: q === 0 ? `This Quarter (Q${quarter} ${year})` : `Q${quarter} ${year}` });
+    }
+    for (let y = 0; y <= YEARS_BACK_COUNT; y++) {
+      const { year } = getYearRange(y);
+      opts.push({ value: `year${y}`, label: y === 0 ? `This Year (${year})` : `${year}` });
+    }
+    return opts;
+  }
+
+  function periodMeta(period) {
+    if (period === "week") return { noun: "this week", previous: "last week" };
+    const [, kind, nStr] = period.match(/^(month|quarter|year)(\d+)$/);
+    const n = Number(nStr);
+    if (n === 0) return { noun: `this ${kind}`, previous: `last ${kind}` };
+    if (kind === "month") {
+      const label = (back) => getMonthRange(back).start.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      return { noun: `in ${label(n)}`, previous: `in ${label(n + 1)}` };
+    }
+    if (kind === "quarter") {
+      const label = (back) => {
+        const r = getQuarterRange(back);
+        return `Q${r.quarter} ${r.year}`;
+      };
+      return { noun: `in ${label(n)}`, previous: `in ${label(n + 1)}` };
+    }
+    const label = (back) => String(getYearRange(back).year);
+    return { noun: `in ${label(n)}`, previous: `in ${label(n + 1)}` };
+  }
 
   function periodRanges(period) {
-    const now = new Date();
     if (period === "week") {
       const start = THIS_WEEK_START;
       return {
@@ -66,16 +106,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         }),
       };
     }
-    if (period === "month") {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    const [, kind, nStr] = period.match(/^(month|quarter|year)(\d+)$/);
+    const n = Number(nStr);
+
+    if (kind === "month") {
+      const { start, end } = getMonthRange(n);
+      const prev = getMonthRange(n + 1);
+      const days = end.getDate();
       return {
         start,
-        end: endOfDay(new Date(now.getFullYear(), now.getMonth(), days)),
-        prevStart: new Date(now.getFullYear(), now.getMonth() - 1, 1),
-        prevEnd: endOfDay(new Date(now.getFullYear(), now.getMonth(), 0)),
+        end: endOfDay(end),
+        prevStart: prev.start,
+        prevEnd: endOfDay(prev.end),
         buckets: Array.from({ length: days }, (_, i) => {
-          const day = new Date(now.getFullYear(), now.getMonth(), i + 1);
+          const day = new Date(start.getFullYear(), start.getMonth(), i + 1);
           return {
             start: day,
             end: endOfDay(day),
@@ -86,12 +131,35 @@ document.addEventListener("DOMContentLoaded", async () => {
         }),
       };
     }
-    const year = now.getFullYear();
+
+    if (kind === "quarter") {
+      const { start, end, quarter, year } = getQuarterRange(n);
+      const prev = getQuarterRange(n + 1);
+      const firstMonth = (quarter - 1) * 3;
+      return {
+        start,
+        end: endOfDay(end),
+        prevStart: prev.start,
+        prevEnd: endOfDay(prev.end),
+        buckets: Array.from({ length: 3 }, (_, i) => {
+          const first = new Date(year, firstMonth + i, 1);
+          return {
+            start: first,
+            end: endOfDay(new Date(year, firstMonth + i + 1, 0)),
+            label: first.toLocaleDateString("en-US", { month: "short" }),
+            title: first.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          };
+        }),
+      };
+    }
+
+    const { start, end, year } = getYearRange(n);
+    const prev = getYearRange(n + 1);
     return {
-      start: new Date(year, 0, 1),
-      end: endOfDay(new Date(year, 11, 31)),
-      prevStart: new Date(year - 1, 0, 1),
-      prevEnd: endOfDay(new Date(year - 1, 11, 31)),
+      start,
+      end: endOfDay(end),
+      prevStart: prev.start,
+      prevEnd: endOfDay(prev.end),
       buckets: Array.from({ length: 12 }, (_, m) => {
         const first = new Date(year, m, 1);
         return {
@@ -122,9 +190,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   function renderPeriodMenu() {
-    periodLabel.textContent = PERIODS[state.period].label;
-    periodMenu.innerHTML = Object.entries(PERIODS)
-      .map(([value, p]) => `<li data-period="${value}" class="${value === state.period ? "active" : ""}">${p.label}</li>`)
+    const opts = buildPeriodOptions();
+    const current = opts.find((o) => o.value === state.period);
+    periodLabel.textContent = current ? current.label : "";
+    periodMenu.innerHTML = opts
+      .map((o) => `<li data-period="${o.value}" class="${o.value === state.period ? "active" : ""}">${o.label}</li>`)
       .join("");
     periodMenu.querySelectorAll("li").forEach((li) => {
       li.addEventListener("click", () => {
@@ -482,7 +552,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${c.folderName ? escapeHtml(c.folderName) : `<span class="cd-muted">No topic yet</span>`}</td>
           <td class="cd-summary">${escapeHtml(summary)}</td>
           <td><span class="status-pill ${c.status === "Reviewed" ? "status-pill--resolved" : "status-pill--in-process"}">${c.status === "Reviewed" ? "Reviewed" : "Waiting"}</span></td>
-          <td><a class="recent-reports-table__action" href="concern-detail.html?id=${encodeURIComponent(c.id)}">View</a></td>
+          <td><a class="recent-reports-table__view-btn" href="concern-detail.html?id=${encodeURIComponent(c.id)}">View Details</a></td>
         </tr>`;
       })
       .join("");
@@ -494,7 +564,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const ranges = periodRanges(state.period);
     const all = liveConcerns();
     const ctx = {
-      meta: PERIODS[state.period],
+      meta: periodMeta(state.period),
       ranges,
       received: all.filter((c) => within(c.dateSubmitted, ranges.start, ranges.end)),
       previousReceived: all.filter((c) => within(c.dateSubmitted, ranges.prevStart, ranges.prevEnd)),

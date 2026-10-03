@@ -458,6 +458,181 @@ button {
   margin-bottom: 16px;
 }
 
+/* ---------- Multi-author select (Upload Ordinance) ---------- */
+
+.author-select {
+  position: relative;
+}
+
+/* Sits right under a taller, custom field like this one (not a native
+   single-line input), so the hint needs its own positive gap instead of
+   the default field-hint's negative margin-top made for a plain input. */
+.author-select + .field-hint {
+  margin-top: 8px;
+}
+
+.author-select__box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 40px 8px 10px;
+  background: var(--white);
+  cursor: pointer;
+  position: relative;
+}
+
+.author-select__box:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
+}
+
+.author-select__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.author-select__placeholder {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.author-select__tags:not(:empty) + .author-select__placeholder {
+  display: none;
+}
+
+.author-select__chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.author-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 12px;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.author-tag__remove {
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.author-tag__remove:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.author-select__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  padding: 10px;
+}
+
+.author-select__panel[hidden] {
+  display: none;
+}
+
+.author-select__custom-row input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--text);
+}
+
+.author-select__custom-row input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
+}
+
+.author-select__roster {
+  max-height: 200px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 8px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.author-select__roster li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  border-radius: 6px;
+}
+
+.author-select__roster li:hover {
+  background: #f2f1ec;
+}
+
+.author-select__roster li small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.author-select__check {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--white);
+}
+
+.author-select__roster li.is-selected .author-select__check {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+.author-select__panel__empty {
+  padding: 8px 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: default;
+}
+
 .form-links {
   display: flex;
   align-items: center;
@@ -716,6 +891,22 @@ button {
   box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
 }
 
+.filters-dropdown__clear {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #c0392b;
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.filters-dropdown__clear:hover {
+  background: #a93226;
+}
+
 /* Floating "+ Upload Ordinance" button (Secretary only — see
    ordinances-list.js) — fixed to the viewport so it's always reachable
    without hunting for it in the toolbar. */
@@ -888,6 +1079,12 @@ button {
 .pagination-controls button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.pagination-controls button.active {
+  background: var(--navy);
+  color: var(--white);
+  border-color: var(--navy);
 }
 
 /* "Page X of Y" — click to jump to a specific page (see pagination.js) */
@@ -2372,6 +2569,11 @@ button {
   color: var(--white);
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 50;
 }
 
 .admin-sidebar.is-collapsed {
@@ -2476,6 +2678,9 @@ button {
   padding: 14px 28px;
   background: var(--white);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
 }
 
 .admin-topbar__menu-btn {
@@ -3027,6 +3232,23 @@ button {
 
 .recent-reports-table__action:hover {
   background: #f2f1ec;
+}
+
+.recent-reports-table__view-btn {
+  display: inline-block;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.recent-reports-table__view-btn:hover {
+  background: var(--navy-hover);
 }
 
 .dash-pagination {

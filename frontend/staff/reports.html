@@ -15,7 +15,7 @@
         <div class="admin-sidebar__brand-text">
           <strong>SafeSpace</strong>
           <small>Barangay Platero</small>
-          <small>Barangay Staff Portal</small>
+          <small id="sidebarPortalLabel">Barangay Staff Portal</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -96,6 +96,7 @@
       </header>
 
       <div class="admin-content">
+        <h1 class="page-heading">Reports</h1>
         <form class="reports-search-row" id="reportSearchForm">
           <input type="text" id="reportSearchInput" class="reports-search-input" placeholder="Search..." />
           <button type="submit" class="btn reports-search-btn">Search</button>
@@ -135,6 +136,7 @@
                   <option value="100">100</option>
                 </select>
               </label>
+              <button type="button" class="filters-dropdown__clear">Clear</button>
             </div>
           </div>
           <!-- Hotel booking-style range picker (two calendars) — reports are

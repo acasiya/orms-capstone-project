@@ -216,6 +216,26 @@ function getMonthRange(monthsBack) {
   return { start, end };
 }
 
+// quartersBack counts back from the current quarter (0 = this quarter).
+function getQuarterRange(quartersBack) {
+  const now = new Date();
+  const currentQuarter = Math.floor(now.getMonth() / 3);
+  const totalQuarters = now.getFullYear() * 4 + currentQuarter - quartersBack;
+  const year = Math.floor(totalQuarters / 4);
+  const quarter = totalQuarters % 4;
+  const start = new Date(year, quarter * 3, 1);
+  const end = new Date(year, quarter * 3 + 3, 0);
+  return { start, end, quarter: quarter + 1, year };
+}
+
+// yearsBack counts back from the current year (0 = this year).
+function getYearRange(yearsBack) {
+  const year = new Date().getFullYear() - yearsBack;
+  const start = new Date(year, 0, 1);
+  const end = new Date(year, 11, 31);
+  return { start, end, year };
+}
+
 function getConcernsForWeekOffset(offset) {
   const { start, end } = getWeekRange(offset);
   const endDate = endOfDay(end);

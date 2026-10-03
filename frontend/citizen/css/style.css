@@ -65,6 +65,7 @@
   --sage-dark: #3a5641;
   --highlight: #d9f7dc;
   --accent: #03ac13;
+  --page-bg-image: url("../assets/barangay hall white washed.png");
 }
 
 * {
@@ -88,7 +89,11 @@ body {
 body {
   font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-  background: var(--green-mist);
+  background-color: var(--green-mist);
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 a {
@@ -259,7 +264,11 @@ button {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  background: var(--plain-bg);
+  background-color: var(--plain-bg);
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* ---------- Auth card ---------- */
@@ -835,7 +844,11 @@ button {
 
 .page-shell {
   min-height: calc(100vh - 60px);
-  background: var(--plain-bg);
+  background-color: var(--plain-bg);
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 32px 28px 64px;
@@ -934,6 +947,22 @@ button {
   outline: none;
   border-color: var(--navy);
   box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
+}
+
+.filters-dropdown__clear {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #c0392b;
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.filters-dropdown__clear:hover {
+  background: #a93226;
 }
 
 .ordinances-search {
@@ -1062,6 +1091,12 @@ button {
 .pagination-controls button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.pagination-controls button.active {
+  background: var(--navy);
+  color: var(--white);
+  border-color: var(--navy);
 }
 
 /* "Page X of Y" — click to jump to a specific page (see pagination.js) */
@@ -1302,7 +1337,11 @@ button {
 
 .plain-page {
   min-height: calc(100vh - 60px);
-  background: var(--plain-bg);
+  background-color: var(--plain-bg);
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 32px 28px 64px;
 }
 
@@ -1998,7 +2037,7 @@ button {
 
 .concern-row {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   padding: 20px 0;
@@ -2012,6 +2051,9 @@ button {
 .concern-row__title {
   font-weight: 700;
   font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .concern-row__date {
@@ -2914,12 +2956,23 @@ button {
 }
 
 /* ---------- About Us (about.html) ---------- */
+/* Unlike every other citizen page, the barangay hall photo isn't the whole
+   page's background — only the intro (title + barangay/mission cards) sits
+   over it, as its own section background with that content layered on top;
+   everything below (seals, council) stays on plain white. */
 
 .about-page {
   background: var(--white);
 }
 
 .about-intro {
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.about-intro__inner {
   max-width: 960px;
   margin: 0 auto;
   padding: 40px 28px 52px;
@@ -3134,7 +3187,11 @@ button {
 /* ---------- Legal pages (privacy-policy.html, terms.html) ---------- */
 
 .legal-page {
-  background: var(--plain-bg);
+  background-color: var(--plain-bg);
+  background-image: var(--page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 40px 20px 64px;
 }
 

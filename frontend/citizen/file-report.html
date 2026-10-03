@@ -38,7 +38,7 @@
 
   <div class="plain-page">
     <div class="plain-page__inner plain-page__inner--split">
-      <h1 class="page-heading">Submit a Report</h1>
+      <h1 class="page-heading">File Report</h1>
 
       <div class="plain-page__layout">
       <div>
@@ -169,6 +169,17 @@
     <div class="modal-card">
       <h2>Report Submitted!</h2>
       <button type="button" class="btn" data-modal-confirm>Confirm</button>
+    </div>
+  </div>
+
+  <!-- Shown once when the citizen lands on this page while still in the
+       cooldown window between report submissions. -->
+  <div class="modal-overlay" id="reportCooldownModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>You Recently Filed a Report</h2>
+      <p id="reportCooldownText"></p>
+      <button type="button" class="btn" data-close-modal>OK</button>
     </div>
   </div>
 

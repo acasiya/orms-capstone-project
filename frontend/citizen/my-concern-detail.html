@@ -156,5 +156,16 @@
       <div class="media-lightbox__body" id="mediaLightboxBody"></div>
     </div>
   </div>
+
+  <!-- Shown the first time this concern/suggestion's remarks are viewed -->
+  <div class="modal-overlay" id="remarksPopupModal" hidden>
+    <div class="modal-card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>This Has a Remark</h2>
+      <p>A Barangay Official left a remark on this concern/suggestion:</p>
+      <p class="remarks-card__text" id="remarksPopupText"></p>
+      <button type="button" class="btn" data-close-modal>OK</button>
+    </div>
+  </div>
 </body>
 </html>

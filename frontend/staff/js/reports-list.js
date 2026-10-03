@@ -17,6 +17,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const typeFilter = document.getElementById("typeFilter");
   const dateFrom = document.getElementById("dateFrom");
   const dateTo = document.getElementById("dateTo");
+  // Reports can't be filtered into a future that hasn't happened yet.
+  const todayStr = new Date().toLocaleDateString("en-CA");
+  dateFrom.max = todayStr;
+  dateTo.max = todayStr;
   const dateRangeClear = document.getElementById("dateRangeClear");
   const statusFilter = document.getElementById("statusFilter");
   const list = document.getElementById("reportsList");
@@ -24,6 +28,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pageSizeSelect = document.getElementById("reportsPageSize");
 
   let page = 1;
+  // Only re-filters on Search (or pressing Enter in the field), not on every
+  // keystroke — this tracks the query that was actually searched for.
+  let appliedQuery = "";
 
   list.innerHTML = `<div class="ordinances-empty">Loading reports...</div>`;
   try {
@@ -87,13 +94,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    const query = searchInput.value.trim().toLowerCase();
-    if (query) {
+    if (appliedQuery) {
       rows = rows.filter(
         (r) =>
-          r.incidentType.toLowerCase().includes(query) ||
-          r.location.toLowerCase().includes(query) ||
-          r.reporter.toLowerCase().includes(query)
+          r.incidentType.toLowerCase().includes(appliedQuery) ||
+          r.location.toLowerCase().includes(appliedQuery) ||
+          r.reporter.toLowerCase().includes(appliedQuery)
       );
     }
 
@@ -163,10 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    page = 1;
-    render();
-  });
-  searchInput.addEventListener("input", () => {
+    appliedQuery = searchInput.value.trim().toLowerCase();
     page = 1;
     render();
   });

@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   let logs = [];
   let page = 1;
   let currentPageRows = [];
+  // Only re-filters on Search (or pressing Enter in the field), not on every
+  // keystroke — this tracks the query that was actually searched for.
+  let appliedQuery = "";
 
   async function loadLogs() {
     tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading audit logs...</td></tr>`;
@@ -31,14 +34,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const filterValue = typeFilter.value;
     let rows = logs.filter((a) => filterValue === "all" || accountTypeGroup(a.type) === filterValue);
 
-    const query = searchInput.value.trim().toLowerCase();
-    if (query) {
+    if (appliedQuery) {
       rows = rows.filter(
         (a) =>
-          a.owner.toLowerCase().includes(query) ||
-          a.action.toLowerCase().includes(query) ||
-          a.timeLabel.toLowerCase().includes(query) ||
-          a.type.toLowerCase().includes(query)
+          a.owner.toLowerCase().includes(appliedQuery) ||
+          a.action.toLowerCase().includes(appliedQuery) ||
+          a.timeLabel.toLowerCase().includes(appliedQuery) ||
+          a.type.toLowerCase().includes(appliedQuery)
       );
     }
 
@@ -142,12 +144,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     page = 1;
     render();
   });
-  searchInput.addEventListener("input", () => {
-    page = 1;
-    render();
-  });
   searchForm.addEventListener("submit", (e) => {
     e.preventDefault();
+    appliedQuery = searchInput.value.trim().toLowerCase();
     page = 1;
     render();
   });

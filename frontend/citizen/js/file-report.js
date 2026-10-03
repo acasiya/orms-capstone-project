@@ -4,6 +4,9 @@
 // nothing actually saved.
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Incident date can't be in the future — you can only report something that's already happened.
+  document.getElementById("incidentDate").max = new Date().toLocaleDateString("en-CA");
+
   // ---- Reporting As: read-only citizen info, from the session cache ----
   const reportingUser = getCurrentUser();
   if (reportingUser) {
@@ -25,6 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const gateNotice = document.getElementById("reportGateNotice");
   const gateNoticeText = document.getElementById("reportGateNoticeText");
   const gateVerifyBtn = document.getElementById("reportGateVerifyBtn");
+  const cooldownModal = document.getElementById("reportCooldownModal");
+  const cooldownModalText = document.getElementById("reportCooldownText");
   const verifyModal = document.getElementById("reportVerifyModal");
   const verifyError = document.getElementById("reportVerifyError");
   const verifySendRow = document.getElementById("reportVerifySendRow");
@@ -37,6 +42,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let verificationNeeded = false;
   let cooldownActive = false;
+  // Only popped up once per page load — repeat gate-status checks (after
+  // verifying, after a 429 on submit, etc.) shouldn't reopen it.
+  let cooldownModalShown = false;
 
   function showVerifyError(message) {
     verifyError.textContent = message;
@@ -56,11 +64,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     verificationNeeded = !!verification_required;
     cooldownActive = cooldown_seconds > 0;
     if (cooldownActive) {
-      const minutes = Math.max(1, Math.ceil(cooldown_seconds / 60));
-      gateNoticeText.textContent = `You've recently filed a report — you can file another in about ${minutes} minute(s).`;
-      gateVerifyBtn.hidden = true;
-      gateNotice.hidden = false;
+      gateNotice.hidden = true;
       submitBtn.disabled = true;
+      if (!cooldownModalShown) {
+        cooldownModalShown = true;
+        const minutes = Math.max(1, Math.ceil(cooldown_seconds / 60));
+        cooldownModalText.textContent = `You can file another report in about ${minutes} minute(s).`;
+        cooldownModal.hidden = false;
+      }
     } else if (verificationNeeded) {
       gateNoticeText.textContent = "Please verify it's you before filing this report.";
       gateVerifyBtn.hidden = false;
@@ -135,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       verifyModal.hidden = true;
       verificationNeeded = false;
-      gateNotice.hidden = cooldownActive;
+      gateNotice.hidden = true;
       submitBtn.disabled = cooldownActive;
     } catch (err) {
       showVerifyError(err.message);
