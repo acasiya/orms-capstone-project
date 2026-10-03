@@ -48,6 +48,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   filterField.addEventListener("change", updateSearchPlaceholder);
   updateSearchPlaceholder();
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
     await ensureOrdinancesLoaded();

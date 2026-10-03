@@ -252,6 +252,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   if (list) list.innerHTML = `<div class="ordinances-empty">Loading questions...</div>`;
   if (faqManageList) faqManageList.innerHTML = `<div class="ordinances-empty">Loading...</div>`;
 

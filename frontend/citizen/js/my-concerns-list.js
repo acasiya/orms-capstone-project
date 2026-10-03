@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pagination = document.getElementById("concernsPagination");
   const pageSizeSelect = document.getElementById("concernsPageSize");
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   }

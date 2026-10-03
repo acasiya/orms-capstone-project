@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     tbody.innerHTML = rows
       .map(
         (a) => `
-        <tr>
+        <tr data-id="${a.id}">
           <td>${a.id}</td>
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
@@ -44,6 +44,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   typeFilter.addEventListener("change", render);
+
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   await loadAccounts();
 
   // Approve Account popup: opened by clicking an account owner's name
@@ -77,11 +80,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const ownerLink = e.target.closest(".admin-table__owner-link[data-id]");
-    if (!ownerLink) return;
+    // The owner link still works on its own (desktop), and on mobile the
+    // other columns are hidden (see style.css) so the whole row — really
+    // just the name — is what's left to tap. "View ID Photo" itself still
+    // reaches the photo from inside the popup this opens.
+    const row = e.target.closest("tr[data-id]");
+    if (!row) return;
     e.preventDefault();
 
-    const account = accounts.find((a) => a.id === ownerLink.dataset.id);
+    const account = accounts.find((a) => a.id === row.dataset.id);
     if (!account || !approveModal) return;
 
     activeAccountId = account.id;

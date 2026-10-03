@@ -809,41 +809,101 @@ button {
 .ordinances-toolbar {
   display: flex;
   gap: 14px;
-  flex-wrap: wrap;
+  align-items: flex-start;
   margin-bottom: 20px;
 }
 
-.sort-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding: 11px 40px 11px 18px;
+/* Show/Search By/Show (page size) live inside one panel behind a single
+   "Filters" button instead of three separate dropdowns, at every screen
+   width — see ordinances-list.js for the open/close logic. */
+.filters-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filters-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
   border: none;
   border-radius: 10px;
-  background-color: var(--navy);
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 14px;
+  background: var(--navy);
   color: var(--white);
   font-size: 0.92rem;
   font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filters-dropdown__trigger:hover {
+  background: var(--navy-hover);
+}
+
+.filters-dropdown__chevron {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.filters-dropdown__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.filters-dropdown__panel[hidden] {
+  display: none;
+}
+
+.filters-dropdown__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filters-dropdown__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.filters-dropdown__field select {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--white);
   cursor: pointer;
 }
 
-.sort-select:focus {
+.filters-dropdown__field select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.4);
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
 }
 
 .ordinances-search {
   flex: 1;
   display: flex;
   gap: 10px;
+  min-width: 0;
 }
 
 .ordinances-search input {
   flex: 1;
+  min-width: 0;
   padding: 11px 14px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -851,6 +911,10 @@ button {
 }
 
 .ordinances-search button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 11px 26px;
   border: none;
   border-radius: 6px;
@@ -858,6 +922,7 @@ button {
   color: var(--white);
   font-weight: 600;
   font-size: 0.88rem;
+  flex-shrink: 0;
 }
 
 .ordinances-search button:hover {
@@ -2389,23 +2454,39 @@ button {
     padding: 26px 22px 22px;
   }
 
-  .ordinances-toolbar {
-    flex-direction: column;
-    gap: 10px;
+  /* Icon-only on narrow screens — "Filters"/"Search" text and the chevron
+     take up room the search input needs more. 16px on the select keeps
+     mobile Safari from auto-zooming when it's tapped. */
+  .filters-dropdown__trigger {
+    padding: 12px;
+    font-size: 16px;
   }
 
-  .sort-select {
-    width: 100%;
-    /* 16px keeps mobile Safari from auto-zooming when the control is tapped */
+  .filters-dropdown__trigger-text,
+  .filters-dropdown__chevron {
+    display: none;
+  }
+
+  .filters-dropdown__field select {
     font-size: 16px;
-    padding: 13px 44px 13px 16px;
-    background-position: right 16px center;
-    background-size: 16px;
   }
 
   .ordinances-search input,
   .ordinances-search button {
     font-size: 16px;
+    border-radius: 8px;
+  }
+
+  .ordinances-search input {
+    padding: 12px 16px;
+  }
+
+  .ordinances-search button {
+    padding: 12px;
+  }
+
+  .ordinances-search__text {
+    display: none;
   }
 
   .detail-meta {
@@ -2432,9 +2513,15 @@ button {
     grid-template-columns: 1fr;
   }
 
+  /* Status filter and "Show N" stay side by side — only the heading drops
+     to its own line above them. */
   .reports-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .reports-toolbar .page-heading {
+    flex-basis: 100%;
   }
 
   .notif-dropdown {

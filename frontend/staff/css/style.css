@@ -631,8 +631,89 @@ button {
 .ordinances-toolbar {
   display: flex;
   gap: 14px;
-  flex-wrap: wrap;
+  align-items: flex-start;
   margin-bottom: 20px;
+}
+
+/* Show/Search By/Show (page size) live inside one panel behind a single
+   "Filters" button instead of three separate dropdowns, at every screen
+   width — see ordinances-list.js for the open/close logic. */
+.filters-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filters-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filters-dropdown__trigger:hover {
+  background: var(--navy-hover);
+}
+
+.filters-dropdown__chevron {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.filters-dropdown__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.filters-dropdown__panel[hidden] {
+  display: none;
+}
+
+.filters-dropdown__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filters-dropdown__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.filters-dropdown__field select {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--white);
+  cursor: pointer;
+}
+
+.filters-dropdown__field select:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
 }
 
 /* Floating "+ Upload Ordinance" button (Secretary only — see
@@ -675,46 +756,16 @@ button {
   }
 }
 
-.ordinances-toolbar select {
-  padding: 11px 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.88rem;
-  background: var(--white);
-  color: var(--text);
-}
-
-.sort-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding: 11px 40px 11px 18px;
-  border: none;
-  border-radius: 10px;
-  background-color: var(--navy);
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 14px;
-  color: var(--white);
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sort-select:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.4);
-}
-
 .ordinances-search {
   flex: 1;
   display: flex;
   gap: 10px;
+  min-width: 0;
 }
 
 .ordinances-search input {
   flex: 1;
+  min-width: 0;
   padding: 11px 14px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -722,6 +773,10 @@ button {
 }
 
 .ordinances-search button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 11px 26px;
   border: none;
   border-radius: 6px;
@@ -729,6 +784,7 @@ button {
   color: var(--white);
   font-weight: 600;
   font-size: 0.88rem;
+  flex-shrink: 0;
 }
 
 .ordinances-search button:hover {
@@ -1152,7 +1208,10 @@ button {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 50;
+  /* Above the mobile sidebar drawer (60) and its backdrop (55) — a modal
+     (e.g. the Logout confirm) opened while the drawer is open must sit on
+     top of it, not get hidden behind it. */
+  z-index: 70;
 }
 
 .modal-overlay[hidden] {
@@ -2173,8 +2232,73 @@ button {
     padding: 26px 22px 22px;
   }
 
-  .ordinances-toolbar {
-    flex-direction: column;
+  /* Belt-and-suspenders against any single element (an unshrinkable
+     toolbar, a long pagination bar) pushing the whole page wider than the
+     viewport and creating a page-level horizontal scrollbar — elements
+     with their own overflow-x: auto still scroll internally. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  /* First/Prev/page-numbers/Next/Last/"Page X of Y" can't all fit on one
+     line on a phone — wrap instead of overflowing. */
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Investigator Dashboard's "Oldest Open Reports (Mine)" collapses to just
+     Days Open + Status (columns 3 and 4) — tap a row to go to that report
+     (see investigator-dashboard.js), same place the arrow link goes. */
+  .recent-reports-table--aging thead th:nth-child(1),
+  .recent-reports-table--aging thead th:nth-child(2),
+  .recent-reports-table--aging thead th:nth-child(5),
+  .recent-reports-table--aging tbody td:nth-child(1),
+  .recent-reports-table--aging tbody td:nth-child(2),
+  .recent-reports-table--aging tbody td:nth-child(5) {
+    display: none;
+  }
+
+  .recent-reports-table--aging tbody tr {
+    cursor: pointer;
+  }
+
+  /* Icon-only on narrow screens — "Filters"/"Search" text and the chevron
+     take up room the search input needs more. 16px on the select keeps
+     mobile Safari from auto-zooming when it's tapped. */
+  .filters-dropdown__trigger {
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .filters-dropdown__trigger-text,
+  .filters-dropdown__chevron {
+    display: none;
+  }
+
+  .filters-dropdown__field select {
+    font-size: 16px;
+  }
+
+  .ordinances-search input,
+  .ordinances-search button {
+    font-size: 16px;
+    border-radius: 8px;
+  }
+
+  .ordinances-search input {
+    min-width: 0;
+    flex: 1;
+    padding: 12px 16px;
+  }
+
+  .ordinances-search button {
+    padding: 12px;
+  }
+
+  .ordinances-search__text {
+    display: none;
   }
 
   .detail-meta {
@@ -3026,7 +3150,7 @@ button {
 
 /* z-index: 0 traps Leaflet's internal panes/controls (which climb to ~1000)
    in a local stacking context, so the map can't paint over the page's
-   modal overlay (z-index 50) or the sidebar. */
+   modal overlay (z-index 70) or the sidebar. */
 .heatmap-canvas {
   position: relative;
   z-index: 0;
@@ -3379,6 +3503,7 @@ button {
 
 .reports-filters-row {
   display: flex;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
@@ -3390,11 +3515,18 @@ button {
 
 @media (max-width: 860px) {
   .reports-search-row {
-    flex-direction: column;
+    gap: 10px;
+  }
+
+  .reports-search-input {
+    min-width: 0;
+    font-size: 16px;
   }
 
   .reports-search-btn {
-    width: 100%;
+    width: auto;
+    padding: 13px 22px;
+    font-size: 16px;
   }
 }
 

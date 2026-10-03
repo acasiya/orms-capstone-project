@@ -1105,7 +1105,10 @@ button {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 50;
+  /* Above the mobile sidebar drawer (60) and its backdrop (55) — a modal
+     (e.g. the Logout confirm) opened while the drawer is open must sit on
+     top of it, not get hidden behind it. */
+  z-index: 70;
 }
 
 .modal-overlay[hidden] {
@@ -1501,6 +1504,7 @@ button {
 
 .reports-filters-row {
   display: flex;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
@@ -1540,11 +1544,18 @@ button {
 
 @media (max-width: 860px) {
   .reports-search-row {
-    flex-direction: column;
+    gap: 10px;
+  }
+
+  .reports-search-input {
+    min-width: 0;
+    font-size: 16px;
   }
 
   .reports-search-btn {
-    width: 100%;
+    width: auto;
+    padding: 13px 22px;
+    font-size: 16px;
   }
 }
 
@@ -1593,8 +1604,14 @@ button {
 }
 
 @media (max-width: 860px) {
+  /* minmax(0, 1fr), not plain 1fr — a bare 1fr track still grows to fit an
+     item's unwrapped min-content width (the pagination bar's row of
+     buttons, here), which is what was actually pushing the whole page
+     into a horizontal scroll. minmax(0, ...) caps the track at the
+     container's real width like .concerns-page-main's min-width: 0 already
+     intends for the item itself. */
   .concerns-page-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2339,6 +2356,7 @@ button {
 
 .admin-toolbar {
   display: flex;
+  align-items: flex-start;
   gap: 14px;
   margin-bottom: 18px;
   flex-wrap: wrap;
@@ -2353,6 +2371,103 @@ button {
   font-family: inherit;
   font-size: 0.85rem;
   min-width: 150px;
+}
+
+/* Sort/filter/page-size controls live inside one panel behind a single
+   "Order" button instead of several separate dropdowns, at every screen
+   width — see each page's own JS for the open/close logic. */
+.filters-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filters-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filters-dropdown__trigger:hover {
+  background: var(--navy-hover);
+}
+
+.filters-dropdown__chevron {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.filters-dropdown__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.filters-dropdown__panel[hidden] {
+  display: none;
+}
+
+.filters-dropdown__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filters-dropdown__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.filters-dropdown__field select {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--white);
+  cursor: pointer;
+}
+
+.filters-dropdown__field select:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(3, 172, 19, 0.15);
+}
+
+@media (max-width: 860px) {
+  .filters-dropdown__trigger {
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .filters-dropdown__trigger-text,
+  .filters-dropdown__chevron {
+    display: none;
+  }
+
+  .filters-dropdown__field select {
+    font-size: 16px;
+  }
 }
 
 .admin-table-card {
@@ -2427,6 +2542,30 @@ button {
   border-bottom: none;
 }
 
+/* Audit Logs' tap-a-row popup (see audit-logs.js) — reuses the same
+   dt/dd row styling as the Edit Account popup's detail list. */
+.log-detail-modal .modal-card {
+  text-align: left;
+  max-width: 340px;
+}
+
+.log-detail-modal h2 {
+  margin: 0 0 14px;
+  text-align: center;
+}
+
+.log-detail-modal .edit-account-card__details {
+  margin: 0;
+}
+
+.log-detail-modal .edit-account-card__row {
+  align-items: flex-start;
+}
+
+.log-detail-modal .edit-account-card__row dd {
+  text-align: right;
+}
+
 .admin-table__owner-link {
   color: var(--link);
   text-decoration: underline;
@@ -2454,8 +2593,56 @@ button {
 }
 
 @media (max-width: 860px) {
+  /* Belt-and-suspenders against any single element (an unshrinkable toolbar,
+     a long table) pushing the whole page wider than the viewport and
+     creating a page-level horizontal scrollbar — elements with their own
+     overflow-x: auto (e.g. .admin-table-card) still scroll internally. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  /* First/Prev/page-numbers/Next/Last/"Page X of Y" can't all fit on one
+     line on a phone — wrap instead of overflowing (this was the actual
+     cause of the page-wide horizontal scroll the overflow-x: hidden above
+     now masks; wrapping fixes it properly instead of just hiding it). */
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
   .admin-topbar__name {
     display: none;
+  }
+
+  /* Manage Accounts' and Approve Accounts' tables collapse to just the
+     owner's name — tap a row to open the full details popup (ID/Email/
+     Type/Status/etc., or ID photo + Approve/Reject) that already exists
+     for the owner link, instead of horizontally scrolling a 5-column
+     table on a phone screen. */
+  .admin-table--accounts thead th:not(:nth-child(2)),
+  .admin-table--accounts tbody td:not(:nth-child(2)),
+  .admin-table--approve thead th:not(:nth-child(2)),
+  .admin-table--approve tbody td:not(:nth-child(2)) {
+    display: none;
+  }
+
+  /* Audit Logs' table collapses to Time/Date + Action (columns 4 and 5) —
+     those are what actually matter on this page; Account ID/Owner/Type
+     move into the tap-to-open popup (see audit-logs.js). */
+  .admin-table--audit thead th:nth-child(1),
+  .admin-table--audit thead th:nth-child(2),
+  .admin-table--audit thead th:nth-child(3),
+  .admin-table--audit tbody td:nth-child(1),
+  .admin-table--audit tbody td:nth-child(2),
+  .admin-table--audit tbody td:nth-child(3) {
+    display: none;
+  }
+
+  .admin-table--accounts tbody tr,
+  .admin-table--approve tbody tr,
+  .admin-table--audit tbody tr {
+    cursor: pointer;
   }
 }
 

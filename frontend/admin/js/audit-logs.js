@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let logs = [];
   let page = 1;
+  let currentPageRows = [];
 
   async function loadLogs() {
     tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading audit logs...</td></tr>`;
@@ -60,6 +61,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
+    currentPageRows = pageRows;
+
     if (!rows.length) {
       tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No logs match this filter.</td></tr>`;
       return;
@@ -67,8 +70,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     tbody.innerHTML = pageRows
       .map(
-        (a) => `
-        <tr>
+        (a, i) => `
+        <tr data-row-index="${i}">
           <td>${a.accountId}</td>
           <td>${a.owner}</td>
           <td>${a.type}</td>
@@ -78,6 +81,58 @@ document.addEventListener("DOMContentLoaded", async () => {
       )
       .join("");
   }
+
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
+  // ---- Mobile row-tap details (Account ID/Owner/Type are hidden on mobile
+  // — see the 860px breakpoint in style.css, which keeps only Time/Date and
+  // Action visible) — tapping a row shows everything in one popup instead. ----
+  let logDetailModal = null;
+
+  function ensureLogDetailModal() {
+    if (logDetailModal) return logDetailModal;
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay log-detail-modal";
+    overlay.hidden = true;
+    overlay.innerHTML = `
+      <div class="modal-card">
+        <button type="button" class="modal-close" aria-label="Close">&times;</button>
+        <h2>Log Details</h2>
+        <dl class="edit-account-card__details">
+          <div class="edit-account-card__row"><dt>Account ID</dt><dd id="logDetailId"></dd></div>
+          <div class="edit-account-card__row"><dt>Account Owner</dt><dd id="logDetailOwner"></dd></div>
+          <div class="edit-account-card__row"><dt>Account Type</dt><dd id="logDetailType"></dd></div>
+          <div class="edit-account-card__row"><dt>Time/Date</dt><dd id="logDetailTime"></dd></div>
+          <div class="edit-account-card__row"><dt>Action</dt><dd id="logDetailAction"></dd></div>
+        </dl>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const closeModal = () => { overlay.hidden = true; };
+    overlay.querySelector(".modal-close").addEventListener("click", closeModal);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeModal();
+    });
+    logDetailModal = overlay;
+    return overlay;
+  }
+
+  function openLogDetail(log) {
+    const overlay = ensureLogDetailModal();
+    overlay.querySelector("#logDetailId").textContent = log.accountId;
+    overlay.querySelector("#logDetailOwner").textContent = log.owner;
+    overlay.querySelector("#logDetailType").textContent = log.type;
+    overlay.querySelector("#logDetailTime").textContent = log.timeLabel;
+    overlay.querySelector("#logDetailAction").textContent = log.action;
+    overlay.hidden = false;
+  }
+
+  tbody.addEventListener("click", (e) => {
+    const row = e.target.closest("tr[data-row-index]");
+    if (!row) return;
+    const log = currentPageRows[Number(row.dataset.rowIndex)];
+    if (log) openLogDetail(log);
+  });
 
   sortSelect.addEventListener("change", () => {
     page = 1;

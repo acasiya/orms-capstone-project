@@ -61,28 +61,43 @@
           <button type="submit" class="btn reports-search-btn">Search</button>
         </form>
 
-        <div class="admin-toolbar">
-          <select id="sortSelect" class="admin-select">
-            <option value="time">Most Recent</option>
-            <option value="owner">Owner Name</option>
-            <option value="id">Account ID</option>
-          </select>
-          <select id="typeFilter" class="admin-select">
-            <option value="all">All</option>
-            <option value="citizen">Barangay Citizens</option>
-            <option value="admin">Administrators</option>
-            <option value="staff">Barangay Staff</option>
-          </select>
-          <label class="page-size-field">
-            Show
-            <select id="auditPageSize" class="admin-select">
-              <option value="5" selected>5</option>
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </label>
+        <div class="admin-toolbar admin-toolbar--audit">
+          <div class="filters-dropdown">
+            <button type="button" class="filters-dropdown__trigger" id="filtersToggleBtn" aria-expanded="false" aria-haspopup="true" aria-label="Order">
+              <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+              <span class="filters-dropdown__trigger-text">Order</span>
+              <span class="filters-dropdown__chevron">&#9662;</span>
+            </button>
+            <div class="filters-dropdown__panel" id="filtersPanel" hidden>
+              <label class="filters-dropdown__field">
+                <span class="filters-dropdown__label">Sort</span>
+                <select id="sortSelect">
+                  <option value="time">Most Recent</option>
+                  <option value="owner">Owner Name</option>
+                  <option value="id">Account ID</option>
+                </select>
+              </label>
+              <label class="filters-dropdown__field">
+                <span class="filters-dropdown__label">Filter</span>
+                <select id="typeFilter">
+                  <option value="all">All</option>
+                  <option value="citizen">Barangay Citizens</option>
+                  <option value="admin">Administrators</option>
+                  <option value="staff">Barangay Staff</option>
+                </select>
+              </label>
+              <label class="filters-dropdown__field">
+                <span class="filters-dropdown__label">Show</span>
+                <select id="auditPageSize">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div class="admin-table-card">

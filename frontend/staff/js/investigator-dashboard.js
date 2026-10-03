@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .map((r) => {
             const days = daysBetween(r.dateSubmitted, now);
             return `
-        <tr>
+        <tr data-id="${r.id}">
           <td>${r.id.slice(0, 8).toUpperCase()}</td>
           <td>${r.location || "—"}</td>
           <td>${days} ${days === 1 ? "day" : "days"}</td>
@@ -118,6 +118,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           })
           .join("")
       : `<tr><td colspan="5" class="ordinances-empty">Nothing open on your plate right now.</td></tr>`;
+
+    // On mobile, only Days Open/Status stay visible (see style.css) — tap
+    // anywhere on the row to go to the report, same place the arrow link goes.
+    body.querySelectorAll("tr[data-id]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest("a")) return;
+        window.location.href = `report-detail.html?id=${encodeURIComponent(row.dataset.id)}`;
+      });
+    });
   }
 
   renderStats();

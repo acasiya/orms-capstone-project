@@ -205,5 +205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   render();
 });

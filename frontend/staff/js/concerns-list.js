@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const allFoldersBtn = document.getElementById("allFoldersBtn");
   const addFolderBtn = document.getElementById("addFolderBtn");
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   const folderNameModal = document.getElementById("folderNameModal");
   const folderNameModalTitle = document.getElementById("folderNameModalTitle");
   const folderNameInput = document.getElementById("folderNameInput");

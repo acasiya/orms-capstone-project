@@ -40,21 +40,33 @@
     <div class="plain-page__inner plain-page__inner--wide">
       <div class="reports-toolbar">
         <h1 class="page-heading">My Recent Concerns/Suggestions</h1>
-        <select id="statusFilter" class="reports-filter">
-          <option value="All">All</option>
-          <option value="Submitted">Submitted</option>
-          <option value="Resolved">Resolved</option>
-        </select>
-        <label class="page-size-field">
-          Show
-          <select id="concernsPageSize" class="reports-filter">
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </label>
+        <div class="filters-dropdown">
+          <button type="button" class="filters-dropdown__trigger" id="filtersToggleBtn" aria-expanded="false" aria-haspopup="true" aria-label="Order">
+            <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            <span class="filters-dropdown__trigger-text">Order</span>
+            <span class="filters-dropdown__chevron">&#9662;</span>
+          </button>
+          <div class="filters-dropdown__panel" id="filtersPanel" hidden>
+            <label class="filters-dropdown__field">
+              <span class="filters-dropdown__label">Filter</span>
+              <select id="statusFilter">
+                <option value="All">All</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </label>
+            <label class="filters-dropdown__field">
+              <span class="filters-dropdown__label">Show</span>
+              <select id="concernsPageSize">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="concerns-card" id="concernsList"></div>

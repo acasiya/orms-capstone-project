@@ -300,6 +300,33 @@ function isLoggedIn() {
   return !!getAccessToken();
 }
 
+// Wires a ".filters-dropdown" trigger+panel pair (sort/filter/page-size
+// controls behind a single "Order" button — see style.css's .filters-dropdown
+// rules). Each page with one calls this once with its own #filtersToggleBtn/
+// #filtersPanel; the controls inside the panel (real <select>s) keep their
+// own existing "change" listeners untouched.
+function wireFiltersDropdown(toggleBtn, panel) {
+  if (!toggleBtn || !panel) return;
+
+  function closePanel() {
+    panel.hidden = true;
+    toggleBtn.setAttribute("aria-expanded", "false");
+  }
+
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    toggleBtn.setAttribute("aria-expanded", String(willOpen));
+  });
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !panel.contains(e.target) && e.target !== toggleBtn) closePanel();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !panel.hidden) closePanel();
+  });
+}
+
 // Clears both buckets unconditionally (rather than just whichever
 // REMEMBER_KEY currently points at) so a leftover token from switching
 // "Stay signed in" on/off across logins can never survive a logout.

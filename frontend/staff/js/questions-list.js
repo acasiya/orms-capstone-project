@@ -118,6 +118,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   list.innerHTML = `<div class="ordinances-empty">Loading questions...</div>`;
   try {
     questions = await getQuestions();

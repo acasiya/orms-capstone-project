@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pagination = document.getElementById("reportsPagination");
   const pageSizeSelect = document.getElementById("reportsPageSize");
 
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
+
   const badgeClass = {
     Submitted: "status-badge--submitted",
     "Under Review": "status-badge--in-process",

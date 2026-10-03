@@ -99,34 +99,49 @@
         <div class="page-shell page-shell--nested">
           <h1 class="page-heading">Ordinances &amp; Resolutions</h1>
           <div class="ordinances-toolbar">
-            <label class="page-size-field">
-              Show
-              <select id="kindFilter" class="sort-select" aria-label="Show ordinances, resolutions, or both">
-                <option value="all" selected>Ordinances &amp; Resolutions</option>
-                <option value="ordinance">Ordinances</option>
-                <option value="resolution">Resolutions</option>
-              </select>
-            </label>
+            <div class="filters-dropdown">
+              <button type="button" class="filters-dropdown__trigger" id="filtersToggleBtn" aria-expanded="false" aria-haspopup="true" aria-label="Order">
+                <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                <span class="filters-dropdown__trigger-text">Order</span>
+                <span class="filters-dropdown__chevron">&#9662;</span>
+              </button>
+              <div class="filters-dropdown__panel" id="filtersPanel" hidden>
+                <label class="filters-dropdown__field">
+                  <span class="filters-dropdown__label">Filter</span>
+                  <select id="kindFilter" aria-label="Show ordinances, resolutions, or both">
+                    <option value="all" selected>Ordinances &amp; Resolutions</option>
+                    <option value="ordinance">Ordinances</option>
+                    <option value="resolution">Resolutions</option>
+                  </select>
+                </label>
+                <label class="filters-dropdown__field">
+                  <span class="filters-dropdown__label">Search By</span>
+                  <select id="filterField">
+                    <option value="title">Title</option>
+                    <option value="author">Author</option>
+                    <option value="number">Number</option>
+                    <option value="category">Category</option>
+                  </select>
+                </label>
+                <label class="filters-dropdown__field">
+                  <span class="filters-dropdown__label">Show</span>
+                  <select id="ordinancesPageSize">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </label>
+              </div>
+            </div>
             <form class="ordinances-search" id="ordinanceSearchForm">
-              <select id="filterField" class="sort-select">
-                <option value="title">Title</option>
-                <option value="author">Author</option>
-                <option value="number">Number</option>
-                <option value="category">Category</option>
-              </select>
               <input type="text" id="ordinanceSearch" placeholder="Search..." />
-              <button type="submit">Search</button>
+              <button type="submit" aria-label="Search">
+                <svg class="nav-icon ordinances-search__icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3"/></svg>
+                <span class="ordinances-search__text">Search</span>
+              </button>
             </form>
-            <label class="page-size-field">
-              Show
-              <select id="ordinancesPageSize" class="sort-select">
-                <option value="5" selected>5</option>
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </label>
           </div>
 
           <div class="ordinances-table-wrap">

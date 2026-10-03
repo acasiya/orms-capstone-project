@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     tbody.innerHTML = pageRows
       .map(
         (a) => `
-        <tr>
+        <tr data-id="${a.id}">
           <td>${a.id}</td>
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
@@ -73,6 +73,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       )
       .join("");
   }
+
+  wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
 
   sortSelect.addEventListener("change", () => {
     page = 1;
@@ -142,11 +144,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   tbody.addEventListener("click", (e) => {
-    const link = e.target.closest(".admin-table__owner-link");
-    if (!link) return;
+    // The owner link still works on its own (desktop), and on mobile the
+    // other columns are hidden (see style.css) so the whole row — really
+    // just the name — is what's left to tap.
+    const row = e.target.closest("tr[data-id]");
+    if (!row) return;
     e.preventDefault();
 
-    const account = accounts.find((a) => a.id === link.dataset.id);
+    const account = accounts.find((a) => a.id === row.dataset.id);
     if (!account || !editModal) return;
 
     activeAccount = account;

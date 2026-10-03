@@ -55,6 +55,33 @@ function getAdminUser() {
   }
 }
 
+// Wires a ".filters-dropdown" trigger+panel pair (sort/filter/page-size
+// controls behind a single "Order" button — see style.css's .filters-dropdown
+// rules). Each page with one calls this once with its own #filtersToggleBtn/
+// #filtersPanel; the controls inside the panel (real <select>s) keep their
+// own existing "change" listeners untouched.
+function wireFiltersDropdown(toggleBtn, panel) {
+  if (!toggleBtn || !panel) return;
+
+  function closePanel() {
+    panel.hidden = true;
+    toggleBtn.setAttribute("aria-expanded", "false");
+  }
+
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    toggleBtn.setAttribute("aria-expanded", String(willOpen));
+  });
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !panel.contains(e.target) && e.target !== toggleBtn) closePanel();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !panel.hidden) closePanel();
+  });
+}
+
 (function enforceStaffPortalAccess() {
   const user = getAdminUser();
   const hasToken = !!adminAuthStorage().getItem(ADMIN_ACCESS_TOKEN_KEY);
