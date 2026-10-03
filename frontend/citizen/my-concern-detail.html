@@ -56,15 +56,11 @@
 
         <div class="concern-detail__sidebar">
           <h2 class="status-timeline__title">Status Timeline</h2>
-          <div class="status-timeline__item">
-            <span class="status-timeline__dot"></span>
-            <div>
-              <div class="status-timeline__meta">
-                <span class="status-timeline__label">Submitted</span>
-                <span class="status-timeline__date" id="timelineDateTime"></span>
-              </div>
-              <p class="status-timeline__desc">Your Suggestion/Concern has submitted successfully.</p>
-            </div>
+          <div id="timelineItems"></div>
+
+          <div class="remarks-card" id="remarksCard" hidden>
+            <h2 class="remarks-card__title">Remarks:</h2>
+            <div class="remarks-card__text" id="remarksText"></div>
           </div>
           <a class="btn" href="my-concerns.html">Back to Concerns/Suggestions</a>
         </div>

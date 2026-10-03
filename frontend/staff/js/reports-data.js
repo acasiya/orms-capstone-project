@@ -56,6 +56,10 @@ function mapReport(r) {
     ordinance: r.ordinance,
     category: categoryForOrdinance(r.ordinance),
     location: r.location,
+    // Device position at filing time, if the citizen shared it (null otherwise
+    // — the heatmap then falls back to the street in `location`).
+    latitude: r.latitude,
+    longitude: r.longitude,
     reporter: r.reporter,
     contactNumber: r.contact_number,
     natureOfViolation: r.nature_of_violation,

@@ -1,5 +1,5 @@
 // SafeSpace — Concern/Suggestion detail: view real info and let staff change
-// its status (Submitted/Resolved) and leave remarks. Saves go through
+// its status (Submitted/Reviewed) and leave remarks. Saves go through
 // updateConcernStatus (PATCH /api/concerns/staff/<id>/) instead of the old
 // localStorage-only folder-assignment mock.
 
@@ -77,8 +77,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       </div>
     </div>`;
 
-  const STATUSES_ORDERED = ["Submitted", "Resolved"];
-  const STATUS_PILL_CLASS = { Submitted: "status-pill--new", Resolved: "status-pill--resolved" };
+  const STATUSES_ORDERED = ["Submitted", "Reviewed"];
+  const STATUS_PILL_CLASS = { Submitted: "status-pill--new", Reviewed: "status-pill--resolved" };
 
   const statusPill = document.getElementById("statusPill");
   const statusSelect = document.getElementById("statusSelect");

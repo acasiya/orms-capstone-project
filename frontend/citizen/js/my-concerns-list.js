@@ -27,17 +27,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let concerns = [];
   let page = 1;
-  // Resolved concerns are hidden until the citizen actually picks a filter
+  // Reviewed concerns are hidden until the citizen actually picks a filter
   // themselves — even re-selecting "All" counts, since that's an explicit
   // "yes, show everything" action. Only the untouched initial load (which
-  // happens to also show "All" selected) excludes Resolved by default.
+  // happens to also show "All" selected) excludes Reviewed by default.
   let filterTouched = false;
 
   function getFiltered() {
     const filterValue = statusFilter.value;
     return concerns.filter((c) => {
-      const label = c.status === "resolved" ? "Resolved" : "Submitted";
-      if (!filterTouched && filterValue === "All") return label !== "Resolved";
+      const label = c.status === "reviewed" ? "Reviewed" : "Submitted";
+      if (!filterTouched && filterValue === "All") return label !== "Reviewed";
       return filterValue === "All" || label === filterValue;
     });
   }
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <span class="concern-row__title">${titleFor(c.description)}</span>
         <span class="concern-row__date">${formatDate(c.created_at)}</span>
         <a class="concern-row__link" href="my-concern-detail.html?id=${encodeURIComponent(c.id)}">View Details</a>
-        <span class="status-badge ${c.status === "resolved" ? "status-badge--resolved" : "status-badge--submitted"}">${c.status === "resolved" ? "Resolved" : "Submitted"}</span>
+        <span class="status-badge ${c.status === "reviewed" ? "status-badge--resolved" : "status-badge--submitted"}">${c.status === "reviewed" ? "Reviewed" : "Submitted"}</span>
       </div>`
           )
           .join("")

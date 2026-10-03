@@ -170,3 +170,51 @@ class AboutUsTests(APITestCase):
         member = CouncilMember.objects.get(name__contains="Belan")
         response = self.client.patch(f"/api/site/council/{member.id}/", {"photo": png()}, format="multipart")
         self.assertTrue(response.data["hasCustomPhoto"])
+
+
+class BoundaryTests(APITestCase):
+    SQUARE = [[14.31, 121.08], [14.31, 121.09], [14.32, 121.09], [14.32, 121.08]]
+
+    def setUp(self):
+        self.admin = User.objects.create_user(username="adm", email="adm@test.com", password="x", role=User.Role.ADMIN)
+        self.staff = User.objects.create_user(
+            username="cap", email="cap@test.com", password="x", role=User.Role.STAFF, position="Barangay Captain"
+        )
+
+    def test_anyone_can_read_the_seeded_outline(self):
+        boundary = self.client.get("/api/site/boundary/").json()["boundary"]
+        self.assertGreater(len(boundary), 100)
+        self.assertTrue(all(14.30 < lat < 14.34 and 121.08 < lng < 121.10 for lat, lng in boundary))
+
+    def test_only_admins_can_replace_it(self):
+        for user in (None, self.staff):
+            self.client.force_authenticate(user)
+            response = self.client.put("/api/site/boundary/", {"boundary": self.SQUARE}, format="json")
+            self.assertIn(response.status_code, (401, 403))
+        self.assertNotEqual(BarangayProfile.load().boundary, self.SQUARE)
+
+    def test_admin_saves_it_drops_a_repeated_closing_point_and_logs_it(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.put("/api/site/boundary/", {"boundary": self.SQUARE + [self.SQUARE[0]]}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(BarangayProfile.load().boundary, self.SQUARE)
+        self.assertIn(
+            "Updated the barangay map boundary (4 points)",
+            AuditLog.objects.filter(user=self.admin).values_list("action", flat=True),
+        )
+
+    def test_empty_list_removes_it(self):
+        self.client.force_authenticate(self.admin)
+        self.client.put("/api/site/boundary/", {"boundary": self.SQUARE}, format="json")
+        self.client.put("/api/site/boundary/", {"boundary": []}, format="json")
+        self.assertEqual(BarangayProfile.load().boundary, [])
+
+    def test_rejects_too_few_points_and_swapped_coordinates(self):
+        self.client.force_authenticate(self.admin)
+        too_few = self.client.put("/api/site/boundary/", {"boundary": self.SQUARE[:2]}, format="json")
+        swapped = self.client.put(
+            "/api/site/boundary/", {"boundary": [[lng, lat] for lat, lng in self.SQUARE]}, format="json"
+        )
+        self.assertEqual(too_few.status_code, 400)
+        self.assertEqual(swapped.status_code, 400)
+        self.assertGreater(len(BarangayProfile.load().boundary), 20)

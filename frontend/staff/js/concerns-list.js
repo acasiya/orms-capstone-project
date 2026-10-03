@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const badgeClass = {
     Submitted: "status-badge--submitted",
-    Resolved: "status-badge--resolved",
+    Reviewed: "status-badge--resolved",
   };
 
   function truncate(text, max) {
@@ -193,11 +193,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (activeFolderId) {
       rows = rows.filter((c) => c.folderId === activeFolderId);
     }
-    // Resolved concerns stay out of the queue until the status filter is
+    // Reviewed concerns stay out of the queue until the status filter is
     // actually touched — even re-picking "Status" (all) counts, since
     // that's an explicit "yes, show everything" action.
     if (!statusFilterTouched && statusFilter.value === "all") {
-      rows = rows.filter((c) => c.status !== "Resolved");
+      rows = rows.filter((c) => c.status !== "Reviewed");
     } else if (statusFilter.value !== "all") {
       rows = rows.filter((c) => c.status === statusFilter.value);
     }

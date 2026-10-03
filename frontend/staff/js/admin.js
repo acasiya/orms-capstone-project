@@ -239,8 +239,22 @@ function accountTypeGroup(type) {
 // own key, distinct from the Admin portal's "orms_admin_notifications" —
 // localStorage is shared across the whole site (same origin regardless of
 // /admin/ vs /staff/), so a shared key would have let the two portals'
-// notifications leak into each other on any browser used for both.
-const STAFF_NOTIFICATIONS_KEY = "orms_staff_notifications";
+// notifications leak into each other on any browser used for both. For the
+// same reason every key below is also suffixed with the signed-in staff
+// member's id — otherwise a Secretary's concern notifications would still be
+// sitting in the bell when an Investigator later signs in on that browser.
+function staffNotifKey(base) {
+  const user = getAdminUser();
+  return `${base}_${user && user.id != null ? user.id : "anon"}`;
+}
+
+// Pre-per-user keys, shared by every staff account on the browser — dropped
+// so their cross-role leftovers don't linger in storage.
+["orms_staff_notifications", "orms_staff_seen_report_ids", "orms_staff_seen_concern_ids"].forEach((k) =>
+  localStorage.removeItem(k)
+);
+
+const STAFF_NOTIFICATIONS_KEY = staffNotifKey("orms_staff_notifications");
 const STAFF_NOTIFICATIONS_MAX = 20;
 
 function makeNotifId() {
@@ -310,8 +324,8 @@ function setSeenIds(key, ids) {
   localStorage.setItem(key, JSON.stringify(ids.slice(0, 200)));
 }
 
-const NOTIF_SEEN_REPORTS_KEY = "orms_staff_seen_report_ids";
-const NOTIF_SEEN_CONCERNS_KEY = "orms_staff_seen_concern_ids";
+const NOTIF_SEEN_REPORTS_KEY = staffNotifKey("orms_staff_seen_report_ids");
+const NOTIF_SEEN_CONCERNS_KEY = staffNotifKey("orms_staff_seen_concern_ids");
 
 // Polls GET /api/reports/staff/ and raises a notification for any report
 // that wasn't there last time this ran. Returns how many were new, so the

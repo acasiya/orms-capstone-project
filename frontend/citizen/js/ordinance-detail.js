@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfPreviewNote = document.getElementById("pdfPreviewNote");
   const downloadBtn = document.getElementById("detailDownload");
   if (ordinance.pdf) {
-    pdfPreviewFrame.src = pdfViewerUrl(ordinance.pdf);
+    renderPdfPreview(pdfPreviewFrame, ordinance.pdf);
     pdfPreview.hidden = false;
     pdfPreviewNote.hidden = false;
     downloadBtn.hidden = false;

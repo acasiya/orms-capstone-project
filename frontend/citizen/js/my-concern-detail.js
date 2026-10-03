@@ -57,7 +57,41 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("concernLocation").value = concern.location;
   document.getElementById("concernDescription").value = concern.description;
   renderConcernEvidence(document.getElementById("concernEvidence"), concern.attachments);
-  document.getElementById("timelineDateTime").textContent = new Date(concern.created_at).toLocaleString("en-US", {
-    month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
-  });
+
+  // Two stages, mirroring Concern.Status: Submitted, then Reviewed once the
+  // Secretary has read it (their reply, if any, is the Remarks card below).
+  const formatDateTime = (iso) =>
+    new Date(iso).toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  const reviewed = concern.status === "reviewed";
+  const steps = [
+    { label: "Submitted", description: "Your concern/suggestion was submitted successfully.", pending: false, at: concern.created_at },
+    {
+      label: "Reviewed",
+      description: reviewed
+        ? "A Barangay Official has read your concern/suggestion."
+        : "Waiting for a Barangay Official to read your concern/suggestion.",
+      pending: !reviewed,
+      at: concern.reviewed_at || concern.updated_at,
+    },
+  ];
+  document.getElementById("timelineItems").innerHTML = steps
+    .map(
+      (step) => `
+      <div class="status-timeline__item">
+        <span class="status-timeline__dot${step.pending ? " status-timeline__dot--pending" : ""}"></span>
+        <div>
+          <div class="status-timeline__meta">
+            <span class="status-timeline__label${step.pending ? " status-timeline__label--pending" : ""}">${step.label}</span>
+            <span class="status-timeline__date">${step.pending ? "Pending" : formatDateTime(step.at)}</span>
+          </div>
+          <p class="status-timeline__desc">${step.description}</p>
+        </div>
+      </div>`
+    )
+    .join("");
+
+  if (concern.remarks) {
+    document.getElementById("remarksCard").hidden = false;
+    document.getElementById("remarksText").textContent = concern.remarks;
+  }
 });

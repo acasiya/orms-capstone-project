@@ -180,7 +180,7 @@ const REPORT_STATUS_LABELS_FOR_NOTIF = {
   in_action: "In Action",
   resolved: "Resolved",
 };
-const CONCERN_STATUS_LABELS_FOR_NOTIF = { submitted: "Submitted", resolved: "Resolved" };
+const CONCERN_STATUS_LABELS_FOR_NOTIF = { submitted: "Submitted", reviewed: "Reviewed" };
 
 // Snapshots each report/concern's status+remarks (keyed by id) so a later
 // poll can tell whether it's actually changed since last seen. A brand-new

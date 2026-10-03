@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (ordinance.pdf) {
-      pdfPreviewFrame.src = pdfViewerUrl(ordinance.pdf);
+      renderPdfPreview(pdfPreviewFrame, ordinance.pdf);
       detailDocPreview.hidden = false;
       pdfPreviewNote.hidden = false;
       detailDownload.href = ordinance.pdf;

@@ -76,11 +76,16 @@
 
         <form id="reportForm">
           <div class="field">
-            <label for="reportLocation">Specific Location</label>
+            <label for="reportLocation">Street</label>
             <div class="combobox" id="reportLocationCombobox">
               <input type="text" id="reportLocation" name="location" placeholder="Type to search streets..." autocomplete="off" required />
               <ul class="combobox__list" id="reportLocationList" hidden></ul>
             </div>
+            <label class="geo-toggle">
+              <input type="checkbox" id="reportUseGeo" checked />
+              <span>Pin my current location <span class="field-hint">(only if you're at the incident spot)</span></span>
+            </label>
+            <p class="geo-status" id="reportGeoStatus" hidden></p>
           </div>
 
           <div class="field">

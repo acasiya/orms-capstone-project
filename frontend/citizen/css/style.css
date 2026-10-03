@@ -595,6 +595,34 @@ button {
   color: var(--white);
 }
 
+/* File Report: opt-in "pin my current location" under the Street field. */
+.geo-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.geo-toggle input {
+  width: auto;
+  margin: 3px 0 0;
+  accent-color: var(--navy);
+}
+
+.geo-status {
+  margin: 6px 0 0 24px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.geo-status--ok {
+  color: var(--navy);
+}
+
 .field-hint {
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -720,6 +748,20 @@ button {
 
 .form-footer a:hover {
   text-decoration: underline;
+}
+
+/* Login's "Don't Have an Account?" / Sign Up's "Login" — a lighter green
+   than --link so it reads apart from the dark-green submit button right
+   above it. #0a881b is about as light as this green can go and still pass
+   WCAG AA (4.6:1) as small text on the white card; the brand --accent
+   (#03ac13) is only ~3:1 there. */
+.auth-card .form-footer a {
+  color: #0a881b;
+  font-weight: 700;
+}
+
+.auth-card .form-footer a:hover {
+  color: var(--accent);
 }
 
 .form-back {
@@ -1190,7 +1232,7 @@ button {
 .doc-preview__line {
   height: 8px;
   border-radius: 3px;
-  background: #e3e1da;
+  background: var(--cream);
   margin-bottom: 8px;
 }
 
@@ -1208,6 +1250,22 @@ button {
   border: none;
   display: block;
   background: #f2f1ec;
+  /* Pages are canvases drawn by js/pdf-preview.js; the frame scrolls them. */
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.pdf-preview__page {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto 10px;
+  background: var(--white);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.pdf-preview__page:last-child {
+  margin-bottom: 0;
 }
 
 .pdf-preview__fallback {
@@ -1357,10 +1415,10 @@ button {
 }
 
 .reporting-as-card .field input[disabled] {
-  background: var(--cream-dark);
+  background: var(--white);
   color: var(--text);
-  border-color: var(--navy);
-  opacity: 0.85;
+  border-color: var(--border);
+  opacity: 1;
 }
 
 /* ---------- FAQs ---------- */
@@ -1568,13 +1626,13 @@ button {
 }
 
 .btn-clear {
-  background: #eef2f6;
+  background: var(--plain-bg);
   color: var(--text);
   border: 1px solid var(--border);
 }
 
 .btn-clear:hover {
-  background: #e5e7eb;
+  background: var(--highlight);
 }
 
 .btn-success {
@@ -1747,11 +1805,11 @@ button {
 }
 
 .btn-danger {
-  background: #f07167;
+  background: #c0392b;
 }
 
 .btn-danger:hover {
-  background: #e35c51;
+  background: #a93226;
 }
 
 /* ---------- Notifications dropdown ---------- */
@@ -2062,7 +2120,8 @@ button {
   min-height: 60px;
   padding: 16px;
   border-radius: 8px;
-  background: #e3e1da;
+  background: var(--white);
+  border: 1px dashed var(--border);
   color: var(--text-muted);
   font-size: 0.85rem;
   font-style: italic;
@@ -2085,7 +2144,7 @@ button {
   height: 110px;
   border-radius: 8px;
   overflow: hidden;
-  background: #e3e1da;
+  background: var(--cream);
   border: none;
   padding: 0;
   cursor: pointer;
@@ -2197,8 +2256,8 @@ button {
 
 .field input[disabled],
 .field textarea[disabled] {
-  background: #dcdcdc;
-  color: #555;
+  background: var(--white);
+  color: var(--text-muted);
   cursor: default;
 }
 
@@ -2298,7 +2357,7 @@ button {
 }
 
 .profile-sidebar {
-  background: #bdbdbd;
+  background: var(--cream);
   border-radius: var(--radius);
   padding: 24px 22px;
   min-height: 320px;
@@ -2319,7 +2378,7 @@ button {
   margin-bottom: 10px;
   border: 2px solid transparent;
   border-radius: 4px;
-  background: #d4d4d4;
+  background: var(--white);
   color: var(--text);
   font-weight: 700;
   font-size: 0.95rem;
@@ -2327,12 +2386,13 @@ button {
 }
 
 .profile-tab:hover {
-  background: #dcdcdc;
+  background: var(--highlight);
 }
 
 .profile-tab.active {
-  background: #ededed;
-  border-color: #1f2430;
+  background: var(--white);
+  border-color: var(--navy);
+  color: var(--navy);
 }
 
 .profile-sidebar__cancel {

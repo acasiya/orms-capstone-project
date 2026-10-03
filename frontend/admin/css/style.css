@@ -45,14 +45,16 @@
 :root {
   --navy: #057a12;
   --navy-dark: #045c0e;
+  --green-soft: #e3f7e5;
+  --green-mist: #f7fdf8;
   --cream: #e3f7e5;
   --cream-dark: #c2ecc7;
   --white: #ffffff;
-  --text: #1f2430;
-  --text-muted: #6b7280;
+  --text: #2b2a27;
+  --text-muted: #5e665c;
   --link: #04700f;
   --border: #cde8d0;
-  --heart: #e63946;
+  --heart: #d66b52;
   --radius: 10px;
   --shadow: 0 10px 35px rgba(5, 122, 18, 0.15);
   --max-width: 1180px;
@@ -86,7 +88,7 @@ body {
 body {
   font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-  background: var(--white);
+  background: var(--green-mist);
 }
 
 a {
@@ -227,9 +229,7 @@ button {
   justify-content: center;
   padding: 60px 20px;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(4, 40, 8, 0.5) 0%, rgba(4, 40, 8, 0.12) 45%, rgba(4, 40, 8, 0.5) 100%),
-    url("../assets/background.jpg") center / cover no-repeat;
+  background: url("../assets/background.jpg") center / cover no-repeat;
 }
 
 /* ---------- Plain section (Forgot Password flow) ---------- */
@@ -266,8 +266,8 @@ button {
 }
 
 .auth-card--outline {
-  border: 1.5px solid #2a2a2a;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1.5px solid rgba(5, 122, 18, 0.25);
+  box-shadow: 0 2px 10px rgba(5, 122, 18, 0.08);
 }
 
 .auth-card--outline .auth-card__title {
@@ -944,7 +944,7 @@ button {
 .doc-preview__line {
   height: 8px;
   border-radius: 3px;
-  background: #e3e1da;
+  background: var(--cream);
   margin-bottom: 8px;
 }
 
@@ -1218,8 +1218,8 @@ button {
 }
 
 .profile-avatar--guest {
-  background: #d9dce3;
-  color: #6b7280;
+  background: var(--cream);
+  color: var(--navy);
   font-size: 1.6rem;
 }
 
@@ -1243,7 +1243,7 @@ button {
   padding: 12px 16px;
   border: none;
   border-radius: 8px;
-  background: #6b7280;
+  background: var(--sage);
   color: var(--white);
   font-size: 0.92rem;
   font-weight: 600;
@@ -1251,15 +1251,15 @@ button {
 }
 
 .btn-muted:hover {
-  background: #565d68;
+  background: var(--sage-dark);
 }
 
 .btn-danger {
-  background: #f07167;
+  background: #c0392b;
 }
 
 .btn-danger:hover {
-  background: #e35c51;
+  background: #a93226;
 }
 
 /* ---------- Notifications dropdown ---------- */
@@ -1653,7 +1653,7 @@ button {
 .question-row__answer {
   margin-top: 12px;
   padding: 12px 16px;
-  background: var(--plain-bg, #e9e5dc);
+  background: var(--plain-bg);
   border-radius: 6px;
   font-size: 0.88rem;
   line-height: 1.5;
@@ -1823,7 +1823,8 @@ button {
   width: 180px;
   height: 140px;
   border-radius: 8px;
-  background: #e3e1da;
+  background: var(--white);
+  border: 1px dashed var(--border);
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -1893,8 +1894,8 @@ button {
 
 .field input[disabled],
 .field textarea[disabled] {
-  background: #dcdcdc;
-  color: #555;
+  background: var(--white);
+  color: var(--text-muted);
   cursor: default;
 }
 
@@ -1984,7 +1985,7 @@ button {
 }
 
 .profile-sidebar {
-  background: #bdbdbd;
+  background: var(--cream);
   border-radius: var(--radius);
   padding: 24px 22px;
   min-height: 320px;
@@ -2005,7 +2006,7 @@ button {
   margin-bottom: 10px;
   border: 2px solid transparent;
   border-radius: 4px;
-  background: #d4d4d4;
+  background: var(--white);
   color: var(--text);
   font-weight: 700;
   font-size: 0.95rem;
@@ -2013,12 +2014,13 @@ button {
 }
 
 .profile-tab:hover {
-  background: #dcdcdc;
+  background: var(--highlight);
 }
 
 .profile-tab.active {
-  background: #ededed;
-  border-color: #1f2430;
+  background: var(--white);
+  border-color: var(--navy);
+  color: var(--navy);
 }
 
 .profile-sidebar__cancel {
@@ -2362,6 +2364,18 @@ button {
   flex-wrap: wrap;
 }
 
+/* A .btn link sitting at the end of an .admin-toolbar (e.g. About Us
+   Setup's "View About Us page") — .btn is a full-width block by default,
+   and the toolbar's default align-items: stretch otherwise pulls it to the
+   full height of the heading/description beside it. */
+.btn-view-page {
+  width: auto;
+  align-self: flex-start;
+  padding: 12px 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .admin-select {
   background: var(--navy);
   color: var(--white);
@@ -2505,11 +2519,11 @@ button {
 }
 
 .table-row-actions button.table-row-actions__danger {
-  background: #f07167;
+  background: #c0392b;
 }
 
 .table-row-actions button.table-row-actions__danger:hover {
-  background: #e35c51;
+  background: #a93226;
 }
 
 .admin-table {
@@ -2703,7 +2717,7 @@ button {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: #e4e6ea;
+  background: var(--cream);
   margin: 0 auto 14px;
   display: flex;
   align-items: center;
@@ -2737,7 +2751,7 @@ button {
 }
 
 .edit-account-card__row:nth-child(odd) {
-  background: #e9e9ec;
+  background: var(--plain-bg);
 }
 
 .edit-account-card__row dt {
@@ -2770,7 +2784,7 @@ button {
 }
 
 .edit-account-btn--disable {
-  background: #e2726b;
+  background: #c0392b;
 }
 
 /* Same button, opposite action once the account is already disabled — see
@@ -2789,7 +2803,7 @@ button {
 }
 
 .edit-account-btn--delete {
-  background: #b3261e;
+  background: #a93226;
 }
 
 /* Claimed-reports warning before disabling/deleting an account. */
@@ -2913,7 +2927,7 @@ button {
 }
 
 .edit-account-btn--reject {
-  background: #e2726b;
+  background: #c0392b;
 }
 
 /* Short screens (laptops, landscape phones): tighten the top of the card so
@@ -2970,7 +2984,7 @@ button {
   margin: 0 auto;
   border-radius: 10px;
   object-fit: contain;
-  background: #e4e6ea;
+  background: var(--cream);
 }
 
 /* ---------- Create Account page ---------- */
@@ -3229,6 +3243,77 @@ button {
 .setup-status {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+/* ---------- Map Boundary editor (map-boundary.html) ---------- */
+
+.boundary-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.boundary-toolbar__btn {
+  width: auto;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.boundary-toolbar__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.boundary-toolbar__check {
+  margin-left: auto;
+}
+
+/* z-index: 0 keeps Leaflet's panes (z ~1000) under the page's modals. */
+.boundary-map {
+  position: relative;
+  z-index: 0;
+  height: clamp(380px, 62vh, 680px);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.boundary-map .leaflet-container {
+  font: inherit;
+}
+
+.boundary-handle {
+  background: var(--white);
+  border: 2px solid var(--navy);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: move;
+}
+
+.boundary-handle:hover {
+  background: var(--highlight);
+}
+
+.boundary-help {
+  margin: 14px 0 6px;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.boundary-help code {
+  font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .boundary-toolbar__check {
+    margin-left: 0;
+  }
 }
 
 .setup-table td {

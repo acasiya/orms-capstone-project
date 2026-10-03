@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     suggestionsPanel.hidden = true;
   });
 
-  // ---- Specific Location: type-to-filter street combobox ----
+  // ---- Street: type-to-filter street combobox ----
   const locationInput = document.getElementById("reportLocation");
   const locationList = document.getElementById("reportLocationList");
 
@@ -246,8 +246,65 @@ document.addEventListener("DOMContentLoaded", async () => {
       locationList.hidden = true;
     }
   });
+
   locationInput.addEventListener("keydown", (e) => {
     if (e.key === "Escape") locationList.hidden = true;
+  });
+
+  // ---- Current location (optional, on top of the required street) ----
+  // Asked for once, the first time the citizen starts on the Street field
+  // (not on page load, so the browser prompt shows up in context). If they
+  // deny it, it times out, or they untick the box, the report is filed with
+  // just the street and the staff heatmap uses that street's centroid
+  // instead. The backend also drops a position outside the barangay.
+  const useGeoInput = document.getElementById("reportUseGeo");
+  const geoStatus = document.getElementById("reportGeoStatus");
+  let geoCoords = null;
+  let geoRequest = null;
+
+  function setGeoStatus(text, ok) {
+    geoStatus.textContent = text;
+    geoStatus.classList.toggle("geo-status--ok", !!ok);
+    geoStatus.hidden = !text;
+  }
+
+  function requestGeo() {
+    if (geoRequest) return geoRequest;
+    if (!("geolocation" in navigator)) {
+      setGeoStatus("Location isn't available on this device — your selected street will be used.");
+      geoRequest = Promise.resolve(null);
+      return geoRequest;
+    }
+    setGeoStatus("Getting your location...");
+    geoRequest = new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          geoCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          if (useGeoInput.checked) setGeoStatus("Current location pinned.", true);
+          resolve(geoCoords);
+        },
+        () => {
+          setGeoStatus("Location not shared — your selected street will be used instead.");
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+    return geoRequest;
+  }
+
+  locationInput.addEventListener("focus", () => {
+    if (useGeoInput.checked) requestGeo();
+  });
+  useGeoInput.addEventListener("change", () => {
+    if (!useGeoInput.checked) {
+      setGeoStatus("");
+    } else if (geoCoords) {
+      setGeoStatus("Current location pinned.", true);
+    } else {
+      geoRequest = null; // allow a retry after an earlier denial/timeout
+      requestGeo();
+    }
   });
 
   form.addEventListener("submit", async (e) => {
@@ -280,6 +337,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     // — same composition as Sign Up's address field — since Report.location
     // is a single text field, not separate columns.
     formData.append("location", `${blockLot}, ${locationInput.value.trim()}`);
+    if (useGeoInput.checked) {
+      // Usually already resolved from when the Street field was focused;
+      // a still-pending prompt is only waited on briefly so it can't hold
+      // up the submission.
+      const coords = await Promise.race([requestGeo(), new Promise((r) => setTimeout(() => r(null), 3000))]);
+      if (coords) {
+        formData.append("latitude", coords.lat.toFixed(6));
+        formData.append("longitude", coords.lng.toFixed(6));
+      }
+    }
     // Stores the ordinance's readable label as free text rather than its id
     // — Report.ordinance is a text snapshot, not a foreign key, so a report
     // still shows what it cited even if that ordinance is later edited or removed.

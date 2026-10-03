@@ -1,4 +1,10 @@
 // One-time geocoder for the barangay street list -> frontend/staff/js/street-coordinates.js
+//
+// SUPERSEDED (2026-09-30) — don't run this. It geocodes the old 65-street
+// list, most of which turned out to be outside Barangay Platero, and would
+// overwrite street-coordinates.js (which now holds the current in-barangay
+// list, placed from OpenStreetMap road geometry, plus the old list for
+// existing reports). Kept for reference only.
 const fs = require("fs");
 const path = require("path");
 

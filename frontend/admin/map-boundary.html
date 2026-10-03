@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Audit Logs</title>
+  <title>SafeSpace — Map Boundary</title>
+  <link rel="stylesheet" href="/staff/vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -22,12 +23,12 @@
         <li><a href="manage-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5a3.5 3.5 0 00-3.5-3.5h-5A3.5 3.5 0 005 18.5V20"/><circle cx="9.5" cy="8" r="3.25"/><path d="M16 8.2a2.7 2.7 0 010 5.3M19 20v-1.3a3 3 0 00-2.2-2.9"/></svg> Manage Accounts</a></li>
         <li><a href="create-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.25"/><path d="M3 20v-1.5A3.5 3.5 0 016.5 15h6A3.5 3.5 0 0116 18.5V20"/><path d="M18.5 8v5.5M21.2 10.75h-5.4"/></svg> Create Accounts</a></li>
         <li><a href="approve-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Approve Accounts</a></li>
-        <li><a href="audit-logs.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="13" height="17" rx="1.8"/><path d="M9.3 4a1.2 1.2 0 011.2-1.2h3a1.2 1.2 0 011.2 1.2v.6H9.3z"/><path d="M8.7 11h6.6M8.7 14.3h6.6M8.7 17.6h4.4"/></svg> View Audit Logs</a></li>
-              <li><a href="questions.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
+        <li><a href="audit-logs.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="13" height="17" rx="1.8"/><path d="M9.3 4a1.2 1.2 0 011.2-1.2h3a1.2 1.2 0 011.2 1.2v.6H9.3z"/><path d="M8.7 11h6.6M8.7 14.3h6.6M8.7 17.6h4.4"/></svg> View Audit Logs</a></li>
+        <li><a href="questions.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
         <li><a href="ordinance-authors.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 10h4M14 13h4"/></svg> Ordinance Setup</a></li>
         <li><a href="about-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> About Us Setup</a></li>
-        <li><a href="map-boundary.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> Map Boundary</a></li>
-</ul>
+        <li><a href="map-boundary.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> Map Boundary</a></li>
+      </ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
 
@@ -57,75 +58,51 @@
       </header>
 
       <div class="admin-content">
-        <form class="reports-search-row" id="auditSearchForm">
-          <input type="text" id="auditSearchInput" class="reports-search-input" placeholder="Search by name, date, time, or action..." />
-          <button type="submit" class="btn reports-search-btn">Search</button>
-        </form>
-
-        <div class="admin-toolbar admin-toolbar--audit">
-          <div class="filters-dropdown">
-            <button type="button" class="filters-dropdown__trigger" id="filtersToggleBtn" aria-expanded="false" aria-haspopup="true" aria-label="Order">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-              <span class="filters-dropdown__trigger-text">Order</span>
-              <span class="filters-dropdown__chevron">&#9662;</span>
-            </button>
-            <div class="filters-dropdown__panel" id="filtersPanel" hidden>
-              <label class="filters-dropdown__field">
-                <span class="filters-dropdown__label">Sort</span>
-                <select id="sortSelect">
-                  <option value="time">Most Recent</option>
-                  <option value="owner">Owner Name</option>
-                  <option value="id">Account ID</option>
-                </select>
-              </label>
-              <label class="filters-dropdown__field">
-                <span class="filters-dropdown__label">Filter</span>
-                <select id="typeFilter">
-                  <option value="all">All</option>
-                  <option value="citizen">Barangay Citizens</option>
-                  <option value="admin">Administrators</option>
-                  <option value="staff">Barangay Staff</option>
-                </select>
-              </label>
-              <label class="filters-dropdown__field">
-                <span class="filters-dropdown__label">Show</span>
-                <select id="auditPageSize">
-                  <option value="5" selected>5</option>
-                  <option value="10">10</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
-              </label>
-            </div>
+        <div class="admin-toolbar">
+          <div>
+            <h1 style="margin: 0 0 4px; font-size: 1.4rem;">Map Boundary</h1>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.88rem; max-width: 72ch;">
+              The Barangay Platero outline drawn on the staff Reports Dashboard heatmap. Draw it by
+              clicking points on the map, or upload a boundary file. Saving replaces the current
+              outline and is recorded in the audit log.
+            </p>
           </div>
         </div>
 
-        <div class="admin-table-card">
-          <table class="admin-table admin-table--audit">
-            <thead>
-              <tr>
-                <th>Account ID:</th>
-                <th>Account Owner:</th>
-                <th>Account Type:</th>
-                <th>Time/Date:</th>
-                <th>Action:</th>
-              </tr>
-            </thead>
-            <tbody id="auditTableBody"></tbody>
-          </table>
-        </div>
+        <section class="setup-card" aria-labelledby="boundaryHeading">
+          <h2 class="setup-card__title" id="boundaryHeading">Barangay Outline</h2>
+          <form id="boundaryForm" onsubmit="return false">
+            <div class="boundary-toolbar">
+              <label class="btn btn-muted boundary-toolbar__btn" for="boundaryFile">Upload File</label>
+              <input type="file" id="boundaryFile" accept=".geojson,.json,.kml,application/geo+json,application/vnd.google-earth.kml+xml" hidden />
+              <button type="button" class="btn btn-muted boundary-toolbar__btn" id="boundaryUndo" disabled>Undo</button>
+              <button type="button" class="btn btn-muted boundary-toolbar__btn" id="boundaryReset" disabled>Revert to Saved</button>
+              <button type="button" class="btn btn-danger boundary-toolbar__btn" id="boundaryClear" disabled>Clear</button>
+              <label class="setup-check boundary-toolbar__check"><input type="checkbox" id="boundaryShowStreets" checked /> Show app streets</label>
+            </div>
 
-        <div class="pagination-bar pagination-bar--center">
-          <div class="pagination-controls" id="auditPagination"></div>
-        </div>
+            <div class="boundary-map" id="boundaryMap" aria-label="Barangay boundary editor map"></div>
+
+            <ul class="boundary-help">
+              <li><strong>Click the map</strong> to add a point. Once there are 3 points, a new point is placed on the nearest edge, so clicking beside an edge refines it.</li>
+              <li><strong>Drag a point</strong> to move it. <strong>Right-click a point</strong> to remove it.</li>
+              <li><strong>Upload File</strong> accepts GeoJSON (<code>.geojson</code>/<code>.json</code>) or KML (<code>.kml</code>, e.g. exported from Google My Maps or Google Earth). If the file holds several shapes, the largest one is used.</li>
+              <li>The yellow dots are the streets citizens can pick when filing a report. The outline should take them in.</li>
+            </ul>
+
+            <div class="setup-actions">
+              <span class="setup-status" id="boundaryStatus" role="status"></span>
+              <button type="button" class="btn" style="width: auto; padding: 12px 22px;" id="boundarySave" disabled>Save Boundary</button>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   </div>
 
-  <script src="js/audit-log-data.js"></script>
-  <script src="js/pagination.js"></script>
-  <script src="js/audit-logs.js"></script>
+  <script src="/staff/vendor/leaflet/leaflet.js"></script>
+  <script src="/staff/js/street-coordinates.js"></script>
+  <script src="js/map-boundary.js"></script>
   <script src="js/admin.js"></script>
 
   <!-- Logout confirmation -->
@@ -139,7 +116,7 @@
     </div>
   </div>
 
-  <!-- Profile popup: opened by clicking the admin's own photo/name in the topbar -->
+  <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>
     <div class="modal-card profile-card">
       <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>

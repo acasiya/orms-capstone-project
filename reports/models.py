@@ -24,6 +24,12 @@ class Report(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports")
     location = models.CharField(max_length=255)
+    # The citizen's device position when they filed, if they allowed the
+    # browser's location prompt (see file-report.js). Null when they denied
+    # it, it timed out, or it fell outside the barangay — the staff heatmap
+    # then falls back to the street centroid parsed from `location`.
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     # Free text rather than a FK — Ordinances aren't backed by a real model
     # yet (frontend/citizen/js/ordinances-data.js is still a hardcoded
     # array), so this just stores whichever option label the citizen picked.
@@ -84,8 +90,11 @@ class Concern(models.Model):
     """A concern/suggestion filed by a citizen (Submit Suggestion)."""
 
     class Status(models.TextChoices):
+        # "Reviewed" rather than "Resolved": this covers suggestions as well
+        # as concerns, and a suggestion gets read and answered (see remarks),
+        # not resolved — unlike a Report, which is a case that gets closed.
         SUBMITTED = "submitted", "Submitted"
-        RESOLVED = "resolved", "Resolved"
+        REVIEWED = "reviewed", "Reviewed"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="concerns")
@@ -93,6 +102,11 @@ class Concern(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     remarks = models.TextField(blank=True)
+    # When the Secretary marked this Reviewed (cleared if it's moved back to
+    # Submitted). updated_at can't stand in for it — assigning a folder or
+    # editing remarks later moves that — and the Captain's dashboard needs
+    # the real figure for "typical time to review".
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     # Optional — staff assign a concern to a folder after reviewing it; a
     # deleted folder just leaves its concerns unfoldered rather than deleting them.
     folder = models.ForeignKey(ConcernFolder, on_delete=models.SET_NULL, null=True, blank=True, related_name="concerns")

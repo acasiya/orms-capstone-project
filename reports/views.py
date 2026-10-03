@@ -376,6 +376,8 @@ class StaffConcernDetailView(APIView):
         serializer.save()
 
         if "status" in request.data and concern.status != previous_status:
+            concern.reviewed_at = timezone.now() if concern.status == Concern.Status.REVIEWED else None
+            concern.save(update_fields=["reviewed_at"])
             log_action(request.user, f"Updated a concern/suggestion's status to {concern.get_status_display()}")
         if "remarks" in request.data:
             log_action(request.user, "Updated a concern/suggestion's remarks")

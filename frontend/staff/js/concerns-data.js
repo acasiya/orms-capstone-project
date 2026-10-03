@@ -1,24 +1,24 @@
 // SafeSpace — Concerns/Suggestions data, backed by the real API
 // (GET /api/concerns/staff/). Status/remarks work the same way as Reports
-// (Submitted/Resolved + free-text remarks). Folders are a separate,
+// (Submitted/Reviewed + free-text remarks). Folders are a separate,
 // orthogonal categorization staff assign after the fact — backed by
 // /api/concerns/folders/ — used to group concerns for the (future)
 // category breakdown, the same role Report.ordinance plays for Reports.
 
 const CONCERN_STATUS_TO_LABEL = {
   submitted: "Submitted",
-  resolved: "Resolved",
+  reviewed: "Reviewed",
 };
 const CONCERN_LABEL_TO_STATUS = {
   Submitted: "submitted",
-  Resolved: "resolved",
+  Reviewed: "reviewed",
 };
 
-// Newest-first within each status, Submitted before Resolved — same idea as
+// Newest-first within each status, Submitted before Reviewed — same idea as
 // reports-data.js's REPORT_STATUS_RANK, just with Concern's 2-stage status.
 const CONCERN_STATUS_RANK = {
   Submitted: 0,
-  Resolved: 1,
+  Reviewed: 1,
 };
 
 function sortConcernsByStatusThenDate(concerns) {
@@ -44,6 +44,8 @@ function mapConcern(c) {
     folderId: c.folder ? c.folder.id : null,
     folderName: c.folder ? c.folder.name : null,
     dateSubmitted: new Date(c.created_at),
+    // When the Secretary marked it Reviewed (null while still Submitted).
+    dateReviewed: c.reviewed_at ? new Date(c.reviewed_at) : null,
     attachments: c.attachments,
   };
 }
