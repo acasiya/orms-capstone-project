@@ -355,6 +355,15 @@ def _locked_message(minutes):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    # Which portal the login came from. Citizens and Barangay Officials each
+    # have their own login page; the other kind is refused there, after the
+    # password is checked (so a wrong guess still counts toward the lockout).
+    portal = serializers.ChoiceField(choices=["citizen", "staff"], required=False, write_only=True)
+    WRONG_PORTAL = {
+        "citizen": ({User.Role.STAFF, User.Role.ADMIN}, "Barangay staff and administrator accounts can't log in here. Please use the Staff Portal."),
+        "staff": ({User.Role.CITIZEN}, "Citizen accounts can't log in here. Please use the citizen portal."),
+    }
+
     """
     Extends SimpleJWT's login serializer so the token payload — and the
     login response body — includes role/name. This lets the frontend route
@@ -390,6 +399,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise
         if account:
             clear_failed_logins(account)
+
+        portal = attrs.get("portal")
+        if portal in self.WRONG_PORTAL and self.user.role in self.WRONG_PORTAL[portal][0]:
+            raise AuthenticationFailed(self.WRONG_PORTAL[portal][1], code="wrong_portal")
 
         # Citizens start unverified until an Administrator approves their
         # voter's ID (see AdminApproveVerificationView). Staff/Admin accounts

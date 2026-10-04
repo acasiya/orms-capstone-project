@@ -15,7 +15,7 @@
         <div class="admin-sidebar__brand-text">
           <strong>SafeSpace</strong>
           <small>Barangay Platero</small>
-          <small id="sidebarPortalLabel">Barangay Staff Portal</small>
+          <small id="sidebarPortalLabel"></small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -88,12 +88,27 @@
           <button type="button" class="admin-topbar__profile-btn" id="profileBtn">
             <span class="admin-topbar__avatar" aria-hidden="true"></span>
             <span class="admin-topbar__name">
-              <strong>Eliseo Aurelio Jr.</strong>
-              <small>Barangay Chairman</small>
+              <strong></strong>
+              <small></small>
             </span>
           </button>
         </div>
       </header>
+<script>
+  // Fills the topbar name/role and sidebar portal label from the stored login
+  // before first paint — admin.js does the same later, but waiting for it
+  // flashed placeholder text for a moment on every page load.
+  (function () {
+    var store = localStorage.getItem("orms_remember_me") === "1" ? localStorage : sessionStorage;
+    var user;
+    try { user = JSON.parse(store.getItem("orms_auth_user")); } catch (e) { user = null; }
+    if (!user) return;
+    document.querySelectorAll(".admin-topbar__name strong").forEach(function (el) { el.textContent = user.name; });
+    document.querySelectorAll(".admin-topbar__name small").forEach(function (el) { el.textContent = user.position || "Barangay Official"; });
+    var label = document.getElementById("sidebarPortalLabel");
+    if (label) label.textContent = (user.position || "Staff").replace(/^Barangay\s+/i, "") + " Portal";
+  })();
+</script>
 
       <div class="admin-content">
         <div class="page-shell page-shell--nested">

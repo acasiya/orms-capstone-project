@@ -2296,6 +2296,21 @@ button {
   padding: 22px 24px;
 }
 
+.concern-detail__sidebar {
+  box-shadow: none;
+}
+
+.concern-detail__sidebar .remarks-card {
+  box-shadow: none;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+.concern-detail__sidebar > .btn {
+  margin-top: 0;
+}
+
 .field input[disabled],
 .field textarea[disabled] {
   background: var(--white);

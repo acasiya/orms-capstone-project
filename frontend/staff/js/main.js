@@ -384,7 +384,7 @@ async function apiLogin(email, password, remember) {
     response = await fetch(`${API_BASE}/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, portal: "staff" }),
     });
   } catch {
     throw new Error("Could not reach the server. Check your connection and try again.");
