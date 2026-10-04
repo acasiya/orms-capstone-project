@@ -41,8 +41,6 @@
     if (!user) return;
     document.querySelectorAll(".admin-topbar__name strong").forEach(function (el) { el.textContent = user.name; });
     document.querySelectorAll(".admin-topbar__name small").forEach(function (el) { el.textContent = user.position || "Barangay Official"; });
-    var label = document.getElementById("sidebarPortalLabel");
-    if (label) label.textContent = (user.position || "Staff").replace(/^Barangay\s+/i, "") + " Portal";
   })();
 </script>
 

@@ -15,7 +15,7 @@
         <div class="admin-sidebar__brand-text">
           <strong>SafeSpace</strong>
           <small>Barangay Platero</small>
-          <small id="sidebarPortalLabel"></small>
+          <small id="sidebarPortalLabel">Barangay Staff Portal</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -105,8 +105,6 @@
     if (!user) return;
     document.querySelectorAll(".admin-topbar__name strong").forEach(function (el) { el.textContent = user.name; });
     document.querySelectorAll(".admin-topbar__name small").forEach(function (el) { el.textContent = user.position || "Barangay Official"; });
-    var label = document.getElementById("sidebarPortalLabel");
-    if (label) label.textContent = (user.position || "Staff").replace(/^Barangay\s+/i, "") + " Portal";
     var welcome = document.querySelector(".dash-header__title");
     if (welcome && user.name) welcome.textContent = "Welcome back, " + user.name + "!";
   })();

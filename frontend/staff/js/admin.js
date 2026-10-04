@@ -604,16 +604,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("profileCardName") && (document.getElementById("profileCardName").textContent = user.name);
     document.getElementById("profileCardRole") && (document.getElementById("profileCardRole").textContent = user.position || "Barangay Official");
     renderAvatar(document.getElementById("profileCardInitials"), user);
-
-    // "Barangay Staff Portal" -> "<role> Portal" — position is sometimes
-    // already "Barangay ___" (Captain, Treasurer) and sometimes not
-    // (Secretary, Investigator), so strip any existing "Barangay " prefix
-    // first rather than risk "Barangay Portal" reading oddly either way.
-    const portalLabel = document.getElementById("sidebarPortalLabel");
-    if (portalLabel) {
-      const role = (user.position || "Staff").replace(/^Barangay\s+/i, "");
-      portalLabel.textContent = `${role} Portal`;
-    }
+    // The sidebar's "Barangay Staff Portal" label is static HTML — the same
+    // for every Barangay Staff role, so nothing here rewrites it.
   }
 
   const profileBtn = document.getElementById("profileBtn");

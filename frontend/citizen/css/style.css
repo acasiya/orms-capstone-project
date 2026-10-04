@@ -65,7 +65,6 @@
   --sage-dark: #3a5641;
   --highlight: #d9f7dc;
   --accent: #03ac13;
-  --page-bg-image: url("../assets/barangay hall white washed.png");
 }
 
 * {
@@ -89,11 +88,7 @@ body {
 body {
   font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-  background-color: var(--green-mist);
-  background-image: var(--page-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--green-mist);
 }
 
 a {
@@ -264,11 +259,7 @@ button {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  background-color: var(--plain-bg);
-  background-image: var(--page-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--plain-bg);
 }
 
 /* ---------- Auth card ---------- */
@@ -844,11 +835,7 @@ button {
 
 .page-shell {
   min-height: calc(100vh - 60px);
-  background-color: var(--plain-bg);
-  background-image: var(--page-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--plain-bg);
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 32px 28px 64px;
@@ -1337,11 +1324,7 @@ button {
 
 .plain-page {
   min-height: calc(100vh - 60px);
-  background-color: var(--plain-bg);
-  background-image: var(--page-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--plain-bg);
   padding: 32px 28px 64px;
 }
 
@@ -2971,20 +2954,9 @@ button {
 }
 
 /* ---------- About Us (about.html) ---------- */
-/* Unlike every other citizen page, the barangay hall photo isn't the whole
-   page's background — only the intro (title + barangay/mission cards) sits
-   over it, as its own section background with that content layered on top;
-   everything below (seals, council) stays on plain white. */
 
 .about-page {
   background: var(--white);
-}
-
-.about-intro {
-  background-image: var(--page-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 .about-intro__inner {
@@ -3202,11 +3174,7 @@ button {
 /* ---------- Legal pages (privacy-policy.html, terms.html) ---------- */
 
 .legal-page {
-  background-color: var(--plain-bg);
-  background-image: var(--page-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--plain-bg);
   padding: 40px 20px 64px;
 }
 
