@@ -670,6 +670,9 @@ function getPasswordRuleStatus(pw, attrs = {}) {
   });
   return {
     length: pw.length >= 8,
+    lowercase: /[a-z]/.test(pw),
+    uppercase: /[A-Z]/.test(pw),
+    special: /[^A-Za-z0-9]/.test(pw),
     numeric: pw.length > 0 && !/^\d+$/.test(pw),
     common: pw.length > 0 && !COMMON_PASSWORDS.has(lowerPw),
     similar: pw.length > 0 && !tooSimilar,
@@ -709,19 +712,32 @@ function setupPasswordHints() {
     const lastNameField = form.querySelector('[name="last_name"]');
     const emailField = form.querySelector('[name="email"]');
 
+    // Sign Up's list (.password-hint--missing-only) stays hidden until the
+    // resident has typed a password that's still missing something, or
+    // tried to submit without one (see the signup step 1 handler, which
+    // sets data-prompted) — and then only shows the unmet requirements.
+    const missingOnly = hintList.classList.contains("password-hint--missing-only");
+
     function update() {
       const status = getPasswordRuleStatus(passwordField.value, {
         firstName: firstNameField ? firstNameField.value : "",
         lastName: lastNameField ? lastNameField.value : "",
         email: emailField ? emailField.value : "",
       });
+      let allSatisfied = true;
       hintList.querySelectorAll("li[data-rule]").forEach((li) => {
         const satisfied = !!status[li.dataset.rule];
+        if (!satisfied) allSatisfied = false;
         li.classList.toggle("is-satisfied", satisfied);
         const checkbox = li.querySelector('input[type="checkbox"]');
         if (checkbox) checkbox.checked = satisfied;
       });
+      if (missingOnly) {
+        const prompted = passwordField.value.length > 0 || hintList.dataset.prompted !== undefined;
+        hintList.hidden = allSatisfied || !prompted;
+      }
     }
+    hintList.updatePasswordHints = update;
 
     [passwordField, firstNameField, lastNameField, emailField].forEach((field) => {
       if (field) field.addEventListener("input", update);
@@ -869,6 +885,19 @@ document.addEventListener("DOMContentLoaded", () => {
         clearFormError(form);
         if (password.value !== confirmPassword.value) {
           showFormError(form, "Passwords do not match.");
+          return;
+        }
+        // The character-class requirements aren't shown up front — reveal
+        // the list of whichever ones are still missing and point at it.
+        const ruleStatus = getPasswordRuleStatus(password.value);
+        if (!ruleStatus.lowercase || !ruleStatus.uppercase || !ruleStatus.special || !ruleStatus.length) {
+          const hintList = form.querySelector(".password-hint--missing-only");
+          if (hintList && hintList.updatePasswordHints) {
+            hintList.dataset.prompted = "";
+            hintList.updatePasswordHints();
+          }
+          showFormError(form, "Your password is missing some requirements.");
+          password.focus();
           return;
         }
         const passwordError = getPasswordRequirementError(password.value, { firstName, lastName, email });

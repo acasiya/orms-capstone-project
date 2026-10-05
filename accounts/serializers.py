@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -28,6 +29,20 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
     voter_id_image = serializers.ImageField(write_only=True)
+
+    def validate_password(self, value):
+        # Mirrors the Sign Up page's requirement list (see getPasswordRuleStatus
+        # in frontend/citizen/js/main.js); length is MinimumLengthValidator's job.
+        missing = []
+        if not re.search(r"[a-z]", value):
+            missing.append("At least 1 lowercase character")
+        if not re.search(r"[A-Z]", value):
+            missing.append("At least 1 uppercase character")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            missing.append("At least 1 special character")
+        if missing:
+            raise serializers.ValidationError(missing)
+        return value
 
     class Meta:
         model = User
