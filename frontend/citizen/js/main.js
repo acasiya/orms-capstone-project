@@ -713,9 +713,9 @@ function setupPasswordHints() {
     const emailField = form.querySelector('[name="email"]');
 
     // Sign Up's list (.password-hint--missing-only) stays hidden until the
-    // resident has typed a password that's still missing something, or
-    // tried to submit without one (see the signup step 1 handler, which
-    // sets data-prompted) — and then only shows the unmet requirements.
+    // resident clicks Next with requirements unmet (see the signup step 1
+    // handler, which sets data-prompted) — and then only shows the unmet
+    // requirements, updating as they fix the password.
     const missingOnly = hintList.classList.contains("password-hint--missing-only");
 
     function update() {
@@ -733,8 +733,7 @@ function setupPasswordHints() {
         if (checkbox) checkbox.checked = satisfied;
       });
       if (missingOnly) {
-        const prompted = passwordField.value.length > 0 || hintList.dataset.prompted !== undefined;
-        hintList.hidden = allSatisfied || !prompted;
+        hintList.hidden = allSatisfied || hintList.dataset.prompted === undefined;
       }
     }
     hintList.updatePasswordHints = update;
