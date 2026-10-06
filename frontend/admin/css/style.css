@@ -3643,3 +3643,17 @@ button {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* Citizen invite form on Create Accounts: give the hint and button room. */
+#createCitizenAccountForm .field {
+  margin-bottom: 18px;
+}
+
+#createCitizenAccountForm .field-hint {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+#createCitizenAccountForm > .btn {
+  margin-top: 6px;
+}
