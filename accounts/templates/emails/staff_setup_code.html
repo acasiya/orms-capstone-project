@@ -7,6 +7,7 @@
   <span style="display:inline-block;font-size:28px;letter-spacing:6px;font-weight:bold;color:#16223f;background:#f0eee6;padding:12px 20px;border-radius:6px;">{{ code }}</span>
 </p>
 <p style="margin:0 0 8px;font-size:13px;color:#5b5748;">This code expires in {{ expires_minutes }} minutes.</p>
-{% if setup_url %}<p style="margin:0 0 16px;font-size:14px;line-height:1.5;"><a href="{{ setup_url }}" style="display:inline-block;padding:10px 20px;background:#16223f;color:#ffffff;border-radius:6px;text-decoration:none;">Set up your account</a></p>{% endif %}
+{% if setup_url %}<p style="margin:0 0 12px;font-size:14px;line-height:1.5;"><a href="{{ setup_url }}" style="display:inline-block;padding:10px 20px;background:#057a12;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:bold;">Set up your account</a></p>
+<p style="margin:0 0 16px;font-size:12px;line-height:1.5;color:#5b5748;">If the button doesn't work, copy this link and paste it into your browser:<br /><span style="word-break:break-all;color:#057a12;">{{ setup_url }}</span></p>{% endif %}
 <p style="margin:0;font-size:13px;color:#5b5748;">If you weren't expecting this, you can safely ignore this email — nothing will change.</p>
 {% endblock %}
