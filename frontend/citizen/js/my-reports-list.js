@@ -60,7 +60,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             return `
         <div class="concern-row">
           <span class="concern-row__title">${r.ordinance}</span>
-          <span class="concern-row__date">${formatDate(r.created_at)} &middot; ${daysOld(r.created_at)}</span>
+          <span class="concern-row__date">${daysOld(r.created_at)}</span>
+          <span class="concern-row__handler">${r.claimed_by ? `Handled by ${r.claimed_by}` : "Not yet claimed"}</span>
           <a class="concern-row__link" href="my-report-detail.html?id=${encodeURIComponent(r.id)}">View Details</a>
           <span class="status-badge ${badgeClass[label] || ""}">Status: ${label}</span>
         </div>`;

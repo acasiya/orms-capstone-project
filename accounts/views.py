@@ -381,7 +381,8 @@ def _release_claims(actor, holder, reason):
     claimed = list(holder.claimed_reports.all())
     for report in claimed:
         report.assigned_investigator = None
-        report.save(update_fields=["assigned_investigator"])
+        report.previous_investigator = holder
+        report.save(update_fields=["assigned_investigator", "previous_investigator"])
         log_action(actor, f"Released {holder_name}'s claim on a report — {report.ordinance} ({reason})")
     return len(claimed)
 

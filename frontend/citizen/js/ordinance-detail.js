@@ -19,6 +19,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  const backLink = document.querySelector(".detail-back");
+  if (backLink) {
+    backLink.href = document.referrer.endsWith("/home.html") || document.referrer.endsWith("home.html")
+      ? "home.html"
+      : "ordinances.html";
+  }
+
   if (isLoggedIn()) {
     authFetch(`/api/ordinances/${encodeURIComponent(id)}/view/`, { method: "POST" }).catch(() => {});
   }

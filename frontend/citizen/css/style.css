@@ -2072,7 +2072,7 @@ button {
 
 .concern-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 1.2fr) auto auto;
   align-items: center;
   gap: 16px;
   padding: 20px 0;
@@ -3824,4 +3824,100 @@ button {
 .navbar__profile--login.active {
   opacity: 1;
   border-bottom-color: var(--accent);
+}
+
+/* Investigator card: two short lines, so the boxes size to their content (the shared Remarks box has a 90px minimum). */
+#investigatorCard .remarks-card__text {
+  min-height: 0;
+  margin-top: 6px;
+  padding: 9px 12px;
+}
+
+#investigatorCard .remarks-card__text + .remarks-card__text {
+  margin-top: 8px;
+}
+
+.concern-row__handler {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.category-summary {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 44px) / 3);
+  gap: 22px;
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+}
+
+.category-summary > .category-card {
+  scroll-snap-align: start;
+}
+
+@media (max-width: 900px) {
+  .category-summary {
+    grid-auto-columns: calc((100% - 22px) / 2);
+  }
+}
+
+@media (max-width: 560px) {
+  .category-summary {
+    grid-auto-columns: 100%;
+  }
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--accent, #2f7d4a);
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow: 0 8px 22px rgba(20, 60, 30, 0.1);
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.category-card:hover,
+.category-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(20, 60, 30, 0.16);
+  text-decoration: none;
+}
+
+.category-card__count {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent, #2f7d4a);
+}
+
+.category-card__label {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.category-banner {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #e8f4ea;
+  font-size: 0.9rem;
+}
+
+/* Disabled buttons (e.g. Submit Report while a report is already filed) must look
+   unavailable, not like an active button. */
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }

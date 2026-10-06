@@ -3613,3 +3613,33 @@ button {
   width: auto;
   padding: 11px 26px;
 }
+
+/* ---------- Activity page ---------- */
+.activity-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin: 18px 0 24px;
+}
+
+.activity-total {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 16px rgba(20, 60, 30, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-total__value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.activity-total__label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

@@ -58,8 +58,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  const categoryFilter = new URLSearchParams(window.location.search).get("category");
+  if (categoryFilter) {
+    const banner = document.createElement("div");
+    banner.className = "category-banner";
+    banner.innerHTML = `Showing ordinances about <strong>${escapeHtml(categoryFilter)}</strong>. <a href="ordinances.html">Show all</a>`;
+    document.querySelector(".ordinances-toolbar").before(banner);
+  }
+
   function getFiltered() {
     let rows = liveOrdinances();
+    if (categoryFilter) rows = rows.filter((o) => o.category === categoryFilter);
     if (appliedQuery) {
       rows = rows.filter((o) => String(o[appliedField] || "").toLowerCase().includes(appliedQuery));
     }

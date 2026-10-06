@@ -199,3 +199,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 });
+
+
+async function renderCategorySummary() {
+  const container = document.getElementById("categorySummary");
+  if (!container) return;
+  try {
+    const response = await fetch("/api/ordinances/");
+    if (!response.ok) throw new Error("Could not load ordinances.");
+    const all = await response.json();
+    const groups = new Map();
+    all.forEach((o) => {
+      if (!groups.has(o.category)) groups.set(o.category, []);
+      groups.get(o.category).push(o);
+    });
+    if (!groups.size) {
+      container.innerHTML = `<div class="ordinances-empty">No ordinances have been posted yet.</div>`;
+      return;
+    }
+    container.innerHTML = [...groups.entries()]
+      .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+      .map(([category, items]) => {
+        const count = items.length;
+        return `
+        <a class="category-card" href="ordinances.html?category=${encodeURIComponent(category)}">
+          <span class="category-card__count">${count}</span>
+          <span class="category-card__label">${count === 1 ? "Ordinance" : "Ordinances"} about ${escapeHtml(category)}</span>
+        </a>`;
+      })
+      .join("");
+  } catch (err) {
+    container.innerHTML = `<div class="ordinances-empty">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", renderCategorySummary);

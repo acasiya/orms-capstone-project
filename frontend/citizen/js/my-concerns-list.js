@@ -27,17 +27,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let concerns = [];
   let page = 1;
-  // Reviewed concerns are hidden until the citizen actually picks a filter
-  // themselves — even re-selecting "All" counts, since that's an explicit
-  // "yes, show everything" action. Only the untouched initial load (which
-  // happens to also show "All" selected) excludes Reviewed by default.
-  let filterTouched = false;
-
   function getFiltered() {
     const filterValue = statusFilter.value;
     return concerns.filter((c) => {
       const label = c.status === "reviewed" ? "Reviewed" : "Submitted";
-      if (!filterTouched && filterValue === "All") return label !== "Reviewed";
       return filterValue === "All" || label === filterValue;
     });
   }
@@ -72,7 +65,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   statusFilter.addEventListener("change", () => {
-    filterTouched = true;
     page = 1;
     render();
   });

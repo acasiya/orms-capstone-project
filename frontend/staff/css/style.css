@@ -746,7 +746,7 @@ button {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--heart);
+  background: var(--navy);
   color: var(--white);
   display: flex;
   align-items: center;

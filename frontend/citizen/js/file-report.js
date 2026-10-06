@@ -316,6 +316,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  let reportFiledThisVisit = false;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearFormError(form);
@@ -399,12 +400,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         throw new Error(data.detail || "Could not submit your report.");
       }
+      reportFiledThisVisit = true;
       successModal.hidden = false;
     } catch (err) {
       showFormError(form, err.message);
     } finally {
-      submitBtn.disabled = verificationNeeded || cooldownActive;
-      submitBtn.textContent = "Submit Report";
+      submitBtn.disabled = verificationNeeded || cooldownActive || reportFiledThisVisit;
+      submitBtn.textContent = reportFiledThisVisit ? "Report Submitted" : "Submit Report";
     }
   });
 
