@@ -1064,15 +1064,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // clicking Login Now starts that setup. A normal login (password filled
         // in) skips this entirely.
         if (!passwordField.value) {
-          const email = emailField.value.trim();
-          if (!email) {
-            showFormError(form, "Enter your email and password to log in.");
-            return;
-          }
-          // No lookup here: whether this email has an account waiting on setup
-          // isn't something an anonymous visitor should be able to learn. The
-          // setup page emails a code either way and only the inbox owner can use it.
-          window.location.href = `account-setup.html?email=${encodeURIComponent(email)}`;
+          showFormError(form, "Enter your email and password to log in.");
           return;
         }
 
