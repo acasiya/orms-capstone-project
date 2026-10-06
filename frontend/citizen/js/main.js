@@ -1058,16 +1058,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const rememberField = form.querySelector('[name="rememberMe"]');
         clearFormError(form);
 
-        // Staff Portal only: a Staff/Administrator account an admin created
-        // (see accounts/serializers.py's AdminCreateUserSerializer) has no
-        // password yet, so its first login is just the email — leaving
-        // Password blank and clicking Login Now is how that gets triggered,
-        // rather than a separate discoverable link. A normal login (password
-        // filled in) skips this entirely.
-        if (window.location.pathname.startsWith("/staff/") && !passwordField.value) {
+        // A Staff/Administrator account an admin created (see
+        // accounts/serializers.py's AdminCreateUserSerializer) has no password
+        // yet, so its first login is just the email — leaving Password blank and
+        // clicking Login Now starts that setup. A normal login (password filled
+        // in) skips this entirely.
+        if (!passwordField.value) {
           const email = emailField.value.trim();
           if (!email) {
-            showFormError(form, "Enter your email, then leave Password blank to set up a new account, or fill it in to log in.");
+            showFormError(form, "Enter your email and password to log in.");
             return;
           }
           // No lookup here: whether this email has an account waiting on setup

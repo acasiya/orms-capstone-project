@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       addAdminNotification(`New account created: ${created.email} (${role.value})`, "manage-accounts.html");
 
-      createdMessage.textContent = "They can finish setting up their account the first time they log in on the Staff Portal.";
+      createdMessage.textContent = "We emailed a setup code and a link to that address so they can finish setting up their account.";
       createdModal.hidden = false;
       staffForm.reset();
       syncFormVisibility();

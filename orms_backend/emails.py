@@ -42,6 +42,7 @@ if the notification email doesn't go out.
 """
 
 import logging
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -181,15 +182,23 @@ def send_account_suspicious_activity_email(user):
     )
 
 
-def send_staff_setup_code_email(user, code, expires_minutes):
+def send_staff_setup_code_email(user, code, expires_minutes, with_setup_link=False):
     # First-login setup for an admin-created Staff/Administrator account
     # (accounts/views.py's StaffAccountSetupView) proves the person controls the
     # address by making them enter this code before they can choose a password.
+    # with_setup_link is for the email sent when the account is created: it links
+    # straight to the code step, so the code in the email is the one to use.
+    setup_url = None
+    if with_setup_link:
+        setup_url = (
+            f"{settings.FRONTEND_BASE_URL}/staff/account-setup.html"
+            f"?email={quote(user.email)}&sent=1"
+        )
     send_templated_email(
         to=user.email,
         subject="SafeSpace — Your account setup code",
         template_name="staff_setup_code",
-        context={"user": user, "code": code, "expires_minutes": expires_minutes},
+        context={"user": user, "code": code, "expires_minutes": expires_minutes, "setup_url": setup_url},
     )
 
 

@@ -137,6 +137,18 @@ def _pending_setup_account(email):
     return user if user and not user.has_usable_password() else None
 
 
+def _send_setup_code(user, with_setup_link=False):
+    # Same as Forgot Password: only the newest code works.
+    PasswordResetCode.objects.filter(user=user, used_at__isnull=True).update(used_at=timezone.now())
+    code = generate_code()
+    PasswordResetCode.objects.create(
+        user=user,
+        code=code,
+        expires_at=timezone.now() + timedelta(minutes=PasswordResetCode.CODE_TTL_MINUTES),
+    )
+    send_staff_setup_code_email(user, code, PasswordResetCode.CODE_TTL_MINUTES, with_setup_link=with_setup_link)
+
+
 class StaffAccountSetupCodeRequestView(APIView):
     """
     POST /api/auth/staff-setup/request-code/ — step 1 of first-login setup:
@@ -161,15 +173,7 @@ class StaffAccountSetupCodeRequestView(APIView):
     def post(self, request):
         user = _pending_setup_account(request.data.get("email"))
         if user:
-            # Same as Forgot Password: only the newest code works.
-            PasswordResetCode.objects.filter(user=user, used_at__isnull=True).update(used_at=timezone.now())
-            code = generate_code()
-            PasswordResetCode.objects.create(
-                user=user,
-                code=code,
-                expires_at=timezone.now() + timedelta(minutes=PasswordResetCode.CODE_TTL_MINUTES),
-            )
-            send_staff_setup_code_email(user, code, PasswordResetCode.CODE_TTL_MINUTES)
+            _send_setup_code(user)
         return Response({
             "detail": "If that email belongs to an account waiting on setup, we've sent a code to it."
         })
@@ -340,6 +344,7 @@ class AdminCreateUserView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        _send_setup_code(user, with_setup_link=True)
         log_action(self.request.user, f"Created a {user.position} account for {user.email}")
 
 

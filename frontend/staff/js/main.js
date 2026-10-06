@@ -1069,6 +1069,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // not automatically, so following a link can't trigger emails.
     const emailFromQuery = new URLSearchParams(window.location.search).get("email");
     if (emailFromQuery) setupEmailField.value = emailFromQuery;
+    // The link in the account-creation email already has a code sent, so go
+    // straight to the code step rather than sending another (which would
+    // invalidate the one in the email).
+    if (emailFromQuery && new URLSearchParams(window.location.search).get("sent")) {
+      setupEmail = emailFromQuery;
+      document.getElementById("setupCodeEmail").textContent = emailFromQuery;
+      staffSetupEmailForm.hidden = true;
+      staffSetupCodeForm.hidden = false;
+      setupCodeField.focus();
+    }
 
     staffSetupEmailForm.addEventListener("submit", (e) => {
       e.preventDefault();
