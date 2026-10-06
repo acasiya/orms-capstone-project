@@ -2185,6 +2185,11 @@ button {
   color: var(--white);
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
+  overflow-y: auto;
 }
 
 .admin-sidebar.is-collapsed {
@@ -2289,6 +2294,9 @@ button {
   padding: 14px 28px;
   background: var(--white);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
 }
 
 .admin-topbar__menu-btn {
@@ -2652,26 +2660,24 @@ button {
   }
 
   /* Manage Accounts' and Approve Accounts' tables collapse to just the
-     owner's name — tap a row to open the full details popup (ID/Email/
+     owner's name — tap a row to open the full details popup (Email/
      Type/Status/etc., or ID photo + Approve/Reject) that already exists
-     for the owner link, instead of horizontally scrolling a 5-column
+     for the owner link, instead of horizontally scrolling a multi-column
      table on a phone screen. */
-  .admin-table--accounts thead th:not(:nth-child(2)),
-  .admin-table--accounts tbody td:not(:nth-child(2)),
-  .admin-table--approve thead th:not(:nth-child(2)),
-  .admin-table--approve tbody td:not(:nth-child(2)) {
+  .admin-table--accounts thead th:not(:nth-child(1)),
+  .admin-table--accounts tbody td:not(:nth-child(1)),
+  .admin-table--approve thead th:not(:nth-child(1)),
+  .admin-table--approve tbody td:not(:nth-child(1)) {
     display: none;
   }
 
-  /* Audit Logs' table collapses to Time/Date + Action (columns 4 and 5) —
-     those are what actually matter on this page; Account ID/Owner/Type
-     move into the tap-to-open popup (see audit-logs.js). */
+  /* Audit Logs' table collapses to Time/Date + Action (columns 3 and 4) —
+     those are what actually matter on this page; Owner/Type move into the
+     tap-to-open popup (see audit-logs.js). */
   .admin-table--audit thead th:nth-child(1),
   .admin-table--audit thead th:nth-child(2),
-  .admin-table--audit thead th:nth-child(3),
   .admin-table--audit tbody td:nth-child(1),
-  .admin-table--audit tbody td:nth-child(2),
-  .admin-table--audit tbody td:nth-child(3) {
+  .admin-table--audit tbody td:nth-child(2) {
     display: none;
   }
 
@@ -3521,4 +3527,89 @@ button {
   .setup-card {
     padding: 18px 16px;
   }
+}
+
+/* ---------- Site footer editor (About Us Setup) ---------- */
+.footer-link-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.footer-link-row input {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .footer-link-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Legal page editor (Website Setup) ---------- */
+.legal-section-row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 14px 8px;
+  margin-bottom: 14px;
+}
+
+.legal-section-row textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.legal-modal {
+  max-width: 680px;
+  text-align: left;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.legal-modal .field {
+  margin-bottom: 18px;
+}
+
+.legal-modal .field .field-hint {
+  margin: 6px 0 0;
+}
+
+
+.legal-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.legal-modal__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.legal-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 12px;
+}
+
+.legal-modal__actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0 22px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+
+.legal-modal__actions .btn {
+  width: auto;
+  padding: 11px 26px;
 }

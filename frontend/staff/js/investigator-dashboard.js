@@ -11,11 +11,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const dashboardMain = document.querySelector(".admin-content");
   const currentUser = getAdminUser();
 
-  const welcomeTitle = document.querySelector(".dash-header__title");
-  if (welcomeTitle) {
-    welcomeTitle.textContent = `Welcome back, ${(currentUser && currentUser.name) || "Staff"}!`;
-  }
-
   try {
     await ensureReportsLoaded();
   } catch (err) {
@@ -30,6 +25,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (status === "Under Review") return "status-pill--in-process";
     if (status === "In Action") return "status-pill--remarks";
     return "status-pill--new";
+  }
+
+  // Report Timeline age coloring: 0-5 days green, 6-10 yellow, 11-15 orange, 16+ red.
+  function agingPillClass(days) {
+    if (days <= 5) return "aging-pill--green";
+    if (days <= 10) return "aging-pill--yellow";
+    if (days <= 15) return "aging-pill--orange";
+    return "aging-pill--red";
   }
 
   function daysBetween(from, to) {
@@ -92,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }).join("");
   }
 
-  // ---- Oldest Open Reports (mine) ----
+  // ---- Report Timeline (mine) ----
 
   function renderAgingList() {
     const body = document.getElementById("myAgingReportsBody");
@@ -109,15 +112,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             const days = daysBetween(r.dateSubmitted, now);
             return `
         <tr data-id="${r.id}">
-          <td>${r.id.slice(0, 8).toUpperCase()}</td>
           <td>${r.location || "—"}</td>
-          <td>${days} ${days === 1 ? "day" : "days"}</td>
+          <td><span class="status-pill ${agingPillClass(days)}">${days} ${days === 1 ? "day" : "days"}</span></td>
           <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
           <td><a class="recent-reports-table__action" href="report-detail.html?id=${encodeURIComponent(r.id)}" aria-label="View report">&#8594;</a></td>
         </tr>`;
           })
           .join("")
-      : `<tr><td colspan="5" class="ordinances-empty">Nothing open on your plate right now.</td></tr>`;
+      : `<tr><td colspan="4" class="ordinances-empty">Nothing open on your plate right now.</td></tr>`;
 
     // On mobile, only Days Open/Status stay visible (see style.css) — tap
     // anywhere on the row to go to the report, same place the arrow link goes.

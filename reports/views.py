@@ -13,6 +13,7 @@ from accounts.views import IsAdmin, IsInvestigatorOrAdmin, IsSecretaryOrAdmin, I
 from orms_backend.codes import generate_code
 from orms_backend.emails import (
     send_question_answered_email,
+    send_report_reassigned_email,
     send_report_resolved_email,
     send_report_submitted_citizen_email,
     send_report_submitted_staff_emails,
@@ -246,6 +247,12 @@ class StaffReportDetailView(APIView):
 
     def get(self, request, pk):
         report = self.get_object(pk)
+        # Only the Investigator who actually holds this claim "opens" it in
+        # the sense the citizen sees (StaffReportSerializer/report-detail.js)
+        # — a Captain/Secretary/Admin viewing it read-only doesn't move this.
+        if report.assigned_investigator_id == request.user.id:
+            report.investigator_last_viewed_at = timezone.now()
+            report.save(update_fields=["investigator_last_viewed_at"])
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
     def patch(self, request, pk):
@@ -308,9 +315,16 @@ class StaffReportClaimView(APIView):
                 {"detail": f"This report is already claimed by {report.assigned_investigator.get_full_name() or report.assigned_investigator.username}."},
                 status=400,
             )
+        # A reassignment (not just the first-ever claim) when whoever held it
+        # before this claim isn't the one claiming it now — see
+        # StaffReportForfeitView, which is what sets previous_investigator.
+        reassigned = bool(report.previous_investigator_id) and report.previous_investigator_id != request.user.id
         report.assigned_investigator = request.user
-        report.save(update_fields=["assigned_investigator"])
+        report.previous_investigator = None
+        report.save(update_fields=["assigned_investigator", "previous_investigator"])
         log_action(request.user, f"Claimed a report — {report.ordinance}")
+        if reassigned:
+            send_report_reassigned_email(report)
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
 
@@ -328,7 +342,8 @@ class StaffReportForfeitView(APIView):
         report = get_object_or_404(Report.objects.select_related("citizen", "assigned_investigator"), pk=pk)
         holder = report.assigned_investigator
         report.assigned_investigator = None
-        report.save(update_fields=["assigned_investigator"])
+        report.previous_investigator = holder
+        report.save(update_fields=["assigned_investigator", "previous_investigator"])
         if holder:
             holder_name = holder.get_full_name() or holder.username
             log_action(request.user, f"Released {holder_name}'s claim on a report — {report.ordinance}")

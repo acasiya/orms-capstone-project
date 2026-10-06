@@ -111,4 +111,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("remarksCard").hidden = false;
     document.getElementById("remarksText").textContent = report.remarks;
   }
+
+  document.getElementById("investigatorClaimedBy").textContent = report.claimed_by
+    ? `Claimed by ${report.claimed_by}`
+    : "Not yet claimed by an investigator.";
+  document.getElementById("investigatorLastOpened").textContent = report.investigator_last_viewed_at
+    ? `Last opened by the investigator on ${formatDateTime(report.investigator_last_viewed_at)}`
+    : "Not yet opened by the investigator.";
 });

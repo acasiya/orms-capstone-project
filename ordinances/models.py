@@ -26,26 +26,6 @@ def pdf_storage():
 
 
 class OrdinanceQuerySet(models.QuerySet):
-    """
-    Named shortcuts for the ordinance/resolution split, so code that must only
-    ever see one kind says so plainly instead of repeating a kind filter
-    (easy to forget — e.g. File Report must never offer a resolution):
-
-        Ordinance.objects.ordinances().published()   # citizen-visible ordinances
-        Ordinance.objects.resolutions()
-        Ordinance.objects.of_kind(request.query_params.get("kind"))
-    """
-
-    def ordinances(self):
-        return self.filter(kind=Ordinance.Kind.ORDINANCE)
-
-    def resolutions(self):
-        return self.filter(kind=Ordinance.Kind.RESOLUTION)
-
-    def of_kind(self, kind):
-        """Filter to one kind; an empty/unknown value leaves both kinds in."""
-        return self.filter(kind=kind) if kind in Ordinance.Kind.values else self
-
     def published(self):
         """Not archived — what citizens and guests are allowed to see."""
         return self.filter(is_archived=False)
@@ -53,25 +33,11 @@ class OrdinanceQuerySet(models.QuerySet):
 
 class Ordinance(models.Model):
     """
-    A real barangay ordinance or resolution, uploaded by Staff/Admin as a PDF.
-    Replaces the old hardcoded frontend placeholder list
-    (frontend/*/js/ordinances-data.js).
-
-    Resolutions share this model (same fields, same lists and detail pages,
-    filterable by `kind`) rather than getting their own, since they're
-    displayed and searched alongside ordinances. Who may manage each kind
-    differs: the Secretary handles ordinances, the Barangay Treasurer
-    resolutions (see accounts.views.managed_document_kinds). Only ordinances
-    can be violated, so File Report's dropdown and suggestions use
-    kind=ORDINANCE only.
+    A real barangay ordinance, uploaded by Staff/Admin as a PDF. Replaces the
+    old hardcoded frontend placeholder list (frontend/*/js/ordinances-data.js).
     """
 
-    class Kind(models.TextChoices):
-        ORDINANCE = "ordinance", "Ordinance"
-        RESOLUTION = "resolution", "Resolution"
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    kind = models.CharField(max_length=12, choices=Kind.choices, default=Kind.ORDINANCE, db_index=True)
     number = models.CharField(max_length=100)
     title = models.CharField(max_length=255)
     # Free text, typed directly on Upload/Edit Ordinance — not a ForeignKey to
@@ -188,6 +154,25 @@ class OrdinanceCategory(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class OrdinanceView(models.Model):
+    """
+    Records that a citizen has opened a specific ordinance's detail page —
+    separate from OrdinanceDownload below (a citizen can view one without
+    ever downloading its PDF). Backs the citizen home page's "Latest
+    Ordinances" section: an ordinance stays listed there until a row like
+    this exists for (that ordinance, that citizen).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ordinance = models.ForeignKey(Ordinance, on_delete=models.CASCADE, related_name="views")
+    citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ordinance_views")
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["ordinance", "citizen"]
+        ordering = ["-viewed_at"]
 
 
 class OrdinanceDownload(models.Model):

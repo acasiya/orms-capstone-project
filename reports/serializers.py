@@ -36,18 +36,26 @@ class ReportSerializer(serializers.ModelSerializer):
         child=serializers.FileField(), write_only=True, required=False, allow_empty=True
     )
     attachments = serializers.SerializerMethodField(read_only=True)
+    claimed_by = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Report
         fields = [
             "id", "location", "latitude", "longitude", "ordinance", "incident_date", "incident_time",
             "nature_of_violation", "status", "remarks", "created_at", "updated_at",
-            "files", "attachments",
+            "files", "attachments", "claimed_by", "investigator_last_viewed_at",
         ]
-        read_only_fields = ["id", "status", "remarks", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "status", "remarks", "created_at", "updated_at", "investigator_last_viewed_at",
+        ]
 
     def validate_files(self, files):
         return validate_attachment_files(files)
+
+    def get_claimed_by(self, obj):
+        if not obj.assigned_investigator:
+            return None
+        return obj.assigned_investigator.get_full_name() or obj.assigned_investigator.username
 
     def validate(self, attrs):
         lat, lng = attrs.get("latitude"), attrs.get("longitude")

@@ -21,12 +21,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let appliedQuery = "";
 
   async function loadLogs() {
-    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading audit logs...</td></tr>`;
+    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">Loading audit logs...</td></tr>`;
     try {
       logs = await getAuditLogs();
       render();
     } catch (err) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">${err.message}</td></tr>`;
     }
   }
 
@@ -47,7 +47,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const sortValue = sortSelect.value;
     rows = rows.slice().sort((a, b) => {
       if (sortValue === "owner") return a.owner.localeCompare(b.owner);
-      if (sortValue === "id") return a.accountId.localeCompare(b.accountId);
       return new Date(b.timeAt) - new Date(a.timeAt);
     });
 
@@ -66,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentPageRows = pageRows;
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No logs match this filter.</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">No logs match this filter.</td></tr>`;
       return;
     }
 
@@ -74,7 +73,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       .map(
         (a, i) => `
         <tr data-row-index="${i}">
-          <td>${a.accountId}</td>
           <td>${a.owner}</td>
           <td>${a.type}</td>
           <td>${a.timeLabel}</td>
@@ -86,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
 
-  // ---- Mobile row-tap details (Account ID/Owner/Type are hidden on mobile
+  // ---- Mobile row-tap details (Owner/Type are hidden on mobile
   // — see the 860px breakpoint in style.css, which keeps only Time/Date and
   // Action visible) — tapping a row shows everything in one popup instead. ----
   let logDetailModal = null;
@@ -101,7 +99,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         <button type="button" class="modal-close" aria-label="Close">&times;</button>
         <h2>Log Details</h2>
         <dl class="edit-account-card__details">
-          <div class="edit-account-card__row"><dt>Account ID</dt><dd id="logDetailId"></dd></div>
           <div class="edit-account-card__row"><dt>Account Owner</dt><dd id="logDetailOwner"></dd></div>
           <div class="edit-account-card__row"><dt>Account Type</dt><dd id="logDetailType"></dd></div>
           <div class="edit-account-card__row"><dt>Time/Date</dt><dd id="logDetailTime"></dd></div>
@@ -121,7 +118,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function openLogDetail(log) {
     const overlay = ensureLogDetailModal();
-    overlay.querySelector("#logDetailId").textContent = log.accountId;
     overlay.querySelector("#logDetailOwner").textContent = log.owner;
     overlay.querySelector("#logDetailType").textContent = log.type;
     overlay.querySelector("#logDetailTime").textContent = log.timeLabel;

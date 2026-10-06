@@ -1,10 +1,12 @@
-// SafeSpace — Reports Dashboard: a single date-range filter drives every
-// card (stats, heatmap, category pie, status chart, investigator chart) —
-// all real, from reports-data.js's API-backed data (category comes from
-// matching each report's ordinance against the real uploaded ordinances —
-// see reports-data.js's categoryForOrdinance). The heatmap is a Leaflet +
-// OpenStreetMap density map keyed on each report's street (geocoded to a
-// centroid in street-coordinates.js) — see js/heatmap.js.
+// SafeSpace — Reports Dashboard: a top date-range filter (presets or a
+// custom "Date From - Date To" range) sets the default period for the
+// stats and all four graphs; each graph can then override it with its own
+// dropdown until the top filter changes again or Clear Filters is pressed.
+// All real data, from reports-data.js's API-backed source (category comes
+// from matching each report's ordinance against the real uploaded
+// ordinances — see reports-data.js's categoryForOrdinance). The heatmap is
+// a Leaflet + OpenStreetMap density map keyed on each report's street
+// (geocoded to a centroid in street-coordinates.js) — see js/heatmap.js.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const MONTHS_BACK_COUNT = 5;
@@ -13,22 +15,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   const CATEGORY_COLOR_PALETTE = [
     "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
     "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
+    "#c9a227", "#5b8c5a", "#d1667f", "#4a6fa5",
+    "#e0824a", "#7b5ea7", "#3c9d8f", "#b25a9e",
   ];
 
-  // A single period drives every card on the dashboard — the stats,
-  // heatmap, and all three charts — so the top date-range dropdown filters
-  // the whole page instead of each card tracking its own period.
+  // The top date-range filter sets a default that every graph follows —
+  // changing it immediately re-applies to all four (clearing any
+  // per-graph override) — but each graph's own dropdown can then override
+  // it independently, until the top filter changes again or Clear Filters
+  // is pressed. The 5 stat cards and the Report Timeline table always
+  // follow the top filter only (Report Timeline is actually independent of
+  // every filter — see its own comment below).
   const state = {
-    period: "week",
+    topPeriod: "week",
+    customRange: null, // {from: "YYYY-MM-DD", to: "YYYY-MM-DD"} once topPeriod === "custom"
+    graphOverride: { heatmap: null, category: null, status: null, investigator: null },
   };
 
-  const dashboardMain = document.querySelector(".admin-content");
-
-  const welcomeTitle = document.querySelector(".dash-header__title");
-  if (welcomeTitle) {
-    const currentUser = getAdminUser();
-    welcomeTitle.textContent = `Welcome back, ${(currentUser && currentUser.name) || "Staff"}!`;
+  function topPeriodValue() {
+    return state.topPeriod === "custom" && state.customRange
+      ? { type: "custom", from: state.customRange.from, to: state.customRange.to }
+      : state.topPeriod;
   }
+
+  // The period a given graph should actually render with — its own
+  // override if it has one, else whatever the top filter is set to.
+  function effectivePeriod(graphKey) {
+    return state.graphOverride[graphKey] || topPeriodValue();
+  }
+
+  // Builds from local date components, not toISOString() (which converts to
+  // UTC first and would roll the date back a day in any timezone ahead of
+  // UTC, e.g. the Philippines at local midnight).
+  function toDateInputValue(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function labelForPeriodValue(value) {
+    if (value && typeof value === "object" && value.type === "custom") {
+      return `${formatDate(new Date(`${value.from}T00:00:00`))} - ${formatDate(new Date(`${value.to}T00:00:00`))}`;
+    }
+    const opt = buildPeriodOptions().find((o) => o.value === value);
+    return opt ? opt.label : "";
+  }
+
+  const dashboardMain = document.querySelector(".admin-content");
 
   try {
     await ensureOrdinancesLoaded();
@@ -47,10 +81,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     new Set([...liveOrdinances().map((o) => o.category), ...liveReports().map((r) => r.category)])
   );
 
+  // Assigned by each category's stable position in REPORT_CATEGORIES, not a
+  // hash of its name — a hash can (and did) collide two categories onto the
+  // same color even well under the palette size.
+  const CATEGORY_COLOR_BY_NAME = new Map(
+    REPORT_CATEGORIES.map((name, i) => [name, CATEGORY_COLOR_PALETTE[i % CATEGORY_COLOR_PALETTE.length]])
+  );
+
   function categoryColor(name) {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
-    return CATEGORY_COLOR_PALETTE[Math.abs(hash) % CATEGORY_COLOR_PALETTE.length];
+    return CATEGORY_COLOR_BY_NAME.get(name) || CATEGORY_COLOR_PALETTE[0];
   }
 
   function formatDate(date) {
@@ -119,9 +158,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // The comparison period for a delta — one week/month/quarter/year further
-  // back than the selected one. "all" has no previous period to compare
-  // against.
+  // back than the selected one. "all" and a custom date range have no
+  // previous period to compare against.
   function getPreviousPeriodValue(period) {
+    if (typeof period !== "string") return null;
     if (period === "week") return "week1";
     const match = period.match(/^(week|month|quarter|year)(\d+)$/);
     if (!match) return null;
@@ -129,6 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function periodDeltaSuffix(period) {
+    if (typeof period !== "string") return "";
     if (period.startsWith("week")) return "vs last week";
     if (period.startsWith("month")) return "vs last month";
     if (period.startsWith("quarter")) return "vs last quarter";
@@ -158,10 +199,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderStats() {
-    const cur = computeStats(getReportsForPeriod(state.period));
-    const prevPeriod = getPreviousPeriodValue(state.period);
+    const topPeriod = topPeriodValue();
+    const cur = computeStats(getReportsForPeriod(topPeriod));
+    const prevPeriod = getPreviousPeriodValue(topPeriod);
     const prev = prevPeriod ? computeStats(getReportsForPeriod(prevPeriod)) : null;
-    const suffix = periodDeltaSuffix(state.period);
+    const suffix = periodDeltaSuffix(topPeriod);
     setStat("statTotal", "statTotalDelta", cur.total, prev && prev.total, suffix);
     setStat("statNew", "statNewDelta", cur.new, prev && prev.new, suffix);
     setStat("statProcess", "statProcessDelta", cur.process, prev && prev.process, suffix);
@@ -169,27 +211,67 @@ document.addEventListener("DOMContentLoaded", async () => {
     setStat("statRemarks", "statRemarksDelta", cur.remarks, prev && prev.remarks, suffix);
   }
 
-  // ---- Date range dropdown (drives the whole dashboard) ----
+  // ---- Date range dropdown (the top filter — sets every graph's default) ----
 
   const dateRangeLabel = document.getElementById("dateRangeLabel");
   const dateRangeMenu = document.getElementById("dateRangeMenu");
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
-  function currentPeriodLabel() {
-    const opt = buildPeriodOptions().find((o) => o.value === state.period);
-    return opt ? opt.label : "";
+  // Changing the top filter is an "overwrite" — every graph's own override
+  // is cleared so all four immediately follow the new top period again.
+  function setTopPeriod(period, customRange) {
+    state.topPeriod = period;
+    state.customRange = customRange || null;
+    Object.keys(state.graphOverride).forEach((key) => (state.graphOverride[key] = null));
   }
 
   function renderDateRangeMenu() {
-    dateRangeMenu.innerHTML = buildPeriodOptions()
-      .map((o) => `<li data-value="${o.value}" class="${o.value === state.period ? "active" : ""}">${o.label}</li>`)
-      .join("");
-    dateRangeMenu.querySelectorAll("li").forEach((li) => {
+    const defaultRange = state.customRange || {
+      from: toDateInputValue(getWeekRange(0).start),
+      to: toDateInputValue(getWeekRange(0).end),
+    };
+    dateRangeMenu.innerHTML =
+      `<li class="dash-dropdown-menu__custom">
+        <div class="dash-dropdown-menu__custom-row">
+          <label>From <input type="date" id="topCustomFrom" value="${defaultRange.from}" /></label>
+          <label>To <input type="date" id="topCustomTo" value="${defaultRange.to}" /></label>
+        </div>
+        <button type="button" class="btn" id="topCustomApply">Apply Custom Range</button>
+      </li>` +
+      buildPeriodOptions()
+        .map(
+          (o) =>
+            `<li data-value="${o.value}" class="${state.topPeriod === o.value ? "active" : ""}">${o.label}</li>`
+        )
+        .join("");
+
+    dateRangeMenu.querySelectorAll("li[data-value]").forEach((li) => {
       li.addEventListener("click", () => {
-        state.period = li.dataset.value;
+        setTopPeriod(li.dataset.value);
+        closeAllDropdowns();
         renderAll();
       });
     });
+
+    const customLi = dateRangeMenu.querySelector(".dash-dropdown-menu__custom");
+    customLi.addEventListener("click", (e) => e.stopPropagation());
+    customLi.querySelector("#topCustomApply").addEventListener("click", () => {
+      const from = customLi.querySelector("#topCustomFrom").value;
+      const to = customLi.querySelector("#topCustomTo").value;
+      if (!from || !to || from > to) {
+        alert("Choose a valid date range (From must be on or before To).");
+        return;
+      }
+      setTopPeriod("custom", { from, to });
+      closeAllDropdowns();
+      renderAll();
+    });
   }
+
+  clearFiltersBtn.addEventListener("click", () => {
+    setTopPeriod("week");
+    renderAll();
+  });
 
   // ---- Reports by Category pie ----
 
@@ -199,7 +281,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderCategoryPie() {
     categoryPie.querySelectorAll(".pie-chart__label, .pie-chart__empty").forEach((el) => el.remove());
 
-    const reports = getReportsForPeriod(state.period);
+    const reports = getReportsForPeriod(effectivePeriod("category"));
     if (!reports.length) {
       categoryPie.style.background = "var(--border)";
       categoryPie.insertAdjacentHTML("beforeend", `<div class="pie-chart__empty">No data yet</div>`);
@@ -256,7 +338,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const MAX_BAR_HEIGHT = 168; // px — leaves room for the count label above it
 
   function renderStatusChart() {
-    const stats = computeStats(getReportsForPeriod(state.period));
+    const stats = computeStats(getReportsForPeriod(effectivePeriod("status")));
     const maxCount = Math.max(stats.new, stats.process, stats.remarks, stats.resolved, 1);
 
     if (!stats.total) {
@@ -290,7 +372,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ];
 
   function renderInvestigatorChart() {
-    const reports = getReportsForPeriod(state.period).filter((r) => r.assignedInvestigator);
+    const reports = getReportsForPeriod(effectivePeriod("investigator")).filter((r) => r.assignedInvestigator);
     const counts = {};
     reports.forEach((r) => {
       counts[r.assignedInvestigator] = (counts[r.assignedInvestigator] || 0) + 1;
@@ -318,7 +400,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  // ---- Oldest Open Reports (aging list) ----
+  // ---- Report Timeline (aging list) ----
   //
   // Deliberately NOT filtered by state.period — an old report shouldn't
   // vanish from this list just because the selected date range has moved
@@ -330,6 +412,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function daysBetween(from, to) {
     return Math.max(0, Math.floor((to - from) / (1000 * 60 * 60 * 24)));
+  }
+
+  // Report Timeline age coloring: 0-5 days green, 6-10 yellow, 11-15 orange, 16+ red.
+  function agingPillClass(days) {
+    if (days <= 5) return "aging-pill--green";
+    if (days <= 10) return "aging-pill--yellow";
+    if (days <= 15) return "aging-pill--orange";
+    return "aging-pill--red";
   }
 
   function renderAgingReports() {
@@ -347,17 +437,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             const days = daysBetween(r.dateSubmitted, now);
             return `
         <tr>
-          <td>${r.id.slice(0, 8).toUpperCase()}</td>
           <td>${r.ordinance || "—"}</td>
           <td>${r.location || "—"}</td>
-          <td>${days} ${days === 1 ? "day" : "days"}</td>
+          <td><span class="status-pill ${agingPillClass(days)}">${days} ${days === 1 ? "day" : "days"}</span></td>
           <td><span class="status-pill ${statusPillClass(r.status)}">${r.status}</span></td>
           <td>${r.assignedInvestigator || "Unclaimed"}</td>
           <td><a class="recent-reports-table__view-btn" href="report-detail.html?id=${encodeURIComponent(r.id)}">View Details</a></td>
         </tr>`;
           })
           .join("")
-      : `<tr><td colspan="7" class="ordinances-empty">Nothing open — every report has been resolved.</td></tr>`;
+      : `<tr><td colspan="6" class="ordinances-empty">Nothing open — every report has been resolved.</td></tr>`;
   }
 
   function statusPillClass(status) {
@@ -390,7 +479,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const cardHeatmap = createIncidentHeatmap(heatmapCanvasEl, { interactive: false });
     let modalHeatmap = null;
 
-    const heatmapCounts = () => countByLocation(getReportsForPeriod(state.period));
+    const heatmapCounts = () => countByLocation(getReportsForPeriod(effectivePeriod("heatmap")));
 
     renderHeatmaps = () => {
       const counts = heatmapCounts();
@@ -447,11 +536,77 @@ document.addEventListener("DOMContentLoaded", async () => {
     heatmapCanvasEl.innerHTML = `<div class="ordinances-empty">Map unavailable</div>`;
   }
 
-  // ---- Wire up — one period, every card ----
+  // ---- Per-graph filter dropdowns — override the top filter for one card ----
+
+  const GRAPH_FILTERS = [
+    { key: "heatmap", labelId: "heatmapFilterLabel", menuId: "heatmapFilterMenu", render: () => renderHeatmaps() },
+    { key: "category", labelId: "categoryFilterLabel", menuId: "categoryFilterMenu", render: () => renderCategoryPie() },
+    { key: "status", labelId: "statusFilterLabel", menuId: "statusFilterMenu", render: () => renderStatusChart() },
+    { key: "investigator", labelId: "investigatorFilterLabel", menuId: "investigatorFilterMenu", render: () => renderInvestigatorChart() },
+  ];
+
+  function renderGraphFilterLabel(cfg) {
+    const override = state.graphOverride[cfg.key];
+    document.getElementById(cfg.labelId).textContent = override ? labelForPeriodValue(override) : "Dashboard Default";
+  }
+
+  function renderGraphFilterMenu(cfg) {
+    const menu = document.getElementById(cfg.menuId);
+    const override = state.graphOverride[cfg.key];
+    const isCustom = !!override && typeof override === "object";
+    const current = isCustom ? "" : override || "";
+    const defaultRange = isCustom
+      ? override
+      : { from: toDateInputValue(getWeekRange(0).start), to: toDateInputValue(getWeekRange(0).end) };
+    const options = [{ value: "", label: "Dashboard Default" }, ...buildPeriodOptions()];
+    menu.innerHTML =
+      `<li class="dash-dropdown-menu__custom">
+        <div class="dash-dropdown-menu__custom-row">
+          <label>From <input type="date" id="${cfg.key}CustomFrom" value="${defaultRange.from}" /></label>
+          <label>To <input type="date" id="${cfg.key}CustomTo" value="${defaultRange.to}" /></label>
+        </div>
+        <button type="button" class="btn" id="${cfg.key}CustomApply">Apply Custom Range</button>
+      </li>` +
+      options
+        .map((o) => `<li data-value="${o.value}" class="${current === o.value ? "active" : ""}">${o.label}</li>`)
+        .join("");
+
+    menu.querySelectorAll("li[data-value]").forEach((li) => {
+      li.addEventListener("click", () => {
+        state.graphOverride[cfg.key] = li.dataset.value || null;
+        closeAllDropdowns();
+        renderGraphFilterLabel(cfg);
+        renderGraphFilterMenu(cfg);
+        cfg.render();
+      });
+    });
+
+    const customLi = menu.querySelector(".dash-dropdown-menu__custom");
+    customLi.addEventListener("click", (e) => e.stopPropagation());
+    customLi.querySelector(`#${cfg.key}CustomApply`).addEventListener("click", () => {
+      const from = customLi.querySelector(`#${cfg.key}CustomFrom`).value;
+      const to = customLi.querySelector(`#${cfg.key}CustomTo`).value;
+      if (!from || !to || from > to) {
+        alert("Choose a valid date range (From must be on or before To).");
+        return;
+      }
+      state.graphOverride[cfg.key] = { type: "custom", from, to };
+      closeAllDropdowns();
+      renderGraphFilterLabel(cfg);
+      renderGraphFilterMenu(cfg);
+      cfg.render();
+    });
+  }
+
+  // ---- Wire up — the top filter sets every graph's default ----
 
   function renderAll() {
-    dateRangeLabel.textContent = currentPeriodLabel();
+    dateRangeLabel.textContent = labelForPeriodValue(topPeriodValue());
     renderDateRangeMenu();
+    GRAPH_FILTERS.forEach((cfg) => {
+      renderGraphFilterLabel(cfg);
+      renderGraphFilterMenu(cfg);
+    });
     renderStats();
     renderCategoryPie();
     renderStatusChart();

@@ -68,7 +68,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 # Barangay Staff no longer has a free-text job title — every staff (and,
-# now, Administrator) account picks exactly one of these 4 at creation time
+# now, Administrator) account picks exactly one of these at creation time
 # (AdminCreateUserSerializer) or later (AdminAccountDetailView.patch's
 # "Update Role"). Administrator isn't a separate account type anymore —
 # picking it here just sets role=ADMIN alongside the rest of the position
@@ -79,22 +79,18 @@ class RegisterSerializer(serializers.ModelSerializer):
 # AdminAccountDetailView.patch. Each role also determines which sections of
 # the Staff Portal that account can see — see
 # frontend/staff/js/admin.js's STAFF_NAV_ACCESS.
-#
-# Barangay Treasurer manages resolutions (Ordinance.kind == RESOLUTION) the
-# way the Secretary manages ordinances — see accounts.views.can_manage_document_kind.
-STAFF_ROLE_CHOICES = ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator", "Administrator"]
+STAFF_ROLE_CHOICES = ["Barangay Captain", "Secretary", "Investigator", "Administrator"]
 STAFF_ROLE_TO_ROLE_FIELD = {
     "Barangay Captain": User.Role.STAFF,
     "Secretary": User.Role.STAFF,
-    "Barangay Treasurer": User.Role.STAFF,
     "Investigator": User.Role.STAFF,
     "Administrator": User.Role.ADMIN,
 }
-UNIQUE_STAFF_ROLES = {"Barangay Captain", "Secretary", "Barangay Treasurer"}
+UNIQUE_STAFF_ROLES = {"Barangay Captain", "Secretary"}
 
 
 def validate_staff_role_uniqueness(staff_role, exclude_user=None):
-    """Shared by account creation and Update Role — one active Barangay Captain/Secretary/Treasurer at a time."""
+    """Shared by account creation and Update Role — one active Barangay Captain/Secretary at a time."""
     if staff_role not in UNIQUE_STAFF_ROLES:
         return
     clash = User.objects.filter(position__iexact=staff_role, is_active=True)
@@ -312,14 +308,35 @@ class AdminAccountSerializer(serializers.ModelSerializer):
     # read as "Online" just because is_active defaults to True.
     setupPending = serializers.SerializerMethodField()
     position = serializers.CharField(read_only=True)
+    # Citizen accounts only — how many reports/suggestions they've filed and
+    # what state each is in, so the admin can gauge an account's activity
+    # without leaving Manage Accounts. None for Staff/Admin accounts, which
+    # don't file either.
+    reportStats = serializers.SerializerMethodField()
+    suggestionStats = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id", "owner", "email", "type", "active", "position",
             "lastActiveLabel", "activityMinutes", "created", "createdAt", "updated",
-            "setupPending",
+            "setupPending", "reportStats", "suggestionStats",
         ]
+
+    def _status_breakdown(self, queryset):
+        from django.db.models import Count
+        counts = {row["status"]: row["count"] for row in queryset.values("status").annotate(count=Count("id"))}
+        return {"total": sum(counts.values()), "byStatus": counts}
+
+    def get_reportStats(self, obj):
+        if obj.role != User.Role.CITIZEN:
+            return None
+        return self._status_breakdown(obj.reports.all())
+
+    def get_suggestionStats(self, obj):
+        if obj.role != User.Role.CITIZEN:
+            return None
+        return self._status_breakdown(obj.concerns.all())
 
     def get_setupPending(self, obj):
         return not obj.has_usable_password()

@@ -24,6 +24,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   }
 
+  function daysOld(iso) {
+    const days = Math.max(0, Math.floor((Date.now() - new Date(iso)) / (1000 * 60 * 60 * 24)));
+    return `${days} ${days === 1 ? "day" : "days"} old`;
+  }
+
   let reports = [];
   let page = 1;
   // Resolved reports are hidden until the citizen actually picks a filter
@@ -55,9 +60,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             return `
         <div class="concern-row">
           <span class="concern-row__title">${r.ordinance}</span>
-          <span class="concern-row__date">${formatDate(r.created_at)}</span>
+          <span class="concern-row__date">${formatDate(r.created_at)} &middot; ${daysOld(r.created_at)}</span>
           <a class="concern-row__link" href="my-report-detail.html?id=${encodeURIComponent(r.id)}">View Details</a>
-          <span class="status-badge ${badgeClass[label] || ""}">${label}</span>
+          <span class="status-badge ${badgeClass[label] || ""}">Status: ${label}</span>
         </div>`;
           })
           .join("")

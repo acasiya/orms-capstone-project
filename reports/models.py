@@ -50,6 +50,18 @@ class Report(models.Model):
     assigned_investigator = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="claimed_reports"
     )
+    # Set each time the assigned Investigator opens this report's detail page
+    # (see StaffReportDetailView.get) — shown to the citizen alongside who's
+    # claimed it, so they can see it's actually being looked at.
+    investigator_last_viewed_at = models.DateTimeField(null=True, blank=True)
+    # Whoever last held this report's claim before it was forfeited (cleared
+    # back to None once claimed again) — lets StaffReportClaimView tell
+    # whether a new claimant is actually a *different* Investigator than
+    # before, so the citizen is only emailed about an investigator swap, not
+    # every claim.
+    previous_investigator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

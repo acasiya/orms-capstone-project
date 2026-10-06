@@ -228,6 +228,14 @@ function getReportsForWeekOffset(offset) {
 }
 
 function getReportsForPeriod(periodValue) {
+  // A custom "Date From - Date To" range (see reports-dashboard.js's top
+  // filter) — {type: "custom", from: "YYYY-MM-DD", to: "YYYY-MM-DD"},
+  // inclusive of both ends.
+  if (periodValue && typeof periodValue === "object" && periodValue.type === "custom") {
+    const start = new Date(`${periodValue.from}T00:00:00`);
+    const end = endOfDay(new Date(`${periodValue.to}T00:00:00`));
+    return liveReports().filter((r) => r.dateSubmitted >= start && r.dateSubmitted <= end);
+  }
   if (periodValue === "all") return liveReports();
   if (periodValue === "week") return getReportsForWeekOffset(0);
   if (periodValue.startsWith("week")) return getReportsForWeekOffset(Number(periodValue.slice(4)));

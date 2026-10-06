@@ -11,12 +11,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let accounts = [];
 
   async function loadAccounts() {
-    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading accounts...</td></tr>`;
+    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">Loading accounts...</td></tr>`;
     try {
       accounts = await getPendingVerifications();
       render();
     } catch (err) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">${err.message}</td></tr>`;
     }
   }
 
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rows = accounts.filter((a) => filterValue === "all" || accountTypeGroup(a.type) === filterValue);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No accounts are waiting for approval.</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">No accounts are waiting for approval.</td></tr>`;
       return;
     }
 
@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       .map(
         (a) => `
         <tr data-id="${a.id}">
-          <td>${a.id}</td>
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
           <td><a class="admin-table__owner-link" href="#" data-photo-id="${a.id}">View Photo</a></td>
@@ -53,7 +52,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const approveModal = document.getElementById("approveAccountModal");
   const approveName = document.getElementById("approveAccountName");
   const approveEmail = document.getElementById("approveAccountEmail");
-  const approveId = document.getElementById("approveAccountId");
   const approveType = document.getElementById("approveAccountType");
   const approveCreated = document.getElementById("approveAccountCreated");
   const approvePhotoLink = document.getElementById("approveAccountPhotoLink");
@@ -94,7 +92,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     activeAccountId = account.id;
     approveName.textContent = account.owner;
     approveEmail.textContent = account.email;
-    approveId.textContent = account.id;
     approveType.textContent = account.type;
     approveCreated.textContent = account.created;
     approveModal.hidden = false;

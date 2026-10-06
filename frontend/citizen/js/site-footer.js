@@ -65,6 +65,43 @@ function fillBarangayFields(profile) {
   });
 }
 
+const DEFAULT_FOOTER_QUICK_LINKS = [
+  { label: "Ordinances", url: "ordinances.html" },
+  { label: "File a Report", url: "file-report.html" },
+  { label: "Submit a Suggestion", url: "submit-suggestion.html" },
+  { label: "FAQs", url: "faqs.html" },
+  { label: "About Us", url: "about.html" },
+];
+
+const DEFAULT_FOOTER_LEGAL_LINKS = [
+  { label: "Privacy Policy", url: "privacy-policy.html" },
+  { label: "Terms and Agreements", url: "terms.html" },
+  { label: "Your Data Privacy Rights", url: "privacy-policy.html#your-rights" },
+];
+
+const FOOTER_AUTH_GATES = { "file-report.html": "report", "submit-suggestion.html": "suggestion" };
+
+function footerLinksHtml(links) {
+  return links
+    .map((link) => {
+      const gate = FOOTER_AUTH_GATES[link.url];
+      return `<li><a href="${escapeSiteHtml(link.url)}"${gate ? ` data-auth-gate="${gate}"` : ""}>${escapeSiteHtml(link.label)}</a></li>`;
+    })
+    .join("");
+}
+
+// Saved lists from Admin's About Us Setup; an empty saved list means "use the defaults".
+function renderFooterLists(profile) {
+  const lists = [
+    ["quick", profile.footer_quick_links, DEFAULT_FOOTER_QUICK_LINKS],
+    ["legal", profile.footer_legal_links, DEFAULT_FOOTER_LEGAL_LINKS],
+  ];
+  lists.forEach(([key, saved, fallback]) => {
+    const ul = document.querySelector(`[data-footer-list="${key}"]`);
+    if (ul) ul.innerHTML = footerLinksHtml(saved && saved.length ? saved : fallback);
+  });
+}
+
 (function renderSiteFooter() {
   const footer = document.getElementById("siteFooter");
   if (footer) {
@@ -76,28 +113,18 @@ function fillBarangayFields(profile) {
           <div>
             <p class="site-footer__name" data-barangay="name">Barangay Platero</p>
             <p class="site-footer__sub" data-barangay="city"></p>
-            <p class="site-footer__tagline">SafeSpace — Online Reporting and Management System</p>
+            <p class="site-footer__tagline" data-barangay="footer_tagline">SafeSpace — Online Reporting and Management System</p>
           </div>
         </div>
 
         <nav class="site-footer__col" aria-label="Quick links">
           <h2 class="site-footer__heading">Quick Links</h2>
-          <ul>
-            <li><a href="ordinances.html">Ordinances</a></li>
-            <li><a href="file-report.html" data-auth-gate="report">File a Report</a></li>
-            <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit a Suggestion</a></li>
-            <li><a href="faqs.html">FAQs</a></li>
-            <li><a href="about.html">About Us</a></li>
-          </ul>
+          <ul data-footer-list="quick">${footerLinksHtml(DEFAULT_FOOTER_QUICK_LINKS)}</ul>
         </nav>
 
         <nav class="site-footer__col" aria-label="Legal">
           <h2 class="site-footer__heading">Legal</h2>
-          <ul>
-            <li><a href="privacy-policy.html">Privacy Policy</a></li>
-            <li><a href="terms.html">Terms and Agreements</a></li>
-            <li><a href="privacy-policy.html#your-rights">Your Data Privacy Rights</a></li>
-          </ul>
+          <ul data-footer-list="legal">${footerLinksHtml(DEFAULT_FOOTER_LEGAL_LINKS)}</ul>
         </nav>
 
         <div class="site-footer__col">
@@ -114,13 +141,14 @@ function fillBarangayFields(profile) {
 
       <div class="site-footer__bottom">
         <p>&copy; ${new Date().getFullYear()} <span data-barangay="name">Barangay Platero</span>, <span data-barangay="city">City of Biñan, Laguna</span>. All rights reserved.</p>
-        <p>Personal data is processed under the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+        <p data-barangay="footer_notice">Personal data is processed under the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
       </div>`;
   }
 
   loadSiteAbout()
     .then(({ profile }) => {
       fillBarangayFields(profile);
+      renderFooterLists(profile);
       const emergency = document.getElementById("footerEmergencyLink");
       if (emergency && profile.emergency_hotline) {
         emergency.textContent = profile.emergency_hotline;

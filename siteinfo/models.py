@@ -14,6 +14,14 @@ class BarangayProfile(models.Model):
     """
 
     name = models.CharField(max_length=100, default="Barangay Platero")
+    # The website's own brand — the navbar/sidebar logo + name shown across
+    # all 3 portals (frontend/*/js/main.js and admin.js pull this live).
+    # Deliberately separate from `name` above: that's the barangay's own
+    # name (About Us), this is the system's. The browser tab title stays a
+    # static "SafeSpace" regardless of this field — only the visible
+    # navbar/sidebar brand follows it.
+    site_name = models.CharField(max_length=60, default="SafeSpace")
+    site_logo = models.ImageField(upload_to="site/", blank=True)
     city = models.CharField(max_length=100, default="City of Biñan, Laguna")
     address = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=50, blank=True)
@@ -23,6 +31,15 @@ class BarangayProfile(models.Model):
     # About Us' "What is SafeSpace" and "Our Mission" cards.
     about_text = models.TextField(blank=True)
     mission_text = models.TextField(blank=True)
+    # The site footer's own copy (frontend/citizen/js/site-footer.js). The
+    # link lists are [{"label": ..., "url": ...}] — empty falls back to the
+    # built-in defaults the footer ships with.
+    footer_tagline = models.CharField(max_length=255, default="SafeSpace — Online Reporting and Management System")
+    footer_notice = models.CharField(
+        max_length=255, default="Personal data is processed under the Data Privacy Act of 2012 (Republic Act No. 10173)."
+    )
+    footer_quick_links = models.JSONField(default=list, blank=True)
+    footer_legal_links = models.JSONField(default=list, blank=True)
     # The barangay's outline on the staff incident heatmap, as a list of
     # [lat, lng] points (one closed ring; the first point isn't repeated).
     # Drawn or uploaded by an Administrator on the Map Boundary page. Empty
@@ -105,3 +122,27 @@ class AboutLogo(models.Model):
 
     def __str__(self):
         return self.alt_text
+
+
+class LegalDocument(models.Model):
+    """
+    The text of one of the citizen legal pages (Privacy Policy, Terms and
+    Agreements), edited by an Administrator from Website Setup. `sections` is
+    a list of {"anchor", "heading", "body"}: body is plain text where each
+    block is separated by a blank line — "- " starts a bullet, "1. " a
+    numbered item, "| a | b |" a table row (first row is the header), and
+    **bold**, [text](url) and {{address}}/{{email}}/{{phone}}/{{name}} are
+    filled in on the page. The page renders it with frontend/citizen/js/legal.js.
+    """
+
+    class Key(models.TextChoices):
+        PRIVACY = "privacy", "Privacy Policy"
+        TERMS = "terms", "Terms and Agreements"
+
+    key = models.CharField(max_length=20, choices=Key.choices, unique=True)
+    effective_date = models.CharField(max_length=60, blank=True)
+    sections = models.JSONField(default=list, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.get_key_display()

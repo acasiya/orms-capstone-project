@@ -36,6 +36,16 @@ function saveBarangayProfile(fields) {
   return setupRequest("/api/site/profile/", { method: "PATCH", json: fields, fallback: "Could not save the details." });
 }
 
+// ---- Website branding ----
+
+function getBranding() {
+  return setupRequest("/api/site/branding/admin/", { fallback: "Could not load the website's branding." });
+}
+
+function saveBranding(fields) {
+  return setupRequest("/api/site/branding/admin/", { method: "PATCH", ...toSetupBody(fields), fallback: "Could not save the branding." });
+}
+
 // ---- Council members / logos ----
 // `fields` is a plain object; a File value (photo/image) switches the
 // request to multipart so the upload can ride along.

@@ -7,11 +7,11 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from accounts.models import User, log_action
-from accounts.views import IsAdmin, IsDocumentManager, can_manage_document_kind
+from accounts.views import IsAdmin, IsDocumentManager
 
 from .extraction import extract_fields
 from .matching import suggest_ordinances
-from .models import Ordinance, OrdinanceAuthor, OrdinanceCategory, OrdinanceDownload
+from .models import Ordinance, OrdinanceAuthor, OrdinanceCategory, OrdinanceDownload, OrdinanceView
 from .serializers import (
     OrdinanceAuthorSerializer,
     OrdinanceCategorySerializer,
@@ -29,21 +29,8 @@ def _is_staff_or_admin(user):
 
 
 def _label(doc):
-    """"ordinance No. 1-(2026) — Title" / "resolution …" for audit log lines."""
-    return f"{doc.get_kind_display().lower()} {doc.number} — {doc.title}"
-
-
-def _forbid_unless_manager(user, doc):
-    """403 for anyone who doesn't manage this document's kind (see accounts.views)."""
-    if can_manage_document_kind(user, doc.kind):
-        return None
-    manager = "Barangay Treasurer" if doc.kind == Ordinance.Kind.RESOLUTION else "Secretary"
-    return Response(
-        {"detail": f"Only the {manager} or an Administrator can change {doc.get_kind_display().lower()}s."},
-        status=status.HTTP_403_FORBIDDEN,
-    )
-
-
+    """"ordinance No. 1-(2026) — Title" for audit log lines."""
+    return f"ordinance {doc.number} — {doc.title}"
 
 
 class OrdinanceListCreateView(generics.ListCreateAPIView):
@@ -52,18 +39,15 @@ class OrdinanceListCreateView(generics.ListCreateAPIView):
     (browsable without an account, same as the old hardcoded placeholder
     list); Staff/Admin see every ordinance, archived included, so Secretary
     can find one again to unarchive it.
-    Both ordinances and resolutions (see Ordinance.kind); ?kind= narrows it.
-    POST /api/ordinances/ — upload a new ordinance (Secretary) or resolution
-    (Barangay Treasurer); Administrators can file either. Everyone else only
-    gets a read-only view (see accounts.views.managed_document_kinds).
+    POST /api/ordinances/ — upload a new ordinance (Secretary); Administrators
+    can file one too. Everyone else only gets a read-only view.
     """
 
     def get_queryset(self):
         queryset = Ordinance.objects.all()
         if not _is_staff_or_admin(self.request.user):
             queryset = queryset.published()
-        # Optional ?kind=ordinance|resolution; anything else keeps both.
-        return queryset.of_kind(self.request.query_params.get("kind"))
+        return queryset
 
     def get_permissions(self):
         if self.request.method == "POST":
@@ -74,7 +58,13 @@ class OrdinanceListCreateView(generics.ListCreateAPIView):
         return OrdinanceCreateSerializer if self.request.method == "POST" else OrdinanceSerializer
 
     def get_serializer_context(self):
-        return {"request": self.request}
+        context = {"request": self.request}
+        user = self.request.user
+        if user and user.is_authenticated and user.role == User.Role.CITIZEN:
+            context["viewed_ordinance_ids"] = set(
+                OrdinanceView.objects.filter(citizen=user).values_list("ordinance_id", flat=True)
+            )
+        return context
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -91,9 +81,8 @@ class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
     """
     GET /api/ordinances/<id>/ — one ordinance; 404s for citizens/guests if
     it's archived (same visibility rule as the list).
-    PATCH /api/ordinances/<id>/ — edit it, optionally replacing the PDF. Only
-    whoever manages its kind (Secretary: ordinances, Barangay Treasurer:
-    resolutions) or an Administrator.
+    PATCH /api/ordinances/<id>/ — edit it, optionally replacing the PDF.
+    Secretary or Administrator only.
     """
 
     def get_queryset(self):
@@ -115,12 +104,12 @@ class OrdinanceDetailView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", True)
         instance = self.get_object()
-        forbidden = _forbid_unless_manager(request.user, instance)
-        if forbidden:
-            return forbidden
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         ordinance = serializer.save()
+        # An edit makes it unread again for every citizen, so it resurfaces on
+        # the home page's Latest Ordinances (see OrdinanceSerializer.get_in_latest).
+        OrdinanceView.objects.filter(ordinance=ordinance).delete()
         log_action(request.user, f"Updated {_label(ordinance)}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)
 
@@ -234,7 +223,7 @@ class OrdinanceExtractView(APIView):
     the scan and returns best-guess values for the Upload Ordinance form. Only
     a suggestion: any field it can't read comes back empty, and if extraction
     fails outright the client just leaves the form blank. Nothing is saved.
-    Secretary/Barangay Treasurer/Admin only, same as the upload it feeds.
+    Secretary/Admin only, same as the upload it feeds.
     """
 
     permission_classes = [IsDocumentManager]
@@ -274,8 +263,7 @@ class OrdinanceSuggestView(APIView):
         if len(query) < 3:
             return Response({"results": []})
 
-        # Resolutions aren't laws a citizen can violate, so never suggest one.
-        ordinances = Ordinance.objects.ordinances().published()
+        ordinances = Ordinance.objects.published()
         matches = suggest_ordinances(query, ordinances)
         return Response({
             "results": [
@@ -287,19 +275,15 @@ class OrdinanceSuggestView(APIView):
 
 class OrdinanceArchiveView(APIView):
     """
-    POST /api/ordinances/<id>/archive/ — hides an ordinance/resolution from
-    the Citizen portal without deleting it (see get_queryset filters above).
-    Staff/Admin can still see and unarchive it. Only its kind's manager or an
-    Administrator.
+    POST /api/ordinances/<id>/archive/ — hides an ordinance from the Citizen
+    portal without deleting it (see get_queryset filters above). Staff/Admin
+    can still see and unarchive it. Secretary or Administrator only.
     """
 
     permission_classes = [IsDocumentManager]
 
     def post(self, request, pk):
         ordinance = get_object_or_404(Ordinance, pk=pk)
-        forbidden = _forbid_unless_manager(request.user, ordinance)
-        if forbidden:
-            return forbidden
         ordinance.is_archived = True
         ordinance.save(update_fields=["is_archived"])
         log_action(request.user, f"Archived {_label(ordinance)}")
@@ -307,19 +291,33 @@ class OrdinanceArchiveView(APIView):
 
 
 class OrdinanceUnarchiveView(APIView):
-    """POST /api/ordinances/<id>/unarchive/ — restores an archived ordinance/resolution (its manager or an Admin)."""
+    """POST /api/ordinances/<id>/unarchive/ — restores an archived ordinance (Secretary or Administrator only)."""
 
     permission_classes = [IsDocumentManager]
 
     def post(self, request, pk):
         ordinance = get_object_or_404(Ordinance, pk=pk)
-        forbidden = _forbid_unless_manager(request.user, ordinance)
-        if forbidden:
-            return forbidden
         ordinance.is_archived = False
         ordinance.save(update_fields=["is_archived"])
         log_action(request.user, f"Unarchived {_label(ordinance)}")
         return Response(OrdinanceSerializer(ordinance, context={"request": request}).data)
+
+
+class OrdinanceMarkViewedView(APIView):
+    """
+    POST /api/ordinances/<id>/view/ — removes this ordinance from the
+    citizen home page's "Latest Ordinances" (unread) section for this
+    citizen. Called from the ordinance detail page on load. No-ops (but
+    still 200s) for Staff/Admin/guests, who have no "unread" state here.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        ordinance = get_object_or_404(Ordinance, pk=pk)
+        if request.user.role == User.Role.CITIZEN:
+            OrdinanceView.objects.get_or_create(ordinance=ordinance, citizen=request.user)
+        return Response({"detail": "Marked as viewed."})
 
 
 class OrdinanceDownloadView(APIView):
@@ -339,7 +337,7 @@ class OrdinanceDownloadView(APIView):
         ordinance = get_object_or_404(Ordinance, pk=pk)
         if not ordinance.pdf_file:
             return Response(
-                {"detail": f"This {ordinance.get_kind_display().lower()} has no PDF on file."},
+                {"detail": "This ordinance has no PDF on file."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -352,7 +350,7 @@ class OrdinanceDownloadView(APIView):
                 return Response(
                     {
                         "detail": (
-                            f"You've already downloaded this {ordinance.get_kind_display().lower()}. "
+                            "You've already downloaded this ordinance. "
                             "Each document can only be downloaded once."
                         )
                     },

@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.http import Http404
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,12 +7,14 @@ from rest_framework.views import APIView
 from accounts.models import log_action
 from accounts.views import IsAdmin
 
-from .models import AboutLogo, BarangayProfile, CouncilMember
+from .models import AboutLogo, BarangayProfile, CouncilMember, LegalDocument
 from .serializers import (
     AboutLogoSerializer,
     BarangayProfileSerializer,
     BoundarySerializer,
+    BrandingSerializer,
     CouncilMemberSerializer,
+    LegalDocumentSerializer,
     ReorderSerializer,
 )
 
@@ -25,6 +28,10 @@ PROFILE_FIELD_LABELS = {
     "emergency_hotline": "emergency hotline",
     "about_text": "What is SafeSpace",
     "mission_text": "Our Mission",
+    "footer_tagline": "footer tagline",
+    "footer_notice": "footer notice",
+    "footer_quick_links": "footer quick links",
+    "footer_legal_links": "footer legal links",
 }
 
 
@@ -64,6 +71,40 @@ class BarangayProfileView(APIView):
             log_action(request.user, f"Updated About Us details: {', '.join(changed)}")
         return Response(serializer.data)
 
+
+
+class BrandingPublicView(APIView):
+    """
+    GET /api/site/branding/ — the navbar/sidebar brand name + logo URL, for
+    every portal's main.js/admin.js to apply on load. Public (even a guest
+    on the citizen portal sees the brand).
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return Response(BrandingSerializer(BarangayProfile.load()).data)
+
+
+class BrandingView(APIView):
+    """GET/PATCH /api/site/branding/admin/ — Administrator edits the website's own brand."""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        return Response(BrandingSerializer(BarangayProfile.load()).data)
+
+    def patch(self, request):
+        profile = BarangayProfile.load()
+        serializer = BrandingSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        old_logo = profile.site_logo
+        old_logo_name = old_logo.name if old_logo else None
+        serializer.save()
+        if old_logo_name and old_logo_name != profile.site_logo.name:
+            profile.site_logo.storage.delete(old_logo_name)
+        log_action(request.user, "Updated the website's brand name/logo")
+        return Response(serializer.data)
 
 
 class BoundaryView(APIView):
@@ -201,3 +242,38 @@ class CouncilMemberReorderView(_ReorderView):
 class AboutLogoReorderView(_ReorderView):
     model = AboutLogo
     label = "logos"
+
+
+class LegalDocumentView(APIView):
+    """
+    GET /api/site/legal/<key>/ — a citizen legal page's sections. Public.
+    PUT /api/site/legal/<key>/admin/ — Administrator replaces the sections.
+    """
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [IsAdmin()]
+
+    def _document(self, key):
+        if key not in LegalDocument.Key.values:
+            raise Http404
+        document, _ = LegalDocument.objects.get_or_create(key=key)
+        return document
+
+    def get(self, request, key):
+        document = self._document(key)
+        return Response({"key": key, "effective_date": document.effective_date, "sections": document.sections, "updated_at": document.updated_at})
+
+    def put(self, request, key):
+        document = self._document(key)
+        serializer = LegalDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if "sections" in data:
+            document.sections = data["sections"]
+        if "effective_date" in data:
+            document.effective_date = data["effective_date"].strip()
+        document.save(update_fields=["sections", "effective_date", "updated_at"])
+        log_action(request.user, f"Updated the {document.get_key_display()} page")
+        return Response({"key": key, "effective_date": document.effective_date, "sections": document.sections, "updated_at": document.updated_at})

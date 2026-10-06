@@ -15,12 +15,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let page = 1;
 
   async function loadAccounts() {
-    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading accounts...</td></tr>`;
+    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">Loading accounts...</td></tr>`;
     try {
       accounts = await getAllAccounts();
       render();
     } catch (err) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">${err.message}</td></tr>`;
     }
   }
 
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No accounts match this filter.</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">No accounts match this filter.</td></tr>`;
       return;
     }
 
@@ -58,7 +58,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       .map(
         (a) => `
         <tr data-id="${a.id}">
-          <td>${a.id}</td>
           <td><a class="admin-table__owner-link" href="#" data-id="${a.id}">${a.owner}</a></td>
           <td>${a.email}</td>
           <td>${a.type}</td>
@@ -97,8 +96,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   const editModal = document.getElementById("editAccountModal");
   const editName = document.getElementById("editAccountName");
   const editEmail = document.getElementById("editAccountEmail");
-  const editId = document.getElementById("editAccountId");
   const editStatus = document.getElementById("editAccountStatus");
+  const editReportsRow = document.getElementById("editAccountReportsRow");
+  const editReports = document.getElementById("editAccountReports");
+  const editSuggestionsRow = document.getElementById("editAccountSuggestionsRow");
+  const editSuggestions = document.getElementById("editAccountSuggestions");
+
+  const REPORT_STATUS_LABELS = {
+    submitted: "Submitted",
+    under_review: "Under Review",
+    in_action: "In Action",
+    resolved: "Resolved",
+  };
+  const SUGGESTION_STATUS_LABELS = { submitted: "Submitted", reviewed: "Reviewed" };
+
+  // Renders e.g. "4 filed (2 Submitted, 1 Under Review, 1 Resolved)", or a
+  // plain "no X filed" message when the citizen hasn't filed any yet.
+  function formatStats(stats, labels, noneLabel) {
+    if (!stats || !stats.total) return noneLabel;
+    const parts = Object.entries(stats.byStatus)
+      .map(([key, count]) => `${count} ${labels[key] || key}`)
+      .join(", ");
+    return `${stats.total} filed (${parts})`;
+  }
   const editType = document.getElementById("editAccountType");
   const editCreated = document.getElementById("editAccountCreated");
   const editUpdated = document.getElementById("editAccountUpdated");
@@ -111,12 +131,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   function populateEditModal(account) {
     editName.textContent = account.owner;
     editEmail.textContent = account.email;
-    editId.textContent = account.id;
     editStatus.textContent = account.active ? "Active" : "Disabled";
     editStatus.className = account.active ? "status-active" : "status-inactive";
     editType.textContent = account.type;
     editCreated.textContent = account.created;
     editUpdated.textContent = account.updated;
+
+    const isCitizenAccount = account.reportStats !== null && account.reportStats !== undefined;
+    editReportsRow.hidden = !isCitizenAccount;
+    editSuggestionsRow.hidden = !isCitizenAccount;
+    if (isCitizenAccount) {
+      editReports.textContent = formatStats(account.reportStats, REPORT_STATUS_LABELS, "No reports filed.");
+      editSuggestions.textContent = formatStats(account.suggestionStats, SUGGESTION_STATUS_LABELS, "No suggestions filed.");
+    }
     editDisableBtn.innerHTML = account.active
       ? `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg> Disable User`
       : `<svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Enable User`;
@@ -360,7 +387,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const updateTypeModal = document.getElementById("updateTypeModal");
   const updateTypeSelect = document.getElementById("updateTypeSelect");
   const updateTypeSave = document.getElementById("updateTypeSave");
-  const STAFF_ROLES = ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator", "Administrator"];
+  const STAFF_ROLES = ["Barangay Captain", "Secretary", "Investigator", "Administrator"];
 
   editTypeBtn.addEventListener("click", () => {
     if (!activeAccount) return;

@@ -1,3 +1,5 @@
+import re
+
 from PIL import Image
 from rest_framework import serializers
 
@@ -30,15 +32,89 @@ def image_url(field, default_path):
     return f"/{default_path}" if default_path else ""
 
 
+MAX_FOOTER_LINKS = 12
+
+DEFAULT_FOOTER_LEGAL_LINKS = [
+    {"label": "Privacy Policy", "url": "privacy-policy.html"},
+    {"label": "Terms and Agreements", "url": "terms.html"},
+    {"label": "Your Data Privacy Rights", "url": "privacy-policy.html#your-rights"},
+]
+
+
+def validate_footer_link_list(links):
+    if len(links) > MAX_FOOTER_LINKS:
+        raise serializers.ValidationError(f"A footer list can have at most {MAX_FOOTER_LINKS} links.")
+    cleaned = []
+    for item in links:
+        if not isinstance(item, dict):
+            raise serializers.ValidationError("Each footer link needs a label and a URL.")
+        label = str(item.get("label", "")).strip()
+        url = str(item.get("url", "")).strip()
+        if not label or not url:
+            raise serializers.ValidationError("Each footer link needs a label and a URL.")
+        if len(label) > 60 or len(url) > 500:
+            raise serializers.ValidationError("Footer link labels are limited to 60 characters and URLs to 500.")
+        lowered = url.lower()
+        allowed = lowered.startswith(("https://", "http://", "mailto:", "tel:")) or (
+            ":" not in url and not url.startswith("//")
+        )
+        if not allowed:
+            raise serializers.ValidationError(
+                f"'{url}' isn't a valid link. Use a page name like faqs.html, or a full https:// address."
+            )
+        cleaned.append({"label": label, "url": url})
+    return cleaned
+
+
 class BarangayProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = BarangayProfile
         fields = [
             "name", "city", "address", "phone", "email", "office_hours",
-            "emergency_hotline", "about_text", "mission_text", "updated_at",
+            "emergency_hotline", "about_text", "mission_text",
+            "footer_tagline", "footer_notice", "footer_quick_links", "footer_legal_links",
+            "updated_at",
         ]
         read_only_fields = ["updated_at"]
         extra_kwargs = {"name": {"allow_blank": False}}
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # An unsaved legal list shows the built-in links, so Admin edits those
+        # directly rather than starting from an empty box.
+        if not data["footer_legal_links"]:
+            data["footer_legal_links"] = DEFAULT_FOOTER_LEGAL_LINKS
+        return data
+
+    def validate_footer_quick_links(self, value):
+        return validate_footer_link_list(value)
+
+    def validate_footer_legal_links(self, value):
+        return validate_footer_link_list(value)
+
+
+class BrandingSerializer(serializers.ModelSerializer):
+    """
+    GET: the website's own brand (navbar/sidebar logo + name, all 3 portals
+    — see frontend/*/js/main.js and admin.js). PATCH (Admin only, Website
+    Branding section of About Us Setup): site_logo is multipart; omit it to
+    keep the current logo.
+    """
+
+    site_logo = serializers.ImageField(write_only=True, required=False)
+    site_logo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BarangayProfile
+        fields = ["site_name", "site_logo", "site_logo_url", "updated_at"]
+        read_only_fields = ["updated_at"]
+        extra_kwargs = {"site_name": {"allow_blank": False}}
+
+    def get_site_logo_url(self, obj):
+        return obj.site_logo.url if obj.site_logo else ""
+
+    def validate_site_logo(self, file):
+        return validate_image_upload(file)
 
 
 MAX_BOUNDARY_POINTS = 2000
@@ -126,3 +202,29 @@ class AboutLogoSerializer(serializers.ModelSerializer):
 
 class ReorderSerializer(serializers.Serializer):
     ids = serializers.ListField(child=serializers.UUIDField(), allow_empty=False)
+
+
+MAX_LEGAL_SECTIONS = 40
+MAX_LEGAL_SECTION_CHARS = 8000
+
+
+class LegalDocumentSerializer(serializers.Serializer):
+    effective_date = serializers.CharField(max_length=60, required=False, allow_blank=True)
+    sections = serializers.ListField(child=serializers.DictField(), max_length=MAX_LEGAL_SECTIONS, required=False)
+
+    def validate_sections(self, sections):
+        cleaned = []
+        for section in sections:
+            heading = str(section.get("heading", "")).strip()
+            body = str(section.get("body", "")).strip()
+            anchor = str(section.get("anchor", "") or "").strip()
+            if len(heading) > 200:
+                raise serializers.ValidationError("Section headings are limited to 200 characters.")
+            if len(body) > MAX_LEGAL_SECTION_CHARS:
+                raise serializers.ValidationError(
+                    f"A section can have at most {MAX_LEGAL_SECTION_CHARS} characters of text."
+                )
+            if anchor and not re.fullmatch(r"[a-z0-9-]{1,60}", anchor):
+                raise serializers.ValidationError("Section anchors may only use lowercase letters, numbers and dashes.")
+            cleaned.append({"anchor": anchor, "heading": heading, "body": body})
+        return cleaned

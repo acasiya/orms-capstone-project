@@ -9,15 +9,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const FOLDER_COLOR_PALETTE = [
     "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
     "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
+    "#c9a227", "#5b8c5a", "#d1667f", "#4a6fa5",
+    "#e0824a", "#7b5ea7", "#3c9d8f", "#b25a9e",
   ];
 
   const dashboardMain = document.querySelector(".admin-content");
-  const currentUser = getAdminUser();
-
-  const welcomeTitle = document.querySelector(".dash-header__title");
-  if (welcomeTitle) {
-    welcomeTitle.textContent = `Welcome back, ${(currentUser && currentUser.name) || "Staff"}!`;
-  }
 
   let questions = [];
   try {
@@ -39,10 +35,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     return Math.max(0, Math.floor((to - from) / (1000 * 60 * 60 * 24)));
   }
 
+  // Assigned by each folder's stable position in liveFolders(), not a hash
+  // of its id — a hash can (and did) collide two folders onto the same color.
+  const FOLDER_COLOR_BY_ID = new Map(
+    liveFolders().map((f, i) => [f.id, FOLDER_COLOR_PALETTE[i % FOLDER_COLOR_PALETTE.length]])
+  );
+
   function folderColor(id) {
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-    return FOLDER_COLOR_PALETTE[Math.abs(hash) % FOLDER_COLOR_PALETTE.length];
+    return FOLDER_COLOR_BY_ID.get(id) || FOLDER_COLOR_PALETTE[0];
   }
 
   // ---- Stat cards ----
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("statOpenConcerns").textContent = concerns.filter((c) => c.status === "Submitted").length;
     document.getElementById("statResolvedConcerns").textContent = concerns.filter((c) => c.status === "Reviewed").length;
     document.getElementById("statUnansweredQuestions").textContent = questions.filter((q) => !q.is_answered).length;
-    document.getElementById("statActiveOrdinances").textContent = liveOrdinances().filter((o) => !o.isArchived && o.kind === "ordinance").length;
+    document.getElementById("statActiveOrdinances").textContent = liveOrdinances().filter((o) => !o.isArchived).length;
   }
 
   // ---- Concerns by Folder pie (same technique as concerns-dashboard.js's
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!folders.length) {
       categoryPie.style.background = "var(--border)";
-      categoryPie.insertAdjacentHTML("beforeend", `<div class="pie-chart__empty">No folders yet — create one on Concerns/Suggestions.</div>`);
+      categoryPie.insertAdjacentHTML("beforeend", `<div class="pie-chart__empty">No categories yet — create one on Concerns/Suggestions.</div>`);
       categoryLegend.innerHTML = "";
       return;
     }
@@ -132,14 +132,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             const days = daysBetween(c.dateSubmitted, now);
             return `
         <tr>
-          <td>${c.id.slice(0, 8).toUpperCase()}</td>
-          <td>${c.folderName || "Unfoldered"}</td>
+          <td>${c.folderName || "Uncategorized"}</td>
           <td>${days} ${days === 1 ? "day" : "days"}</td>
           <td><a class="recent-reports-table__action" href="concern-detail.html?id=${encodeURIComponent(c.id)}" aria-label="View concern">&#8594;</a></td>
         </tr>`;
           })
           .join("")
-      : `<tr><td colspan="4" class="ordinances-empty">Nothing open — every concern has been reviewed.</td></tr>`;
+      : `<tr><td colspan="3" class="ordinances-empty">Nothing open — every concern has been reviewed.</td></tr>`;
   }
 
   renderStats();

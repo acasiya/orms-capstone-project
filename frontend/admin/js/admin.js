@@ -474,7 +474,33 @@ function setupPasswordVisibilityToggles() {
   });
 }
 
+// Pulls the navbar/sidebar brand name + logo from Website Branding settings
+// (siteinfo.BarangayProfile.site_name/site_logo — see siteinfo/views.py's
+// BrandingPublicView) so every portal shows the same, admin-editable brand
+// instead of a hardcoded "SafeSpace". Best-effort: on any failure the
+// static "SafeSpace" + default leaf logo already in the HTML stays as-is.
+// The browser tab's <title> is untouched on purpose.
+function applySiteBranding() {
+  fetch("/api/site/branding/")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((branding) => {
+      if (!branding) return;
+      if (branding.site_name) {
+        document.querySelectorAll(".admin-sidebar__brand-text strong").forEach((el) => {
+          el.textContent = branding.site_name;
+        });
+      }
+      if (branding.site_logo_url) {
+        document.querySelectorAll(".admin-sidebar__logo").forEach((el) => {
+          el.style.backgroundImage = `url("${branding.site_logo_url}")`;
+        });
+      }
+    })
+    .catch(() => {});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  applySiteBranding();
   setupPasswordVisibilityToggles();
   setupPasswordHints();
   const sidebarToggle = document.getElementById("sidebarToggle");
@@ -577,14 +603,15 @@ document.addEventListener("DOMContentLoaded", () => {
       logoutConfirmModal.hidden = true;
     });
   }
-  document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+  document.querySelectorAll(".modal-overlay:not([data-modal-guarded])").forEach((overlay) => {
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.hidden = true;
     });
   });
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      btn.closest(".modal-overlay").hidden = true;
+      const overlay = btn.closest(".modal-overlay");
+      if (!overlay.hasAttribute("data-modal-guarded")) overlay.hidden = true;
     });
   });
 

@@ -138,8 +138,9 @@ const STAFF_NAV_ACCESS = {
   "concerns-dashboard.html": ["Barangay Captain"],
   "secretary-dashboard.html": ["Secretary"],
   "concerns.html": ["Secretary"],
-  "ordinances.html": ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator"],
-  "questions.html": ["Barangay Captain", "Secretary", "Barangay Treasurer", "Investigator"],
+  "ordinances.html": ["Barangay Captain", "Secretary", "Investigator"],
+  "questions.html": ["Barangay Captain", "Secretary", "Investigator"],
+  "announcements.html": ["Barangay Captain", "Secretary"],
 };
 
 (function enforceStaffSectionAccess() {
@@ -510,7 +511,33 @@ function setupPasswordVisibilityToggles() {
   });
 }
 
+// Pulls the navbar/sidebar brand name + logo from Admin's Website Branding
+// settings (siteinfo.BarangayProfile.site_name/site_logo — see
+// siteinfo/views.py's BrandingPublicView) so every portal shows the same,
+// admin-editable brand instead of a hardcoded "SafeSpace". Best-effort: on
+// any failure the static "SafeSpace" + default leaf logo already in the
+// HTML stays as-is. The browser tab's <title> is untouched on purpose.
+function applySiteBranding() {
+  fetch("/api/site/branding/")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((branding) => {
+      if (!branding) return;
+      if (branding.site_name) {
+        document.querySelectorAll(".admin-sidebar__brand-text strong").forEach((el) => {
+          el.textContent = branding.site_name;
+        });
+      }
+      if (branding.site_logo_url) {
+        document.querySelectorAll(".admin-sidebar__logo").forEach((el) => {
+          el.style.backgroundImage = `url("${branding.site_logo_url}")`;
+        });
+      }
+    })
+    .catch(() => {});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  applySiteBranding();
   setupPasswordVisibilityToggles();
   setupPasswordHints();
   const sidebarToggle = document.getElementById("sidebarToggle");
@@ -604,8 +631,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("profileCardName") && (document.getElementById("profileCardName").textContent = user.name);
     document.getElementById("profileCardRole") && (document.getElementById("profileCardRole").textContent = user.position || "Barangay Official");
     renderAvatar(document.getElementById("profileCardInitials"), user);
-    // The sidebar's "Barangay Staff Portal" label is static HTML — the same
-    // for every Barangay Staff role, so nothing here rewrites it.
   }
 
   const profileBtn = document.getElementById("profileBtn");
@@ -616,14 +641,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+  document.querySelectorAll(".modal-overlay:not([data-modal-guarded])").forEach((overlay) => {
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.hidden = true;
     });
   });
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      btn.closest(".modal-overlay").hidden = true;
+      const overlay = btn.closest(".modal-overlay");
+      if (!overlay.hasAttribute("data-modal-guarded")) overlay.hidden = true;
     });
   });
 

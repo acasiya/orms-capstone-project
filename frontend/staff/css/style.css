@@ -2491,15 +2491,13 @@ button {
     justify-content: center;
   }
 
-  /* Investigator Dashboard's "Oldest Open Reports (Mine)" collapses to just
-     Days Open + Status (columns 3 and 4) — tap a row to go to that report
+  /* Investigator Dashboard's "Report Timeline (Mine)" collapses to just
+     Days Open + Status (columns 2 and 3) — tap a row to go to that report
      (see investigator-dashboard.js), same place the arrow link goes. */
   .recent-reports-table--aging thead th:nth-child(1),
-  .recent-reports-table--aging thead th:nth-child(2),
-  .recent-reports-table--aging thead th:nth-child(5),
+  .recent-reports-table--aging thead th:nth-child(4),
   .recent-reports-table--aging tbody td:nth-child(1),
-  .recent-reports-table--aging tbody td:nth-child(2),
-  .recent-reports-table--aging tbody td:nth-child(5) {
+  .recent-reports-table--aging tbody td:nth-child(4) {
     display: none;
   }
 
@@ -3093,6 +3091,74 @@ button {
   color: var(--white);
 }
 
+/* Top-level date filter + Clear Filters button, grouped so they wrap as a
+   unit on narrow screens instead of the button ending up on its own row. */
+.dash-header__filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dash-header__clear-btn {
+  width: auto;
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Per-graph filter dropdowns (Heatmap/Category/Status/Investigator) — same
+   widget, smaller, so it fits inline next to a card's <h2>. */
+.dash-dropdown--small .dash-dropdown__btn--small {
+  padding: 7px 10px;
+  font-size: 0.76rem;
+  gap: 5px;
+}
+
+/* The custom "Date From - Date To" range — lives as the last item in the
+   top filter's dropdown, below the preset list. Clicks inside it must not
+   bubble to the document-level listener that closes every open dropdown
+   (see reports-dashboard.js), or picking a date would close the menu. */
+.dash-dropdown-menu__custom {
+  cursor: default;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 10px !important;
+}
+
+.dash-dropdown-menu__custom:hover {
+  background: none;
+}
+
+.dash-dropdown-menu__custom-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.dash-dropdown-menu__custom-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dash-dropdown-menu__custom-row input[type="date"] {
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.dash-dropdown-menu__custom .btn {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.82rem;
+}
+
 .dash-row-top {
   display: grid;
   grid-template-columns: 2.1fr 1fr;
@@ -3244,6 +3310,31 @@ button {
   background: #e3edb8;
   border-color: #b9cf6c;
   color: #56671c;
+}
+
+/* Report Timeline "Days Open" age pills — 0-5/6-10/11-15/16+ days */
+.aging-pill--green {
+  background: #d3ecd9;
+  border-color: #a3d6b1;
+  color: #226b3f;
+}
+
+.aging-pill--yellow {
+  background: #fbf7c4;
+  border-color: #d8cf7a;
+  color: #7a6f1e;
+}
+
+.aging-pill--orange {
+  background: #fbe3c4;
+  border-color: #e0ad6e;
+  color: #8a4e12;
+}
+
+.aging-pill--red {
+  background: #f8d4d4;
+  border-color: #e39b9b;
+  color: #8a2222;
 }
 
 .recent-reports-table__action {
@@ -4644,4 +4735,93 @@ button {
     grid-template-columns: minmax(80px, 38%) minmax(0, 1fr) 26px 40px;
     gap: 8px;
   }
+}
+
+/* ---------- Announcement picture picker (New Announcement) ---------- */
+.announcement-picture {
+  margin-bottom: 18px;
+}
+
+.announcement-picture .field-hint {
+  margin: 6px 0 0;
+}
+
+.announcement-picture__pick {
+  display: inline-block;
+  width: auto;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+
+.announcement-picture__file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.announcement-picture__file img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.announcement-picture__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.announcement-picture__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.announcement-picture__size {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.announcement-picture__file > a {
+  font-weight: 700;
+  color: var(--accent, #2f7d4a);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.announcement-picture__remove {
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.announcement-date-note {
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.announcement-form__actions {
+  justify-content: center;
+  gap: 14px;
+}
+
+.announcement-form__actions .btn {
+  width: auto;
+  min-width: 150px;
+  padding: 12px 22px;
+  white-space: nowrap;
 }

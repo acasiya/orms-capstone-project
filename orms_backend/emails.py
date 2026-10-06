@@ -10,6 +10,7 @@ below:
     - their report is submitted (a confirmation)
     - their suggestion is submitted (a confirmation)
     - their report reaches a final verdict (Resolved — remarks included if any)
+    - their report is unclaimed and then claimed by a different investigator
     - their account is rejected (with the admin's reason, and another chance
       to sign up again with the same email)
     - a question they asked on the FAQs page is answered
@@ -17,6 +18,8 @@ below:
       6-digit code — see reports/verification.py)
     - their account gets automatically disabled for filing reports too
       fast (suspicious activity)
+    - the Secretary or Barangay Captain posts a new Announcement (every
+      citizen gets this one — see announcements/views.py)
   Staff gets emailed when...
     - a report is submitted (needs review)
     - a suggestion is submitted (needs review)
@@ -130,6 +133,18 @@ def send_report_resolved_email(report):
     )
 
 
+def send_report_reassigned_email(report):
+    # Sent only when a report that had already been forfeited by its
+    # original Investigator gets claimed by a *different* one (see
+    # StaffReportClaimView) — not on every claim, just an actual handoff.
+    send_templated_email(
+        to=report.citizen.email,
+        subject="SafeSpace — A new investigator is handling your report",
+        template_name="report_reassigned",
+        context={"report": report},
+    )
+
+
 def send_question_answered_email(question):
     send_templated_email(
         to=question.citizen.email,
@@ -210,6 +225,19 @@ def send_suggestion_submitted_staff_emails(concern, staff_users):
         subject="SafeSpace — A new suggestion needs review",
         template_name="suggestion_submitted_staff",
         context={"concern": concern},
+    )
+
+
+def send_announcement_posted_email(announcement, citizen_users):
+    # The one email with a real clickable link back to the site (the
+    # citizen home page) rather than just "Log in to SafeSpace" as plain
+    # text — see settings.FRONTEND_BASE_URL.
+    link = f"{settings.FRONTEND_BASE_URL}/citizen/home.html"
+    _send_to_each(
+        citizen_users,
+        subject=f"SafeSpace — New announcement: {announcement.title}",
+        template_name="announcement_posted",
+        context={"announcement": announcement, "link": link},
     )
 
 

@@ -18,12 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const dashboardMain = document.querySelector(".admin-content");
 
-  const welcomeTitle = document.querySelector(".dash-header__title");
-  if (welcomeTitle) {
-    const currentUser = getAdminUser();
-    welcomeTitle.textContent = `Welcome back, ${(currentUser && currentUser.name) || "Staff"}!`;
-  }
-
   try {
     await Promise.all([ensureConcernsLoaded(), ensureFoldersLoaded()]);
   } catch (err) {

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "reports",
     "ordinances",
     "siteinfo",
+    "announcements",
 ]
 
 MIDDLEWARE = [
@@ -252,6 +253,14 @@ EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 # when it's present-but-blank (which .env.example ships as, so people fill
 # it in) — so an explicit `or` here is what actually falls back correctly.
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER or "no-reply@orms.local"
+
+# The citizen portal's own origin, for the handful of emails that include an
+# actual clickable link back to the site (e.g. an Announcement's "quick
+# link" — see orms_backend/emails.py's send_announcement_posted_email).
+# Everything else just says "Log in to SafeSpace" as plain text, so this
+# isn't needed more broadly. Frontend is same-origin via WhiteNoise (see
+# CORS note below), so this is also where the backend itself is reachable.
+FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://127.0.0.1:8000").rstrip("/")
 
 # --- CORS ----------------------------------------------------------------
 # Frontend is served from the same origin via WhiteNoise above, so CORS

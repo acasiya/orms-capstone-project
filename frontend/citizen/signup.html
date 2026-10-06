@@ -14,13 +14,12 @@
       SafeSpace
     </div>
     <ul class="navbar__links">
+      <li><a href="home.html">Home</a></li>
       <li><a href="ordinances.html">Ordinances</a></li>
       <li><a href="file-report.html" data-auth-gate="report">File Report</a></li>
       <li><a href="submit-suggestion.html" data-auth-gate="suggestion">Submit Suggestion</a></li>
       <li data-auth-only><a href="my-reports.html">My Reports</a></li>
       <li data-auth-only><a href="my-concerns.html">My Concerns/Suggestions</a></li>
-      <li><a href="faqs.html">FAQs</a></li>
-      <li><a href="about.html">About Us</a></li>
     </ul>
     <span class="navbar__bell" data-auth-only role="button" tabindex="0" id="notifBell">
       <svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5 5 0 00-5 5v3.5c0 .8-.3 1.6-.9 2.2L5 16h14l-1.1-1.3a3.2 3.2 0 01-.9-2.2V9a5 5 0 00-5-5z"/><path d="M10 19a2.2 2.2 0 004 0"/></svg><span class="navbar__badge" id="notifBadge" hidden></span>
@@ -36,7 +35,7 @@
     <div class="navbar__profile" role="button" tabindex="0"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></div>
   </nav>
 
-  <section class="hero">
+  <section class="hero hero--login">
     <div class="auth-card auth-card--wide">
       <h1 class="auth-card__title">Sign Up</h1>
       <form data-goto="verify-signup.html" data-signup-step1 novalidate>
@@ -97,33 +96,10 @@
     </div>
   </section>
 
-  <section class="info-section">
-    <div class="info-grid">
-      <div class="info-card">
-        <h3>Barangay Platero</h3>
-        <p>Ordinance Reporting and Management System</p>
-      </div>
-      <div class="info-card">
-        <h3>What is SafeSpace?</h3>
-        <p>
-          Ordinance Reporting and Management System, or SafeSpace for short, is a
-          web-based system that is designed to help Barangay Citizens to report
-          ordinance violations, as well as submit concerns and suggestions in
-          order to promote collaborative and safe communities.
-        </p>
-      </div>
-      <div class="info-card">
-        <h3>Our Mission</h3>
-        <p>
-          SafeSpace gives the Barangay Citizen to check what happens to their
-          reports and concerns and suggestions. It also helps promote Local
-          Government Accountability and Action.
-        </p>
-      </div>
-    </div>
-  </section>
 
   <script src="js/streets-data.js"></script>
+  <footer id="siteFooter"></footer>
+  <script src="js/site-footer.js"></script>
   <script src="js/main.js"></script>
 
   <!-- Floating "Ask a Question" button — opens askQuestionModal below -->
@@ -175,11 +151,8 @@
     <div class="modal-card profile-card">
       <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
       <div id="profileGuestView">
-        <div class="profile-card__row">
-          <span class="profile-avatar profile-avatar--guest"><svg class="nav-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20c0-4.2 3.6-6.2 8-6.2s8 2 8 6.2"/></svg></span>
-          <p class="profile-card__name">Guest Account</p>
-        </div>
-        <a class="btn btn-muted" href="index.html">Login</a>
+        <a class="btn" href="index.html">Login</a>
+        <a class="btn btn-muted" href="signup.html">Sign Up</a>
       </div>
       <div id="profileUserView" hidden>
         <div class="profile-card__row">
@@ -200,6 +173,38 @@
         <button type="button" class="btn" id="logoutYes">Yes</button>
         <button type="button" class="btn btn-danger" id="logoutNo">No</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Terms & Conditions / Data Privacy gate — must be scrolled to the
+       bottom before "I Agree" enables; shown automatically on load, no
+       close button, and not dismissible by clicking the backdrop (see
+       main.js's generic modal-close handlers, both of which skip
+       [data-modal-mandatory]). -->
+  <div class="modal-overlay" id="termsModal" data-modal-mandatory hidden>
+    <div class="modal-card terms-modal__card">
+      <h2>Terms &amp; Conditions and Data Privacy Notice</h2>
+      <div class="terms-modal__body" id="termsModalBody">
+        <p>Please read this notice in full before creating a SafeSpace account. Scroll to the bottom to enable "I Agree."</p>
+        <h3>1. Acceptance of Terms</h3>
+        <p>By creating an account on SafeSpace, you agree to use the system only for filing genuine ordinance-violation reports, concerns, and suggestions within the barangay it serves. Submitting a false or malicious report is a violation of these Terms and may be referred to the barangay for appropriate action, including penalties under applicable local ordinances.</p>
+        <h3>2. Data Privacy Act of 2012 (Republic Act No. 10173)</h3>
+        <p>SafeSpace collects and processes personal information — including your name, contact number, address, email, and any photos or videos you submit as evidence — strictly in accordance with the Data Privacy Act of 2012 (RA 10173) and its Implementing Rules and Regulations. We process this information only for the purposes of verifying your identity, managing your account, and handling the reports, concerns, and suggestions you submit.</p>
+        <h3>3. What We Collect</h3>
+        <p>Account details you provide at signup (name, email, phone number, address), the contents of any report, concern, or suggestion you file, any photo/video evidence you attach, and basic activity logs (such as login times) used for account security and audit purposes.</p>
+        <h3>4. How We Use Your Data</h3>
+        <p>Your information is used to verify that reports are filed by a real, accountable resident; to route your reports and concerns to the appropriate Barangay Staff for review and action; to notify you by email about updates to your reports, concerns, and suggestions; and to maintain an audit trail for accountability.</p>
+        <h3>5. Data Sharing</h3>
+        <p>Your personal information is only shared internally with authorized Barangay Staff and Administrators responsible for reviewing and acting on your submissions. SafeSpace does not sell or share your personal data with third parties for marketing or any other unrelated purpose.</p>
+        <h3>6. Your Rights</h3>
+        <p>Under the Data Privacy Act of 2012, you have the right to be informed, to access, to object, to erasure or blocking, to damages, to file a complaint, and to data portability regarding your personal information. You may contact the Barangay through the system's support channels to exercise any of these rights.</p>
+        <h3>7. Data Retention and Security</h3>
+        <p>Your data is retained only for as long as necessary to fulfill the purposes above, or as required by law, and is protected using reasonable organizational and technical safeguards against unauthorized access, alteration, or disclosure.</p>
+        <h3>8. Accountability for False Reports</h3>
+        <p>Filing a report you know to be false or misleading is subject to penalty under local ordinances. By proceeding, you acknowledge and accept this responsibility.</p>
+        <p>By clicking "I Agree" below, you confirm that you have read and understood this notice and consent to the collection and processing of your personal data as described above.</p>
+      </div>
+      <button type="button" class="btn" id="termsAgreeBtn" disabled>Scroll down to continue</button>
     </div>
   </div>
 </body>

@@ -6,16 +6,10 @@
 
 let _ordinancesCache = null;
 
-// Ordinances and resolutions share this list (ordinances.models.Ordinance.kind).
-// Only ordinances can be violated, so File Report uses kind === "ordinance".
-const DOCUMENT_KIND_LABELS = { ordinance: "Ordinance", resolution: "Resolution" };
-
 function mapOrdinance(o) {
   const numberMatch = o.number.match(/\d+/);
   return {
     id: o.id,
-    kind: o.kind || "ordinance",
-    kindLabel: DOCUMENT_KIND_LABELS[o.kind] || "Ordinance",
     number: o.number,
     numberSort: numberMatch ? parseInt(numberMatch[0], 10) : 0,
     title: o.title,

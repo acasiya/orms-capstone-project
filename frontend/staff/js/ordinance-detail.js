@@ -1,6 +1,5 @@
-// SafeSpace — Ordinance/Resolution detail: view real info, and (whoever
-// manages its kind — Secretary: ordinances, Barangay Treasurer: resolutions)
-// edit it, including optionally replacing the PDF, via PATCH /api/ordinances/<id>/.
+// SafeSpace — Ordinance detail: view real info, and (Secretary/Admin) edit
+// it, including optionally replacing the PDF, via PATCH /api/ordinances/<id>/.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const id = new URLSearchParams(window.location.search).get("id");
@@ -28,18 +27,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pdfPreviewFrame = document.getElementById("pdfPreviewFrame");
   const pdfPreviewNote = document.getElementById("pdfPreviewNote");
   const detailDownload = document.getElementById("detailDownload");
-  const archivedBadge = document.getElementById("archivedBadge");
 
   function renderDisplay() {
     document.title = `${ordinance.number} — SafeSpace`;
-    // Ordinances keep their long-standing "City Ordinance" heading.
-    detailTitle.textContent = `${ordinance.kind === "resolution" ? "Resolution" : "City Ordinance"} ${ordinance.number}`;
-    document.getElementById("editNumberLabel").textContent = `${ordinance.kindLabel} No.`;
+    detailTitle.textContent = `City Ordinance ${ordinance.number}`;
     document.getElementById("detailAuthor").textContent = ordinance.author;
     document.getElementById("detailDate").textContent = ordinance.dateApproved;
     document.getElementById("detailOrdinanceTitle").textContent = ordinance.title;
     document.getElementById("detailUploadedBy").textContent = ordinance.uploadedBy || "—";
-    archivedBadge.hidden = !ordinance.isArchived;
 
     detailDescription.innerHTML = "";
     ordinance.description.split("\n\n").forEach((para) => {
@@ -67,36 +62,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderDisplay();
 
-  // ---- Edit mode (only whoever manages this kind — see ordinances-data.js) ----
+  // ---- Edit mode (Secretary/Admin only — see ordinances-data.js) ----
 
-  const canEdit = canManageDocument(getAdminUser(), ordinance);
+  const canEdit = isDocumentManager(getAdminUser());
 
   const editBtn = document.getElementById("editOrdinanceBtn");
   editBtn.hidden = !canEdit;
-  editBtn.setAttribute("aria-label", `Edit ${ordinance.kindLabel.toLowerCase()}`);
-
-  const archiveToggleBtn = document.getElementById("archiveToggleBtn");
-
-  function renderArchiveToggle() {
-    archiveToggleBtn.hidden = !canEdit;
-    archiveToggleBtn.textContent = ordinance.isArchived ? "Restore" : "Archive";
-  }
-  renderArchiveToggle();
-
-  archiveToggleBtn.addEventListener("click", async () => {
-    archiveToggleBtn.disabled = true;
-    try {
-      ordinance = ordinance.isArchived
-        ? await unarchiveOrdinanceById(ordinance.id)
-        : await archiveOrdinanceById(ordinance.id);
-      renderDisplay();
-      renderArchiveToggle();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      archiveToggleBtn.disabled = false;
-    }
-  });
+  editBtn.setAttribute("aria-label", "Edit ordinance");
 
   if (!canEdit) return;
 

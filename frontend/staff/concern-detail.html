@@ -87,15 +87,15 @@
           </div>
 
           <div class="status-edit-row">
-            <span class="status-edit-label">Folder:</span>
+            <span class="status-edit-label">Category:</span>
           </div>
           <div id="folderAssigned" hidden>
             <div class="folder-row">
               <span class="folder-chip" id="folderChip"></span>
-              <button type="button" class="folder-icon-btn folder-icon-btn--delete" id="folderUnassignBtn" aria-label="Remove from folder">&#10005;</button>
+              <button type="button" class="folder-icon-btn folder-icon-btn--delete" id="folderUnassignBtn" aria-label="Remove from category">&#10005;</button>
             </div>
           </div>
-          <button type="button" class="folder-add-btn" id="assignFolderBtn" aria-label="Assign to a folder">+</button>
+          <button type="button" class="folder-add-btn" id="assignFolderBtn" aria-label="Assign to a category">+</button>
 
           <label for="remarksInput" class="status-edit-remarks-label">Remarks:</label>
           <textarea id="remarksInput" class="status-edit-remarks" placeholder="Enter remarks to be shown to reportee." disabled></textarea>
@@ -147,19 +147,19 @@
     </div>
   </div>
 
-  <!-- Assign to folder -->
+  <!-- Assign to category -->
   <div class="modal-overlay" id="assignFolderModal" hidden>
     <div class="modal-card">
-      <h2>Assign to Folder</h2>
+      <h2>Assign to Category</h2>
       <div class="field">
-        <label for="assignFolderSelect">Choose an existing folder</label>
+        <label for="assignFolderSelect">Choose an existing category</label>
         <select id="assignFolderSelect">
-          <option value="">&mdash; Select a folder &mdash;</option>
+          <option value="">&mdash; Select a category &mdash;</option>
         </select>
       </div>
       <div class="divider">OR</div>
       <div class="field">
-        <label for="assignFolderNewInput">Create a new folder</label>
+        <label for="assignFolderNewInput">Create a new category</label>
         <input type="text" id="assignFolderNewInput" placeholder="e.g. No Loud Karaoke After 10PM" />
       </div>
       <div class="btn-row">

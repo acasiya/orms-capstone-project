@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function openCreateModal() {
     folderModalMode = "create";
-    folderNameModalTitle.textContent = "Create Folder";
+    folderNameModalTitle.textContent = "Create Category";
     folderNameConfirm.textContent = "Create";
     folderNameInput.value = "";
     folderNameModal.hidden = false;
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!folder) return;
     folderModalMode = "rename";
     renameTargetId = id;
-    folderNameModalTitle.textContent = "Rename Folder";
+    folderNameModalTitle.textContent = "Rename Category";
     folderNameConfirm.textContent = "Rename";
     folderNameInput.value = folder.name;
     folderNameModal.hidden = false;

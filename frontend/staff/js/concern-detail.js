@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function populateFolderSelect() {
     assignFolderSelect.innerHTML =
-      `<option value="">&mdash; Select a folder &mdash;</option>` +
+      `<option value="">&mdash; Select a category &mdash;</option>` +
       liveFolders().map((f) => `<option value="${f.id}">${f.name}</option>`).join("");
   }
 
@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (newName) {
         await createFolder(newName);
         const created = liveFolders().find((f) => f.name.toLowerCase() === newName.toLowerCase());
-        if (!created) throw new Error("Could not create this folder.");
+        if (!created) throw new Error("Could not create this category.");
         folderId = created.id;
         folderName = created.name;
       } else if (folderId) {

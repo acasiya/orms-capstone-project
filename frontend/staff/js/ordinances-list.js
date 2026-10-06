@@ -1,17 +1,16 @@
-// SafeSpace — Ordinances & Resolutions list: type filter, search, paginate,
-// render, navigate to detail, plus uploading (the Secretary uploads
-// ordinances, the Barangay Treasurer resolutions — see ordinances-data.js's
-// managedDocumentKinds).
+// SafeSpace — Ordinances list: search, paginate, render, navigate to
+// detail, plus uploading (Secretary/Admin — see ordinances-data.js's
+// isDocumentManager).
 
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("ordinanceRows");
   const filterField = document.getElementById("filterField");
+  const sortSelect = document.getElementById("sortSelect");
   const searchInput = document.getElementById("ordinanceSearch");
   const searchForm = document.getElementById("ordinanceSearchForm");
   const paginationInfo = document.getElementById("paginationInfo");
   const pagination = document.getElementById("ordinancesPagination");
   const pageSizeSelect = document.getElementById("ordinancesPageSize");
-  const kindFilter = document.getElementById("kindFilter");
 
   let pageSize = 5;
   let currentPage = 1;
@@ -52,30 +51,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
 
-  tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">Loading ordinances...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="2" class="ordinances-empty">Loading ordinances...</td></tr>`;
   try {
     await ensureOrdinancesLoaded();
     updateSearchPlaceholder();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="2" class="ordinances-empty">${err.message}</td></tr>`;
     return;
   }
 
-  // Type filter applies immediately (it's a view choice, not a search).
-  function ofSelectedKind() {
-    const kind = kindFilter.value;
-    return kind === "all" ? liveOrdinances() : liveOrdinances().filter((o) => o.kind === kind);
-  }
-
   function getFiltered() {
-    const rows = ofSelectedKind();
-    if (!appliedQuery) return rows;
-    return rows.filter((o) => String(o[appliedField] || "").toLowerCase().includes(appliedQuery));
+    let rows = liveOrdinances();
+    if (appliedQuery) {
+      rows = rows.filter((o) => String(o[appliedField] || "").toLowerCase().includes(appliedQuery));
+    }
+    rows = rows.slice().sort((a, b) =>
+      sortSelect.value === "oldest"
+        ? a.dateSort.localeCompare(b.dateSort)
+        : b.dateSort.localeCompare(a.dateSort)
+    );
+    return rows;
   }
 
   function emptyMessage() {
-    const noun = { all: "ordinances or resolutions", ordinance: "ordinances", resolution: "resolutions" }[kindFilter.value];
-    return ofSelectedKind().length ? `No ${noun} match your search.` : `No ${noun} uploaded yet.`;
+    return liveOrdinances().length ? "No ordinances match your search." : "No ordinances uploaded yet.";
   }
 
   function escapeHtml(str) {
@@ -93,20 +92,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rows = allRows.slice(start, start + pageSize);
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="ordinances-empty">${emptyMessage()}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="2" class="ordinances-empty">${emptyMessage()}</td></tr>`;
     } else {
       tbody.innerHTML = rows
         .map(
           (o) => `
           <tr data-id="${o.id}" tabindex="0">
-            <td><span class="doc-kind doc-kind--${o.kind}">${o.kindLabel}</span></td>
             <td>${escapeHtml(o.number)}</td>
             <td><span class="ordinance-name">${escapeHtml(o.title)}</span></td>
-            <td>${
-              o.isArchived
-                ? `<span class="status-badge status-badge--submitted">Archived</span>`
-                : `<span class="status-badge status-badge--resolved">Active</span>`
-            }</td>
           </tr>`
         )
         .join("");
@@ -145,11 +138,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   });
 
-  kindFilter.addEventListener("change", () => {
-    currentPage = 1;
-    render();
-  });
-
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
       pageSize = Number(pageSizeSelect.value);
@@ -158,19 +146,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  sortSelect.addEventListener("change", () => {
+    currentPage = 1;
+    render();
+  });
+
   render();
 
   // ---- Upload FAB ----
-  // Only for whoever manages a kind: Secretary (ordinances) and Barangay
-  // Treasurer (resolutions); everyone else with access here views only (the
-  // server enforces this too — see OrdinanceListCreateView). Links to
-  // upload-ordinance.html, which files the uploader's own kind.
-  const kinds = managedDocumentKinds(getAdminUser());
+  // Secretary/Admin only; everyone else with access here views only (the
+  // server enforces this too — see OrdinanceListCreateView).
   const uploadBtn = document.getElementById("uploadOrdinanceBtn");
-  uploadBtn.hidden = !kinds.length;
-  if (kinds.length === 1) {
-    const label = `Upload ${DOCUMENT_KIND_LABELS[kinds[0]]}`;
-    uploadBtn.title = label;
-    uploadBtn.setAttribute("aria-label", label);
-  }
+  uploadBtn.hidden = !isDocumentManager(getAdminUser());
 });

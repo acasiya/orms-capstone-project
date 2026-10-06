@@ -19,10 +19,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  if (isLoggedIn()) {
+    authFetch(`/api/ordinances/${encodeURIComponent(id)}/view/`, { method: "POST" }).catch(() => {});
+  }
+
   document.title = `${ordinance.number} — SafeSpace`;
-  // Ordinances keep their long-standing "City Ordinance" heading.
-  document.getElementById("detailTitle").textContent =
-    `${ordinance.kind === "resolution" ? "Resolution" : "City Ordinance"} ${ordinance.number}`;
+  document.getElementById("detailTitle").textContent = `City Ordinance ${ordinance.number}`;
   document.getElementById("detailAuthor").textContent = ordinance.author;
   document.getElementById("detailDate").textContent = ordinance.dateApproved;
   document.getElementById("detailOrdinanceTitle").textContent = ordinance.title;
@@ -70,12 +72,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const response = await authFetch(`/api/ordinances/${encodeURIComponent(ordinance.id)}/download/`);
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          alert(data.detail || `Could not download this ${ordinance.kindLabel.toLowerCase()}.`);
+          alert(data.detail || "Could not download this ordinance.");
           return;
         }
         window.open(data.pdf_url, "_blank", "noopener");
       } catch {
-        alert(`Could not download this ${ordinance.kindLabel.toLowerCase()}. Please try again.`);
+        alert("Could not download this ordinance. Please try again.");
       } finally {
         downloadBtn.textContent = originalText;
       }

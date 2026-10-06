@@ -67,7 +67,7 @@ const RESET_DRAFT_KEY = "orms_reset_draft";
 // only — a real Staff account always has a position, so STAFF_POSITION_HOME
 // below is what actually decides where they land (see loginHome()).
 const ROLE_HOME = {
-  citizen: "/citizen/ordinances.html",
+  citizen: "/citizen/home.html",
   staff: "/staff/reports-dashboard.html",
   admin: "/admin/manage-accounts.html",
 };
@@ -79,7 +79,6 @@ const STAFF_POSITION_HOME = {
   "Barangay Captain": "/staff/reports-dashboard.html",
   Secretary: "/staff/concerns.html",
   Investigator: "/staff/reports.html",
-  "Barangay Treasurer": "/staff/ordinances.html",
 };
 
 // Works out where to send someone right after apiLogin/apiCompleteStaffSetup
@@ -254,38 +253,6 @@ async function checkForConcernUpdates() {
     snapshot[c.id] = hash;
   });
   setNotifSnapshot(CONCERN_SNAPSHOT_KEY, snapshot);
-}
-
-// Ordinances are a shared/global list rather than something a citizen owns,
-// so unlike the report/concern checks above, the very first-ever poll
-// (localStorage key never set at all) silently baselines every ordinance
-// that already exists — otherwise a brand-new citizen would get flooded
-// with "new ordinance" notices for the whole existing library.
-const ORDINANCE_SNAPSHOT_KEY = "orms_citizen_ordinance_snapshot";
-
-async function checkForOrdinanceUpdates() {
-  let list;
-  try {
-    const res = await fetch("/api/ordinances/");
-    if (!res.ok) return;
-    list = await res.json();
-  } catch {
-    return;
-  }
-
-  const neverChecked = localStorage.getItem(ORDINANCE_SNAPSHOT_KEY) === null;
-  const snapshot = getNotifSnapshot(ORDINANCE_SNAPSHOT_KEY);
-  list.forEach((o) => {
-    const hash = `${o.title}|${o.description}|${o.updated_at}`;
-    const isFirstSight = !(o.id in snapshot);
-    if (isFirstSight) {
-      if (!neverChecked) addCitizenNotification(`A new ordinance was uploaded: ${o.number} — ${o.title}`, `ordinance-detail.html?id=${o.id}`);
-    } else if (snapshot[o.id] !== hash) {
-      addCitizenNotification(`Ordinance ${o.number} — ${o.title} was updated.`, `ordinance-detail.html?id=${o.id}`);
-    }
-    snapshot[o.id] = hash;
-  });
-  setNotifSnapshot(ORDINANCE_SNAPSHOT_KEY, snapshot);
 }
 
 function getAccessToken() {
@@ -811,7 +778,40 @@ function enforcePortalAccess() {
   }
 }
 
+// Pulls the navbar brand name + logo from Admin's Website Branding settings
+// (siteinfo.BarangayProfile.site_name/site_logo — see siteinfo/views.py's
+// BrandingPublicView) so every portal shows the same, admin-editable brand
+// instead of a hardcoded "SafeSpace". Best-effort: on any failure the
+// static "SafeSpace" + default leaf logo already in the HTML stays as-is.
+// The browser tab's <title> is untouched on purpose. Public (guests see
+// the navbar too), so a plain fetch — no auth needed.
+function applySiteBranding() {
+  fetch("/api/site/branding/")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((branding) => {
+      if (!branding) return;
+      document.querySelectorAll(".navbar__brand").forEach((brand) => {
+        if (!branding.site_name) return;
+        const textNode = Array.from(brand.childNodes).find((n) => n.nodeType === 3 && n.textContent.trim());
+        if (textNode) textNode.textContent = ` ${branding.site_name}`;
+      });
+      if (branding.site_logo_url) {
+        document.querySelectorAll(".navbar__logo").forEach((el) => {
+          el.style.backgroundImage = `url("${branding.site_logo_url}")`;
+        });
+      }
+    })
+    .catch(() => {});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  applySiteBranding();
+  document.querySelectorAll(".navbar__brand").forEach((brand) => {
+    brand.style.cursor = "pointer";
+    brand.addEventListener("click", () => {
+      window.location.href = "home.html";
+    });
+  });
   expireStaleSession();
   enforcePortalAccess();
   setupPasswordHints();
@@ -1579,9 +1579,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const profileGuestView = document.getElementById("profileGuestView");
   const profileUserView = document.getElementById("profileUserView");
   if (profileBtn && profileModal) {
-    if (loggedIn && user) renderAvatar(profileBtn, user);
+    if (loggedIn && user) {
+      renderAvatar(profileBtn, user);
+    } else {
+      profileBtn.textContent = "Login";
+      profileBtn.classList.add("navbar__profile--login");
+      if (window.location.pathname.endsWith("/index.html") || window.location.pathname.endsWith("/citizen/")) {
+        profileBtn.classList.add("active");
+      }
+      const signUpLink = document.createElement("a");
+      signUpLink.href = "signup.html";
+      signUpLink.textContent = "Sign Up";
+      signUpLink.className = "navbar__profile--login";
+      if (window.location.pathname.endsWith("/signup.html")) signUpLink.classList.add("active");
+      profileBtn.insertAdjacentElement("afterend", signUpLink);
+    }
 
     const openProfileModal = () => {
+      if (!(loggedIn && user)) {
+        window.location.href = "index.html";
+        return;
+      }
       if (loggedIn && user) {
         profileGuestView.hidden = true;
         profileUserView.hidden = false;
@@ -1695,9 +1713,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (loggedIn) {
-      Promise.all([checkForReportUpdates(), checkForConcernUpdates(), checkForOrdinanceUpdates()]).then(renderNotifications);
+      Promise.all([checkForReportUpdates(), checkForConcernUpdates()]).then(renderNotifications);
       setInterval(() => {
-        Promise.all([checkForReportUpdates(), checkForConcernUpdates(), checkForOrdinanceUpdates()]).then(renderNotifications);
+        Promise.all([checkForReportUpdates(), checkForConcernUpdates()]).then(renderNotifications);
       }, 30000);
     }
 
@@ -1773,15 +1791,55 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Dismiss: explicit close buttons, or clicking the dimmed backdrop
+  // Dismiss: explicit close buttons, or clicking the dimmed backdrop — except
+  // [data-modal-mandatory] modals (the signup Terms & Conditions gate),
+  // which can only be dismissed by actually agreeing.
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => {
       btn.closest(".modal-overlay").hidden = true;
     });
   });
-  document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+  document.querySelectorAll(".modal-overlay:not([data-modal-mandatory])").forEach((overlay) => {
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.hidden = true;
     });
   });
+
+  // ---- Terms & Conditions / Data Privacy gate (Sign Up page only) ----
+  const termsModal = document.getElementById("termsModal");
+  const termsModalBody = document.getElementById("termsModalBody");
+  const termsAgreeBtn = document.getElementById("termsAgreeBtn");
+  const signupForm = document.querySelector("form[data-signup-step1]");
+
+  if (termsModal && termsModalBody && termsAgreeBtn) {
+    const signupFields = signupForm
+      ? signupForm.querySelectorAll("input, select, button, textarea")
+      : [];
+    signupFields.forEach((el) => (el.disabled = true));
+    termsModal.hidden = false;
+
+    function reachedBottom() {
+      return termsModalBody.scrollTop + termsModalBody.clientHeight >= termsModalBody.scrollHeight - 4;
+    }
+
+    termsModalBody.addEventListener("scroll", () => {
+      if (reachedBottom()) {
+        termsAgreeBtn.disabled = false;
+        termsAgreeBtn.textContent = "I Agree";
+      }
+    });
+
+    // A notice this short may not even need scrolling on a tall viewport —
+    // don't block agreement on a scrollbar that was never going to appear.
+    if (reachedBottom()) {
+      termsAgreeBtn.disabled = false;
+      termsAgreeBtn.textContent = "I Agree";
+    }
+
+    termsAgreeBtn.addEventListener("click", () => {
+      if (termsAgreeBtn.disabled) return;
+      termsModal.hidden = true;
+      signupFields.forEach((el) => (el.disabled = false));
+    });
+  }
 });
