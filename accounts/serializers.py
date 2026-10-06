@@ -17,6 +17,17 @@ from .models import AuditLog, LoginSession, PasswordResetCode, VoterVerification
 User = get_user_model()
 
 
+PH_MOBILE_RE = re.compile(r"^(?:\+?63|0)9\d{9}$")
+
+
+def clean_ph_mobile(value):
+    """A Philippine mobile number — 09XXXXXXXXX or +639XXXXXXXXX (spaces/dashes ignored)."""
+    cleaned = re.sub(r"[\s\-()]", "", value or "")
+    if not PH_MOBILE_RE.match(cleaned):
+        raise serializers.ValidationError("Enter a valid mobile number, like 09XXXXXXXXX.")
+    return cleaned
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     """
     Public self-registration. Always creates a `citizen` role account —
@@ -51,6 +62,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             "contact_number", "address", "voter_id_image",
         ]
         read_only_fields = ["id"]
+
+    def validate_contact_number(self, value):
+        return clean_ph_mobile(value)
 
     def create(self, validated_data):
         voter_id_image = validated_data.pop("voter_id_image")
@@ -193,6 +207,9 @@ class StaffAccountSetupSerializer(serializers.ModelSerializer):
         model = User
         fields = ["first_name", "last_name", "contact_number", "password"]
 
+    def validate_contact_number(self, value):
+        return clean_ph_mobile(value)
+
     def update(self, instance, validated_data):
         password = validated_data.pop("password")
         for field, value in validated_data.items():
@@ -242,6 +259,21 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["first_name", "last_name", "email", "contact_number", "address", "profile_picture"]
+
+    def validate_contact_number(self, value):
+        return clean_ph_mobile(value)
+
+    def validate(self, attrs):
+        # A citizen's name is set at sign-up and can't be changed afterward.
+        # Staff keep editing theirs (set at their setup step).
+        user = self.instance
+        if user is not None and user.role == User.Role.CITIZEN:
+            for field in ("first_name", "last_name"):
+                if field in attrs and attrs[field].strip() != getattr(user, field):
+                    raise serializers.ValidationError(
+                        {field: "Your name was set when you signed up and can't be changed."}
+                    )
+        return attrs
 
 
 class ChangePasswordSerializer(serializers.Serializer):

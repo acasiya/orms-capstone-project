@@ -822,34 +822,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // field. Guarded on STREETS existing since not every page that loads
   // main.js also loads streets-data.js.
   if (typeof STREETS !== "undefined") {
-    const streetInput = document.getElementById("signupStreet");
-    const streetList = document.getElementById("signupStreetList");
-    if (streetInput && streetList) {
-      const renderStreetOptions = () => {
-        const query = streetInput.value.trim().toLowerCase();
-        const matches = query ? STREETS.filter((s) => s.toLowerCase().includes(query)) : STREETS;
-        streetList.innerHTML = matches.length
-          ? matches.map((s) => `<li data-value="${s}">${s}</li>`).join("")
-          : `<li class="combobox__empty">No matching street</li>`;
-        streetList.hidden = false;
-      };
-      streetInput.addEventListener("focus", renderStreetOptions);
-      streetInput.addEventListener("input", renderStreetOptions);
-      streetList.addEventListener("click", (e) => {
-        const option = e.target.closest("li[data-value]");
-        if (!option) return;
-        streetInput.value = option.dataset.value;
-        streetList.hidden = true;
-      });
-      document.addEventListener("click", (e) => {
-        if (!streetInput.contains(e.target) && !streetList.contains(e.target)) {
-          streetList.hidden = true;
-        }
-      });
-      streetInput.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") streetList.hidden = true;
-      });
-    }
+    wireStreetCombobox("signupStreet", "signupStreetList");
+    wireStreetCombobox("profileStreet", "profileStreetList");
   }
 
   // Prevent full page reload on forms that don't have a real backend yet;
@@ -909,6 +883,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // above) rather than free text, so it has to actually match an
         // entry — typing something and not clicking an option shouldn't
         // silently go through as if it were a valid street.
+        if (!isValidPhMobile(form.querySelector('[name="phone"]').value)) {
+          showFormError(form, "Enter a valid mobile number, like 09XXXXXXXXX.");
+          return;
+        }
+
         const streetField = document.getElementById("signupStreet");
         const blockLotField = document.getElementById("signupBlockLot");
         const street = streetField ? streetField.value.trim() : "";
@@ -1843,3 +1822,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+// A Philippine mobile number: 09XXXXXXXXX or +639XXXXXXXXX (spaces and dashes ignored).
+function isValidPhMobile(value) {
+  return /^(?:\+?63|0)9\d{9}$/.test(String(value || "").replace(/[\s\-()]/g, ""));
+}
+
+
+// A type-to-filter combobox over the fixed STREETS list (streets-data.js).
+function wireStreetCombobox(inputId, listId) {
+  const streetInput = document.getElementById(inputId);
+  const streetList = document.getElementById(listId);
+  if (!streetInput || !streetList) return;
+  const renderStreetOptions = () => {
+    const query = streetInput.value.trim().toLowerCase();
+    const matches = query ? STREETS.filter((s) => s.toLowerCase().includes(query)) : STREETS;
+    streetList.innerHTML = matches.length
+      ? matches.map((s) => `<li data-value="${s}">${s}</li>`).join("")
+      : `<li class="combobox__empty">No matching street</li>`;
+    streetList.hidden = false;
+  };
+  streetInput.addEventListener("focus", renderStreetOptions);
+  streetInput.addEventListener("input", renderStreetOptions);
+  streetList.addEventListener("click", (e) => {
+    const option = e.target.closest("li[data-value]");
+    if (!option) return;
+    streetInput.value = option.dataset.value;
+    streetInput.dispatchEvent(new Event("input", { bubbles: true }));
+    streetList.hidden = true;
+  });
+  document.addEventListener("click", (e) => {
+    if (!streetInput.contains(e.target) && !streetList.contains(e.target)) {
+      streetList.hidden = true;
+    }
+  });
+  streetInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") streetList.hidden = true;
+  });
+}

@@ -11,6 +11,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   const emailInput = document.getElementById("profileEmail");
   const mobileInput = document.getElementById("profileMobile");
   const addressInput = document.getElementById("profileAddress");
+  const streetInput = document.getElementById("profileStreet");
+  const blockLotInput = document.getElementById("profileBlockLot");
+
+  // The address is saved as "Block, Lot, Street" (same as sign-up). The hidden
+  // addressInput holds that combined value; the two visible fields feed it.
+  function splitAddress(address) {
+    const parts = String(address || "").split(",").map((part) => part.trim());
+    const last = parts.length > 1 ? parts[parts.length - 1] : "";
+    if (last && STREETS.includes(last)) {
+      streetInput.value = last;
+      blockLotInput.value = parts.slice(0, -1).join(", ");
+    } else {
+      streetInput.value = "";
+      blockLotInput.value = address || "";
+    }
+  }
+
+  function syncAddress() {
+    const blockLot = blockLotInput.value.trim();
+    const street = streetInput.value.trim();
+    addressInput.value = blockLot || street ? `${blockLot}, ${street}` : "";
+  }
   const editForm = document.getElementById("editProfileForm");
 
   function initialsFor(firstName, lastName) {
@@ -40,7 +62,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     lastNameInput.value = user.lastName || "";
     emailInput.value = user.email || "";
     mobileInput.value = user.mobile || "";
-    addressInput.value = user.address || "";
+    splitAddress(user.address);
+    syncAddress();
 
     // Feeds the New Password field's "too similar to your name/email" hint
     // (see setupPasswordHints in main.js) — Change Password has no visible
@@ -84,6 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   function isEditDirty() {
+    syncAddress();
     return (
       firstNameInput.value !== savedSnapshot.firstName ||
       lastNameInput.value !== savedSnapshot.lastName ||
@@ -175,6 +199,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function commitEditSave() {
     clearFormError(editForm);
     const submitBtn = editForm.querySelector('button[type="submit"]');
+
+    syncAddress();
+    if (!STREETS.includes(streetInput.value.trim())) {
+      showFormError(editForm, "Please select a street from the list.");
+      return false;
+    }
+    if (!blockLotInput.value.trim()) {
+      showFormError(editForm, "Enter your block and lot.");
+      return false;
+    }
+    if (!isValidPhMobile(mobileInput.value)) {
+      showFormError(editForm, "Enter a valid mobile number, like 09XXXXXXXXX.");
+      return false;
+    }
 
     const formData = new FormData();
     formData.append("first_name", firstNameInput.value.trim());

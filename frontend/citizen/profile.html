@@ -57,11 +57,11 @@
               <div class="form-row">
                 <div class="field">
                   <label for="profileFirstName">Given Name</label>
-                  <input type="text" id="profileFirstName" required />
+                  <input type="text" id="profileFirstName" required disabled />
                 </div>
                 <div class="field">
                   <label for="profileLastName">Last Name</label>
-                  <input type="text" id="profileLastName" required />
+                  <input type="text" id="profileLastName" required disabled />
                 </div>
               </div>
               <div class="field">
@@ -72,10 +72,20 @@
                 <label for="profileMobile">Mobile Number</label>
                 <input type="tel" id="profileMobile" required />
               </div>
+              <div class="form-row">
               <div class="field">
-                <label for="profileAddress">Address</label>
-                <input type="text" id="profileAddress" required />
+                <label for="profileStreet">Street</label>
+                <div class="combobox" id="profileStreetCombobox">
+                  <input type="text" id="profileStreet" placeholder="Type to search streets..." autocomplete="off" required />
+                  <ul class="combobox__list" id="profileStreetList" hidden></ul>
+                </div>
               </div>
+              <div class="field">
+                <label for="profileBlockLot">Block, Lot, etc.</label>
+                <input type="text" id="profileBlockLot" placeholder="e.g. Block 1, Lot 2" required />
+              </div>
+              </div>
+              <input type="hidden" id="profileAddress" />
               <button type="submit" class="btn btn-success">Apply Changes</button>
             </form>
           </div>
@@ -211,6 +221,7 @@
 
   <footer id="siteFooter"></footer>
   <script src="js/site-footer.js"></script>
+  <script src="js/streets-data.js"></script>
   <script src="js/main.js"></script>
   <script src="js/profile.js"></script>
 </body>
