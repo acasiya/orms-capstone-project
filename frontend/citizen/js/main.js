@@ -1138,6 +1138,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // not automatically, so following a link can't trigger emails.
     const emailFromQuery = new URLSearchParams(window.location.search).get("email");
     if (emailFromQuery) setupEmailField.value = emailFromQuery;
+    if (typeof STREETS !== "undefined") wireStreetCombobox("setupStreet", "setupStreetList");
+    // The link in the account-creation email already has a code sent, so go
+    // straight to the code step rather than sending another (which would
+    // invalidate the one in the email).
+    if (emailFromQuery && new URLSearchParams(window.location.search).get("sent")) {
+      setupEmail = emailFromQuery;
+      document.getElementById("setupCodeEmail").textContent = emailFromQuery;
+      staffSetupEmailForm.hidden = true;
+      staffSetupCodeForm.hidden = false;
+      setupCodeField.focus();
+    }
 
     staffSetupEmailForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -1204,6 +1215,20 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Citizen setup also asks for the address (sign-up's format: "Block, Lot, Street").
+      const streetField = document.getElementById("setupStreet");
+      const blockLotField = document.getElementById("setupBlockLot");
+      let address;
+      if (streetField) {
+        const street = streetField.value.trim();
+        const blockLot = blockLotField.value.trim();
+        if (!STREETS.includes(street)) {
+          showFormError(staffSetupDetailsForm, "Please select a street from the list.");
+          return;
+        }
+        address = `${blockLot}, ${street}`;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = "Setting up...";
       try {
@@ -1212,6 +1237,7 @@ document.addEventListener("DOMContentLoaded", () => {
           last_name: lastName.value.trim(),
           contact_number: phone.value.trim(),
           password: password.value,
+          address,
         });
         window.location.href = loginHome(role) || "index.html";
       } catch (err) {

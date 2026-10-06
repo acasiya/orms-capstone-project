@@ -155,33 +155,52 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
         return user
 
 
-class AdminCreateCitizenSerializer(serializers.ModelSerializer):
+class CitizenInviteSerializer(serializers.Serializer):
     """
-    Used by Administrators to create a Barangay Citizen account directly,
-    full details and password included — unlike AdminCreateUserSerializer
-    above (Staff/Administrator), there's no first-login setup step here:
-    the admin is entering everything themselves right away. Pre-verified
-    immediately too — no voter's ID review needed, since an admin is
-    vetting/entering it directly rather than the resident self-registering
-    (see RegisterSerializer for that path).
+    Administrator or Barangay Secretary creates a Barangay Citizen account from
+    just an email. The citizen then finishes setup themselves (see
+    CitizenSetupSerializer) using the code emailed to them — the same way a
+    staff account is set up.
     """
 
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+        user = User(email=email, username=email, role=User.Role.CITIZEN, is_verified=True)
+        user.set_unusable_password()
+        user.save()
+        return user
+
+
+class CitizenSetupSerializer(serializers.ModelSerializer):
+    """The citizen's own setup step — the same details as sign-up, minus the voter's ID."""
+
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    contact_number = serializers.CharField(required=True)
+    address = serializers.CharField(required=True)
     password = serializers.CharField(write_only=True, validators=[validate_password])
 
     class Meta:
         model = User
-        fields = ["id", "email", "password", "first_name", "last_name", "contact_number", "address"]
-        read_only_fields = ["id"]
+        fields = ["first_name", "last_name", "contact_number", "address", "password"]
 
-    def create(self, validated_data):
+    def validate_contact_number(self, value):
+        return clean_ph_mobile(value)
+
+    def update(self, instance, validated_data):
         password = validated_data.pop("password")
-        validated_data["username"] = validated_data["email"]
-        validated_data["role"] = User.Role.CITIZEN
-        validated_data["is_verified"] = True
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.set_password(password)
+        instance.save()
+        return instance
 
 
 class StaffAccountSetupSerializer(serializers.ModelSerializer):

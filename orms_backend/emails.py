@@ -190,13 +190,14 @@ def send_staff_setup_code_email(user, code, expires_minutes, with_setup_link=Fal
     # straight to the code step, so the code in the email is the one to use.
     setup_url = None
     if with_setup_link:
+        portal = "citizen" if user.role == user.Role.CITIZEN else "staff"
         setup_url = (
-            f"{settings.FRONTEND_BASE_URL}/staff/account-setup.html"
+            f"{settings.FRONTEND_BASE_URL}/{portal}/account-setup.html"
             f"?email={quote(user.email)}&sent=1"
         )
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your account setup code",
+        subject="Your account setup code",
         template_name="staff_setup_code",
         context={"user": user, "code": code, "expires_minutes": expires_minutes, "setup_url": setup_url},
     )

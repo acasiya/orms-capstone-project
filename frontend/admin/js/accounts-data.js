@@ -85,23 +85,15 @@ async function createAccount({ email, staffRole }) {
 // Used by the Create Account form's "Barangay Citizen" account type —
 // creates a full, pre-verified citizen account right away (see
 // accounts/serializers.py's AdminCreateCitizenSerializer).
-async function createCitizenAccount({ email, password, firstName, lastName, contactNumber, address }) {
+async function createCitizenAccount({ email }) {
   const response = await authFetch(`${ADMIN_API_BASE}/create-citizen/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email,
-      password,
-      first_name: firstName,
-      last_name: lastName,
-      contact_number: contactNumber,
-      address,
-    }),
+    body: JSON.stringify({ email }),
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    const firstError = Object.values(data)[0];
-    throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not create this account.");
+    throw new Error((data.email && data.email[0]) || data.detail || "Could not send the invite.");
   }
   return response.json();
 }

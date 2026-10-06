@@ -98,64 +98,14 @@
           </div>
         </form>
 
-        <!-- Barangay Citizen: full details, created (and pre-verified) right
-             away — no first-login setup step, unlike Staff above. -->
-        <form id="createCitizenAccountForm" class="create-account-grid" novalidate hidden>
-          <div class="create-account-card">
-            <div class="field">
-              <label for="ccLastName">Last Name</label>
-              <input type="text" id="ccLastName" name="last_name" placeholder="lastname" required />
-            </div>
-            <div class="field">
-              <label for="ccFirstName">Given Name</label>
-              <input type="text" id="ccFirstName" name="first_name" placeholder="given name" required />
-            </div>
-            <div class="field">
-              <label for="ccPhone">Phone</label>
-              <input type="tel" id="ccPhone" name="phone" placeholder="09XXXXXXXXX" required />
-            </div>
-            <div class="field">
-              <label for="ccEmail">Email</label>
-              <input type="email" id="ccEmail" name="email" placeholder="balamia@gmail.com" required />
-            </div>
-            <div class="field">
-              <label for="ccStreet">Street</label>
-              <div class="combobox" id="ccStreetCombobox">
-                <input type="text" id="ccStreet" placeholder="Type to search streets..." autocomplete="off" required />
-                <ul class="combobox__list" id="ccStreetList" hidden></ul>
-              </div>
-            </div>
-            <div class="field">
-              <label for="ccBlockLot">Block, Lot, etc.</label>
-              <input type="text" id="ccBlockLot" placeholder="e.g. Block 1, Lot 2" required />
-            </div>
+        <!-- Barangay Citizen: email only. They finish setting up the account from the emailed link. -->
+        <form id="createCitizenAccountForm" class="create-account-grid create-account-grid--single" novalidate hidden>
+          <div class="field">
+            <label for="ccEmail">Email</label>
+            <input type="email" id="ccEmail" placeholder="name@example.com" required />
+            <p class="field-hint">We'll email a setup code and a link to this address. The citizen adds their name, phone, address, and password themselves.</p>
           </div>
-
-          <div class="create-account-card">
-            <div class="field field--upload">
-              <label for="ccIdPhoto">Identification</label>
-              <label class="upload-drop" for="ccIdPhoto">
-                <span class="upload-drop__icon">&#8593;</span>
-                <span class="upload-drop__text" id="ccUploadFileName">Upload Voter's ID for Verification</span>
-              </label>
-              <input type="file" id="ccIdPhoto" name="idPhoto" accept="image/*" required hidden />
-            </div>
-            <div class="field">
-              <label for="ccPassword">Password</label>
-              <input type="password" id="ccPassword" name="password" placeholder="Enter your password" required />
-            </div>
-            <div class="field">
-              <label for="ccConfirmPassword">Confirm Password</label>
-              <input type="password" id="ccConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
-            </div>
-            <ul class="password-hint">
-              <li data-rule="length"><input type="checkbox" disabled tabindex="-1" /> At least 8 characters</li>
-              <li data-rule="numeric"><input type="checkbox" disabled tabindex="-1" /> Not entirely numbers</li>
-              <li data-rule="common"><input type="checkbox" disabled tabindex="-1" /> Not a commonly used password</li>
-              <li data-rule="similar"><input type="checkbox" disabled tabindex="-1" /> Not too similar to the account's name or email</li>
-            </ul>
-            <button type="submit" class="btn">Create Account</button>
-          </div>
+          <button type="submit" class="btn">Send Invite</button>
         </form>
       </div>
     </div>

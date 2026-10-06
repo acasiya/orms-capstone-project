@@ -21,7 +21,8 @@ from orms_backend.emails import (
 from .models import AuditLog, LoginSession, PasswordResetCode, User, VoterVerification, log_action
 from .serializers import (
     AdminAccountSerializer,
-    AdminCreateCitizenSerializer,
+    CitizenInviteSerializer,
+    CitizenSetupSerializer,
     AdminCreateUserSerializer,
     AuditLogSerializer,
     ChangePasswordSerializer,
@@ -130,9 +131,9 @@ class LogoutView(APIView):
 
 
 def _pending_setup_account(email):
-    """The Staff/Administrator account an admin created that's still waiting on first-login setup, or None."""
+    """The Staff, Administrator, or Barangay Citizen account an admin or secretary created that's still waiting on setup, or None."""
     user = User.objects.filter(
-        email__iexact=(email or "").strip(), role__in=[User.Role.STAFF, User.Role.ADMIN]
+        email__iexact=(email or "").strip(), role__in=[User.Role.STAFF, User.Role.ADMIN, User.Role.CITIZEN]
     ).first()
     return user if user and not user.has_usable_password() else None
 
@@ -214,7 +215,8 @@ class StaffAccountSetupView(APIView):
         if not reset_code or not reset_code.is_valid():
             return Response({"detail": self.NOT_ALLOWED}, status=400)
 
-        serializer = StaffAccountSetupSerializer(user, data=request.data)
+        setup_serializer = CitizenSetupSerializer if user.role == User.Role.CITIZEN else StaffAccountSetupSerializer
+        serializer = setup_serializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         reset_code.expire()
@@ -348,19 +350,20 @@ class AdminCreateUserView(generics.CreateAPIView):
         log_action(self.request.user, f"Created a {user.position} account for {user.email}")
 
 
-class AdminCreateCitizenView(generics.CreateAPIView):
+class AdminInviteCitizenView(generics.CreateAPIView):
     """
-    POST /api/auth/admin/create-citizen/ — Administrator-only endpoint for
-    creating a Barangay Citizen account directly, full details and password
-    included (Create Accounts' "Barangay Citizen" account type).
+    POST /api/auth/admin/create-citizen/ — Administrator or Barangay Secretary
+    creates a Barangay Citizen account from just an email. The citizen gets a
+    setup code and link by email and finishes the account themselves.
     """
     queryset = User.objects.all()
-    serializer_class = AdminCreateCitizenSerializer
-    permission_classes = [IsAdmin]
+    serializer_class = CitizenInviteSerializer
+    permission_classes = [IsSecretaryOrAdmin]
 
     def perform_create(self, serializer):
         user = serializer.save()
-        log_action(self.request.user, f"Created a Barangay Citizen account for {user.get_full_name() or user.email}")
+        _send_setup_code(user, with_setup_link=True)
+        log_action(self.request.user, f"Invited a Barangay Citizen account for {user.email}")
 
 
 class AdminListUsersView(generics.ListAPIView):

@@ -89,126 +89,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ---- Barangay Citizen form ----
-  const ccLastName = document.getElementById("ccLastName");
-  const ccFirstName = document.getElementById("ccFirstName");
-  const ccPhone = document.getElementById("ccPhone");
-  const ccEmail = document.getElementById("ccEmail");
-  const ccStreet = document.getElementById("ccStreet");
-  const ccStreetList = document.getElementById("ccStreetList");
-  const ccBlockLot = document.getElementById("ccBlockLot");
-  const ccPassword = document.getElementById("ccPassword");
-  const ccConfirmPassword = document.getElementById("ccConfirmPassword");
+  // ---- Barangay Citizen form: email only; the citizen finishes setup themselves ----
+  const citizenEmail = document.getElementById("ccEmail");
   const citizenSubmitBtn = citizenForm.querySelector('button[type="submit"]');
-
-  // Upload dropzone label text: shows the selected filename.
-  // (Voter's ID upload isn't wired to the backend yet — evidence/file
-  // storage is a separate piece of work — so this stays display-only.)
-  const idInput = document.getElementById("ccIdPhoto");
-  const uploadText = document.getElementById("ccUploadFileName");
-  const defaultUploadText = uploadText.textContent;
-  idInput.addEventListener("change", () => {
-    const file = idInput.files[0];
-    uploadText.textContent = file ? file.name : defaultUploadText;
-  });
-
-  // ---- Street: type-to-filter combobox over the fixed STREETS list ----
-  function renderStreetOptions() {
-    const query = ccStreet.value.trim().toLowerCase();
-    const matches = query ? STREETS.filter((s) => s.toLowerCase().includes(query)) : STREETS;
-    ccStreetList.innerHTML = matches.length
-      ? matches.map((s) => `<li data-value="${s}">${s}</li>`).join("")
-      : `<li class="combobox__empty">No matching street</li>`;
-    ccStreetList.hidden = false;
-  }
-  ccStreet.addEventListener("focus", renderStreetOptions);
-  ccStreet.addEventListener("input", renderStreetOptions);
-  ccStreetList.addEventListener("click", (e) => {
-    const option = e.target.closest("li[data-value]");
-    if (!option) return;
-    ccStreet.value = option.dataset.value;
-    ccStreetList.hidden = true;
-  });
-  document.addEventListener("click", (e) => {
-    if (!ccStreet.contains(e.target) && !ccStreetList.contains(e.target)) {
-      ccStreetList.hidden = true;
-    }
-  });
-  ccStreet.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") ccStreetList.hidden = true;
-  });
-
-  // ---- Password requirements: live checkbox feedback ----
-  const passwordHint = citizenForm.querySelector(".password-hint");
-  function updatePasswordHint() {
-    const status = getPasswordRuleStatus(ccPassword.value, {
-      firstName: ccFirstName.value,
-      lastName: ccLastName.value,
-      email: ccEmail.value,
-    });
-    passwordHint.querySelectorAll("li[data-rule]").forEach((li) => {
-      const satisfied = !!status[li.dataset.rule];
-      li.classList.toggle("is-satisfied", satisfied);
-      const checkbox = li.querySelector('input[type="checkbox"]');
-      if (checkbox) checkbox.checked = satisfied;
-    });
-  }
-  [ccPassword, ccFirstName, ccLastName, ccEmail].forEach((field) => field.addEventListener("input", updatePasswordHint));
-  updatePasswordHint();
 
   citizenForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!citizenForm.reportValidity()) return;
-
-    if (ccPassword.value !== ccConfirmPassword.value) {
-      ccConfirmPassword.setCustomValidity("Passwords don't match");
-      ccConfirmPassword.reportValidity();
-      return;
-    }
-    ccConfirmPassword.setCustomValidity("");
-
     clearFormError(citizenForm);
-
-    const passwordError = getPasswordRequirementError(ccPassword.value, {
-      firstName: ccFirstName.value,
-      lastName: ccLastName.value,
-      email: ccEmail.value,
-    });
-    if (passwordError) {
-      showFormError(citizenForm, passwordError);
-      return;
-    }
-
-    if (!STREETS.includes(ccStreet.value.trim())) {
-      showFormError(citizenForm, "Please select a street from the list.");
-      return;
-    }
-
     citizenSubmitBtn.disabled = true;
-    citizenSubmitBtn.textContent = "Creating...";
-
+    citizenSubmitBtn.textContent = "Sending...";
     try {
-      const created = await createCitizenAccount({
-        email: ccEmail.value.trim(),
-        password: ccPassword.value,
-        firstName: ccFirstName.value.trim(),
-        lastName: ccLastName.value.trim(),
-        contactNumber: ccPhone.value.trim(),
-        address: `${ccBlockLot.value.trim()}, ${ccStreet.value.trim()}`,
-      });
-
-      addAdminNotification(`New account created: ${created.first_name} ${created.last_name} (Barangay Citizen)`, "manage-accounts.html");
-
-      createdMessage.textContent = "The account is ready to log in on the Citizen Portal right away.";
+      await createCitizenAccount({ email: citizenEmail.value.trim() });
+      createdMessage.textContent = "We emailed a setup code and a link to that address so they can finish setting up their account.";
       createdModal.hidden = false;
       citizenForm.reset();
-      uploadText.textContent = defaultUploadText;
-      updatePasswordHint();
     } catch (err) {
       showFormError(citizenForm, err.message);
     } finally {
       citizenSubmitBtn.disabled = false;
-      citizenSubmitBtn.textContent = "Create Account";
+      citizenSubmitBtn.textContent = "Send Invite";
     }
   });
 
