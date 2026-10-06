@@ -126,7 +126,7 @@ function renderAvatar(container, user) {
   // an Administrator -> back to their own Staff portal home rather than a
   // login prompt they'd just bounce off of again.
   if (!hasToken || !user) {
-    window.location.href = "/staff/index.html";
+    window.location.href = "/citizen/index.html";
     return;
   }
   if (user.role !== "admin") {
@@ -595,7 +595,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // ignore — logging out locally still proceeds below
       }
       adminLogOut();
-      window.location.href = "/staff/index.html";
+      window.location.href = "/citizen/index.html";
     });
   }
   if (logoutNo) {

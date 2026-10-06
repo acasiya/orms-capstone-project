@@ -397,7 +397,7 @@ async function apiLogin(email, password, remember) {
     response = await fetch(`${API_BASE}/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, portal: "citizen" }),
+      body: JSON.stringify({ email, password }),
     });
   } catch {
     throw new Error("Could not reach the server. Check your connection and try again.");
@@ -1538,19 +1538,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // prompt instead of the form.
   const authGateModal = document.getElementById("authGateModal");
   const authGateTitle = document.getElementById("authGateTitle");
-  if (authGateModal && authGateTitle) {
-    document.querySelectorAll("[data-auth-gate]").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        if (loggedIn) return;
-        e.preventDefault();
-        authGateTitle.textContent =
-          link.dataset.authGate === "report"
-            ? "Want to Submit a Report?"
-            : "Want to Submit a Concern/Suggestion?";
-        authGateModal.hidden = false;
-      });
-    });
-  }
+  // Delegated so links added after load (the footer's quick links are rendered
+  // by site-footer.js once the barangay details arrive) get the prompt too.
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("[data-auth-gate]");
+    if (!link || loggedIn || !authGateModal || !authGateTitle) return;
+    e.preventDefault();
+    authGateTitle.textContent =
+      link.dataset.authGate === "report"
+        ? "Want to Submit a Report?"
+        : "Want to Submit a Concern/Suggestion?";
+    authGateModal.hidden = false;
+  });
 
   // Profile icon: Guest Account card, or the logged-in account card
   const profileBtn = document.querySelector(".navbar__profile");
