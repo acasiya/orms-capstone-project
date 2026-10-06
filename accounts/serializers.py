@@ -283,10 +283,9 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         return clean_ph_mobile(value)
 
     def validate(self, attrs):
-        # A citizen's name is set at sign-up and can't be changed afterward.
-        # Staff keep editing theirs (set at their setup step).
+        # A name is set at sign-up or account setup and can't be changed afterward.
         user = self.instance
-        if user is not None and user.role == User.Role.CITIZEN:
+        if user is not None and user.role in (User.Role.CITIZEN, User.Role.STAFF, User.Role.ADMIN):
             for field in ("first_name", "last_name"):
                 if field in attrs and attrs[field].strip() != getattr(user, field):
                     raise serializers.ValidationError(

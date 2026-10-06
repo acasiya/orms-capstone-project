@@ -259,7 +259,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const from = customLi.querySelector("#topCustomFrom").value;
       const to = customLi.querySelector("#topCustomTo").value;
       if (!from || !to || from > to) {
-        alert("Choose a valid date range (From must be on or before To).");
+        siteAlert("Choose a valid date range (From must be on or before To).");
         return;
       }
       setTopPeriod("custom", { from, to });
@@ -587,7 +587,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const from = customLi.querySelector(`#${cfg.key}CustomFrom`).value;
       const to = customLi.querySelector(`#${cfg.key}CustomTo`).value;
       if (!from || !to || from > to) {
-        alert("Choose a valid date range (From must be on or before To).");
+        siteAlert("Choose a valid date range (From must be on or before To).");
         return;
       }
       state.graphOverride[cfg.key] = { type: "custom", from, to };

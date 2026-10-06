@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       deleteModal.hidden = true;
       pendingDelete = null;
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       deleteConfirm.disabled = false;
     }
@@ -361,7 +361,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       renderMembers();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
       btn.disabled = false;
     }
   });
@@ -494,7 +494,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       renderLogos();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
       btn.disabled = false;
     }
   });

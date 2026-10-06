@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       render();
       return true;
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
       return false;
     }
   }

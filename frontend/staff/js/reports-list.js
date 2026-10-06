@@ -149,13 +149,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     list.querySelectorAll("[data-claim]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm(CLAIM_CONFIRM_MESSAGE)) return;
+        if (!await siteConfirm(CLAIM_CONFIRM_MESSAGE)) return;
         btn.disabled = true;
         try {
           await claimReport(btn.dataset.claim);
           render();
         } catch (err) {
-          alert(err.message);
+          siteAlert(err.message);
           btn.disabled = false;
         }
       });

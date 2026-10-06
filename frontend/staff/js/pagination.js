@@ -16,7 +16,7 @@ function buildPageNumberList(current, total) {
 
 // Jump-to-page modal, built once and reused by every paginated list on the
 // page — a real modal-overlay/modal-card (matching the rest of the site)
-// instead of the browser's native window.prompt()/alert().
+// instead of the browser's native window.prompt()/siteAlert().
 let jumpModalEl = null;
 
 function ensureJumpModal() {

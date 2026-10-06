@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
       deleteModal.hidden = true;
       render(await loadAnnouncements());
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       deleteConfirm.disabled = false;
     }

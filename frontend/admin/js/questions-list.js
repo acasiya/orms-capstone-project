@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (idx !== -1) questions[idx] = updated;
           renderQuestions();
         } catch (err) {
-          alert(err.message);
+          siteAlert(err.message);
           btn.disabled = false;
           btn.textContent = "Send Answer";
         }
@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const question = faqQuestionInput.value.trim();
       const answer = faqAnswerInput.value.trim();
       if (!question || !answer) {
-        alert("Both a question and an answer are required.");
+        siteAlert("Both a question and an answer are required.");
         return;
       }
 
@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderFaqManageList();
         faqModal.hidden = true;
       } catch (err) {
-        alert(err.message);
+        siteAlert(err.message);
       } finally {
         faqModalSave.disabled = false;
       }
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderFaqManageList();
         faqDeleteModal.hidden = true;
       } catch (err) {
-        alert(err.message);
+        siteAlert(err.message);
       } finally {
         faqDeleteConfirm.disabled = false;
         deletingFaqId = null;

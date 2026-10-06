@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (idx !== -1) questions[idx] = updated;
           render();
         } catch (err) {
-          alert(err.message);
+          siteAlert(err.message);
           btn.disabled = false;
           btn.textContent = "Send Answer";
         }

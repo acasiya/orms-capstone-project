@@ -144,13 +144,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderClaim();
 
   claimBtn.addEventListener("click", async () => {
-    if (!confirm(CLAIM_CONFIRM_MESSAGE)) return;
+    if (!await siteConfirm(CLAIM_CONFIRM_MESSAGE)) return;
     claimBtn.disabled = true;
     try {
       report = await claimReport(report.id);
       renderClaim();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       claimBtn.disabled = false;
     }
@@ -249,7 +249,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderTimeline(currentStatus, report.dateSubmitted, report.dateUpdated);
       return true;
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
       return false;
     } finally {
       saveBtn.disabled = false;

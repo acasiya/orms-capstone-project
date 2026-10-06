@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderFolders();
       render();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       folderNameConfirm.disabled = false;
     }
@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderFolders();
       render();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       folderDeleteConfirm.disabled = false;
     }

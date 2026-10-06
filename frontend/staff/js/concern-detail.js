@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       concern.folderName = null;
       renderFolderAssignment();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     }
   });
   assignFolderCancel.addEventListener("click", () => {
@@ -201,7 +201,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderFolderAssignment();
       assignFolderModal.hidden = true;
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       assignFolderConfirm.disabled = false;
     }
@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       statusSelect.hidden = true;
       return true;
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
       return false;
     } finally {
       saveBtn.disabled = false;

@@ -305,27 +305,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!btn || !activeAccount) return;
     const report = claimedReports.find((r) => r.id === btn.dataset.release);
     if (!report) return;
-    if (!window.confirm(`Release ${activeAccount.owner}'s claim on "${report.ordinance}"? Another Investigator will be able to claim it.`)) return;
+    if (!await siteConfirm(`Release ${activeAccount.owner}'s claim on "${report.ordinance}"? Another Investigator will be able to claim it.`)) return;
     btn.disabled = true;
     try {
       await releaseClaims([report.id]);
     } catch (err) {
       btn.disabled = false;
-      alert(err.message);
+      siteAlert(err.message);
     }
   });
 
   releaseAllBtn.addEventListener("click", async () => {
     if (!activeAccount || !claimedReports.length) return;
     const count = claimedReports.length;
-    if (!window.confirm(`Release all ${count} of ${activeAccount.owner}'s claimed reports? Other Investigators will be able to claim them.`)) return;
+    if (!await siteConfirm(`Release all ${count} of ${activeAccount.owner}'s claimed reports? Other Investigators will be able to claim them.`)) return;
     releaseAllBtn.disabled = true;
     try {
       await releaseClaims(claimedReports.map((r) => r.id));
     } catch (err) {
       // Whatever was released before the failure is already gone from the list.
       renderClaimedReports(activeAccount);
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       releaseAllBtn.disabled = false;
     }
@@ -377,7 +377,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Nothing changed — put the button back exactly as it was.
       editDisableBtn.innerHTML = previousLabel;
       editDisableBtn.disabled = false;
-      alert(err.message);
+      siteAlert(err.message);
     }
   });
 
@@ -407,7 +407,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       editModal.hidden = false;
       render();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       updateTypeSave.disabled = false;
     }
@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         primary: "Release & Delete",
       });
       if (!choice) return;
-    } else if (!window.confirm(`Permanently delete ${activeAccount.owner}'s account? This can't be undone.`)) {
+    } else if (!await siteConfirm(`Permanently delete ${activeAccount.owner}'s account? This can't be undone.`)) {
       return;
     }
 
@@ -451,7 +451,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       activeAccount = null;
       render();
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       editDeleteBtn.disabled = false;
     }

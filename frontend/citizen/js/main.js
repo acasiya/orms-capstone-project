@@ -1770,7 +1770,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (askQuestionModal) askQuestionModal.hidden = true;
         if (askQuestionSentModal) askQuestionSentModal.hidden = false;
       } catch (err) {
-        alert(err.message);
+        siteAlert(err.message);
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "Submit Question";
@@ -1875,5 +1875,69 @@ function wireStreetCombobox(inputId, listId) {
   });
   streetInput.addEventListener("keydown", (e) => {
     if (e.key === "Escape") streetList.hidden = true;
+  });
+}
+
+
+// Site-styled replacements for the browser's native popup dialogs.
+function openSiteDialog({ title, message, buttons }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    const card = document.createElement("div");
+    card.className = "modal-card";
+    card.setAttribute("role", "dialog");
+    if (title) {
+      const heading = document.createElement("h2");
+      heading.textContent = title;
+      card.appendChild(heading);
+    }
+    const text = document.createElement("p");
+    text.className = "auth-card__subtitle";
+    text.textContent = message;
+    card.appendChild(text);
+    const row = document.createElement("div");
+    row.className = "btn-row";
+    buttons.forEach((b) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `btn ${b.className || ""}`.trim();
+      btn.textContent = b.label;
+      btn.addEventListener("click", () => close(b.value));
+      row.appendChild(btn);
+    });
+    card.appendChild(row);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const cancelValue = buttons.some((b) => b.value === false) ? false : buttons[0].value;
+    function onKey(e) {
+      if (e.key === "Escape") close(cancelValue);
+    }
+    function close(value) {
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+      resolve(value);
+    }
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) close(cancelValue);
+    });
+    document.addEventListener("keydown", onKey);
+    row.querySelector("button").focus();
+  });
+}
+
+function siteAlert(message, title = "") {
+  return openSiteDialog({ title, message, buttons: [{ label: "OK", value: true }] });
+}
+
+function siteConfirm(message, { title = "Are you sure?", confirmText = "OK", cancelText = "Cancel", danger = false } = {}) {
+  return openSiteDialog({
+    title,
+    message,
+    buttons: [
+      { label: confirmText, value: true, className: danger ? "btn-danger" : "" },
+      { label: cancelText, value: false, className: "btn-muted" },
+    ],
   });
 }

@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await updateOrdinanceAuthor(toggleId, { is_active: !author.is_active });
         render();
       } catch (err) {
-        alert(err.message);
+        siteAlert(err.message);
       } finally {
         e.target.disabled = false;
       }
@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       render();
       deleteModal.hidden = true;
     } catch (err) {
-      alert(err.message);
+      siteAlert(err.message);
     } finally {
       deleteConfirm.disabled = false;
     }

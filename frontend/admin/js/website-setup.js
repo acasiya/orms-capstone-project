@@ -361,14 +361,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderLegalEditor();
   });
 
-  legalEditor.addEventListener("click", (e) => {
+  legalEditor.addEventListener("click", async (e) => {
     const move = e.target.closest("[data-legal-move]");
     const remove = e.target.closest("[data-legal-remove]");
     if (!move && !remove) return;
     readLegalEditor();
     const index = Number(e.target.closest(".legal-section-row").dataset.index);
     if (remove) {
-      if (!confirm("Remove this section from the page?")) return;
+      if (!await siteConfirm("Remove this section from the page?")) return;
       legalSections.splice(index, 1);
     } else {
       const target = index + Number(move.dataset.legalMove);

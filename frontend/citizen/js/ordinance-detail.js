@@ -79,12 +79,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const response = await authFetch(`/api/ordinances/${encodeURIComponent(ordinance.id)}/download/`);
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          alert(data.detail || "Could not download this ordinance.");
+          siteAlert(data.detail || "Could not download this ordinance.");
           return;
         }
         window.open(data.pdf_url, "_blank", "noopener");
       } catch {
-        alert("Could not download this ordinance. Please try again.");
+        siteAlert("Could not download this ordinance. Please try again.");
       } finally {
         downloadBtn.textContent = originalText;
       }
