@@ -13,7 +13,6 @@
       <span class="navbar__logo" aria-hidden="true"></span>
       SafeSpace
     </div>
-    <span class="navbar__portal-label">Barangay Staff Portal</span>
   </nav>
 
   <section class="hero">
@@ -30,7 +29,7 @@
       </form>
 
       <form id="staffSetupCodeForm" novalidate hidden>
-        <p class="auth-card__subtitle">If <strong id="setupCodeEmail"></strong> has an account waiting to be set up, we've emailed it a 6-digit code. Enter it below. Already set up? <a href="/citizen/index.html">Log in normally</a>.</p>
+        <p class="auth-card__subtitle">We've emailed a 6-digit code to <strong id="setupCodeEmail"></strong>. Enter it below.</p>
         <div class="field">
           <label for="setupCode">Code</label>
           <input type="text" id="setupCode" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code" required />
@@ -74,12 +73,6 @@
           <label for="setupConfirmPassword">Confirm Password</label>
           <input type="password" id="setupConfirmPassword" name="confirmPassword" placeholder="Enter your password" required />
         </div>
-        <ul class="password-hint">
-          <li data-rule="length"><input type="checkbox" disabled tabindex="-1" /> At least 8 characters</li>
-          <li data-rule="numeric"><input type="checkbox" disabled tabindex="-1" /> Not entirely numbers</li>
-          <li data-rule="common"><input type="checkbox" disabled tabindex="-1" /> Not a commonly used password</li>
-          <li data-rule="similar"><input type="checkbox" disabled tabindex="-1" /> Not too similar to the account's name or email</li>
-        </ul>
         <button type="submit" class="btn">Complete Setup</button>
       </form>
 
