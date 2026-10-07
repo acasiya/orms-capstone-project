@@ -112,6 +112,42 @@ class PasswordResetCode(models.Model):
         return f"Reset code for {self.user}"
 
 
+class ProfileEditVerificationCode(models.Model):
+    """
+    A short-lived 6-digit code emailed to confirm the real account owner is
+    the one changing their email, mobile number, or address from My Profile
+    → Edit Account Information (see accounts.views.MeView.patch) — sent to
+    the address already on file, not any new one being entered, so this
+    can't be used to hijack an account by pointing it at a different inbox.
+    Same shape as PasswordResetCode; kept separate since it gates a
+    different action.
+    """
+
+    CODE_TTL_MINUTES = 15
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profile_edit_codes")
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    # Wrong guesses so far; see orms_backend/codes.py for the cap.
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def is_valid(self):
+        return self.used_at is None and timezone.now() < self.expires_at
+
+    def expire(self):
+        self.used_at = timezone.now()
+        self.save(update_fields=["used_at"])
+
+    def __str__(self):
+        return f"Profile edit code for {self.user}"
+
+
 class LoginSession(models.Model):
     """
     One row per login, backing the Administrator Module's View Audit Logs
@@ -145,6 +181,16 @@ class AuditLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="audit_logs")
     action = models.CharField(max_length=255)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    # Snapshotted from `user` at write time, so the owner's name and account
+    # type stay on the entry forever even after that account is deleted
+    # (when `user` goes null via SET_NULL above) — an audit log is a record
+    # of what happened, and who/what it happened to shouldn't disappear just
+    # because the account doesn't exist anymore. AuditLogSerializer prefers
+    # these over a live lookup through `user`; entries logged before this
+    # field existed fall back to that live lookup instead.
+    owner_name = models.CharField(max_length=150, blank=True)
+    owner_type = models.CharField(max_length=50, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -152,6 +198,15 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user}: {self.action}"
+
+
+def account_type_label(user):
+    """Shared with AuditLogSerializer.get_type's legacy fallback — keep both in sync."""
+    if user.role == User.Role.ADMIN:
+        return "Administrator"
+    if user.role == User.Role.CITIZEN:
+        return "Barangay Citizen"
+    return user.position or "Barangay Staff"
 
 
 def log_action(user, action):
@@ -167,6 +222,14 @@ def log_action(user, action):
     if len(action) > max_length:
         action = action[: max_length - 1] + "…"
     try:
-        AuditLog.objects.create(user=user, action=action)
+        from .middleware import client_ip
+
+        AuditLog.objects.create(
+            user=user,
+            action=action,
+            ip_address=client_ip(),
+            owner_name=(user.get_full_name() or user.username) if user else "",
+            owner_type=account_type_label(user) if user else "",
+        )
     except Exception:
         pass

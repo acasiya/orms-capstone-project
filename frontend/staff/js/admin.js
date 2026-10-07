@@ -105,7 +105,7 @@ function wireFiltersDropdown(toggleBtn, panel) {
   const user = getAdminUser();
   const hasToken = !!adminAuthStorage().getItem(ADMIN_ACCESS_TOKEN_KEY);
   if (!hasToken || !user || user.role !== "staff") {
-    window.location.href = "/citizen/index.html";
+    window.location.href = "/staff/index.html";
   }
 })();
 
@@ -607,7 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // ignore — logging out locally still proceeds below
       }
       adminLogOut();
-      window.location.href = "/citizen/index.html";
+      window.location.href = "/staff/index.html";
     });
   }
   if (logoutNo) {

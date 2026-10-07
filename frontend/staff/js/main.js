@@ -729,7 +729,7 @@ function enforcePortalAccess() {
 
   const user = getCurrentUser();
   if (!isLoggedIn() || !user || user.role !== portal) {
-    window.location.href = "/citizen/index.html";
+    window.location.href = `/${portal}/index.html`;
   }
 }
 
@@ -1154,7 +1154,7 @@ document.addEventListener("DOMContentLoaded", () => {
           contact_number: phone.value.trim(),
           password: password.value,
         });
-        window.location.href = loginHome(role) || "/citizen/index.html";
+        window.location.href = loginHome(role) || "index.html";
       } catch (err) {
         showFormError(staffSetupDetailsForm, err.message);
         submitBtn.disabled = false;
@@ -1543,7 +1543,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // ignore — logging out locally still proceeds below
       }
       logOut();
-      window.location.href = "/citizen/index.html";
+      window.location.href = "index.html";
     });
   }
   if (logoutNo) {

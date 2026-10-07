@@ -23,6 +23,39 @@ function renderAboutLogos(logos) {
   strip.hidden = !logos.length;
 }
 
+const COUNCIL_MAX_PER_ROW = 5;
+
+// Splits a group's members into as few rows as possible with no more than
+// COUNCIL_MAX_PER_ROW each, and as even as possible — e.g. 8 -> 4+4,
+// 10 -> 5+5, 7 -> 4+3 — instead of letting flex-wrap fill rows unevenly.
+function chunkIntoBalancedRows(members, maxPerRow) {
+  if (!members.length) return [];
+  const rowCount = Math.ceil(members.length / maxPerRow);
+  const perRow = Math.ceil(members.length / rowCount);
+  const chunks = [];
+  for (let i = 0; i < members.length; i += perRow) {
+    chunks.push(members.slice(i, i + perRow));
+  }
+  return chunks;
+}
+
+function renderCouncilMember(m) {
+  return `
+    <figure class="council-member">
+      ${
+        m.photoUrl
+          ? `<img src="${escapeSiteHtml(m.photoUrl)}" alt="" width="150" height="150" loading="lazy"${
+              m.hasCustomPhoto ? ' class="council-member__photo--framed"' : ""
+            } />`
+          : `<span class="council-member__placeholder" aria-hidden="true"></span>`
+      }
+      <figcaption>
+        <span class="council-member__name">${escapeSiteHtml(m.name)}</span>
+        <span class="council-member__role">${escapeSiteHtml(m.position)}</span>
+      </figcaption>
+    </figure>`;
+}
+
 function renderCouncil(council) {
   const rows = document.getElementById("councilRows");
   if (!rows) return;
@@ -33,24 +66,9 @@ function renderCouncil(council) {
   rows.innerHTML = COUNCIL_ROWS.map(({ group, className }) => {
     const members = council.filter((m) => m.group === group);
     if (!members.length) return "";
-    return `<div class="${className}">${members
-      .map(
-        (m) => `
-        <figure class="council-member">
-          ${
-            m.photoUrl
-              ? `<img src="${escapeSiteHtml(m.photoUrl)}" alt="" width="150" height="150" loading="lazy"${
-                  m.hasCustomPhoto ? ' class="council-member__photo--framed"' : ""
-                } />`
-              : `<span class="council-member__placeholder" aria-hidden="true"></span>`
-          }
-          <figcaption>
-            <span class="council-member__name">${escapeSiteHtml(m.name)}</span>
-            <span class="council-member__role">${escapeSiteHtml(m.position)}</span>
-          </figcaption>
-        </figure>`
-      )
-      .join("")}</div>`;
+    return chunkIntoBalancedRows(members, COUNCIL_MAX_PER_ROW)
+      .map((row) => `<div class="${className}">${row.map(renderCouncilMember).join("")}</div>`)
+      .join("");
   }).join("");
 }
 

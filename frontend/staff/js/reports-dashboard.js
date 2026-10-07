@@ -113,6 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { year } = getYearRange(y);
       opts.push({ value: `year${y}`, label: y === 0 ? `This Year (${year})` : `${year}` });
     }
+    opts.push({ value: "all", label: "All Time" });
     return opts;
   }
 

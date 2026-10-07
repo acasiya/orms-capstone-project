@@ -12,7 +12,7 @@ from orms_backend.codes import CODE_EXHAUSTED, CODE_OK, check_code, generate_cod
 from orms_backend.emails import send_password_reset_email
 
 from .lockout import LOCKOUT_MINUTES, clear_failed_logins, lockout_minutes_remaining, record_failed_login
-from .models import AuditLog, LoginSession, PasswordResetCode, VoterVerification, log_action
+from .models import AuditLog, LoginSession, PasswordResetCode, VoterVerification, account_type_label, log_action
 
 User = get_user_model()
 
@@ -442,6 +442,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     # password is checked (so a wrong guess still counts toward the lockout).
     portal = serializers.ChoiceField(choices=["citizen", "staff"], required=False, write_only=True)
 
+    WRONG_PORTAL = {
+        "citizen": ({User.Role.STAFF, User.Role.ADMIN}, "Barangay staff and administrator accounts can't log in here. Please use the Staff Portal."),
+        "staff": ({User.Role.CITIZEN}, "Citizen accounts can't log in here. Please use the citizen portal."),
+    }
+
     """
     Extends SimpleJWT's login serializer so the token payload — and the
     login response body — includes role/name. This lets the frontend route
@@ -479,6 +484,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             clear_failed_logins(account)
 
         portal = attrs.get("portal")
+        if portal in self.WRONG_PORTAL and self.user.role in self.WRONG_PORTAL[portal][0]:
+            raise AuthenticationFailed(self.WRONG_PORTAL[portal][1], code="wrong_portal")
+
         # Citizens start unverified until an Administrator approves their
         # voter's ID (see AdminApproveVerificationView). Staff/Admin accounts
         # are created pre-verified, so this only ever blocks citizens.
@@ -637,27 +645,31 @@ class AuditLogSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
     timeAt = serializers.DateTimeField(source="created_at", read_only=True)
     timeLabel = serializers.SerializerMethodField()
+    ipAddress = serializers.CharField(source="ip_address", read_only=True)
 
     class Meta:
         model = AuditLog
-        fields = ["id", "accountId", "owner", "type", "timeAt", "timeLabel", "action"]
+        fields = ["id", "accountId", "owner", "type", "timeAt", "timeLabel", "action", "ipAddress"]
 
     def get_accountId(self, obj):
         return str(obj.user_id) if obj.user_id else "—"
 
     def get_owner(self, obj):
+        # Snapshotted at write time (see AuditLog.owner_name/log_action), so
+        # this stays correct even after the account is deleted. Entries from
+        # before that field existed fall back to a live lookup, same as before.
+        if obj.owner_name:
+            return obj.owner_name
         if not obj.user:
             return "Deleted account"
         return obj.user.get_full_name() or obj.user.username
 
     def get_type(self, obj):
+        if obj.owner_type:
+            return obj.owner_type
         if not obj.user:
             return "—"
-        if obj.user.role == User.Role.ADMIN:
-            return "Administrator"
-        if obj.user.role == User.Role.CITIZEN:
-            return "Barangay Citizen"
-        return obj.user.position or "Barangay Staff"
+        return account_type_label(obj.user)
 
     def get_timeLabel(self, obj):
         from django.utils import timezone

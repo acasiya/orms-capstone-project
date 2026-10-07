@@ -21,12 +21,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let appliedQuery = "";
 
   async function loadLogs() {
-    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">Loading audit logs...</td></tr>`;
+    tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">Loading audit logs...</td></tr>`;
     try {
       logs = await getAuditLogs();
       render();
     } catch (err) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">${err.message}</td></tr>`;
     }
   }
 
@@ -40,7 +40,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           a.owner.toLowerCase().includes(appliedQuery) ||
           a.action.toLowerCase().includes(appliedQuery) ||
           a.timeLabel.toLowerCase().includes(appliedQuery) ||
-          a.type.toLowerCase().includes(appliedQuery)
+          a.type.toLowerCase().includes(appliedQuery) ||
+          (a.ipAddress || "").toLowerCase().includes(appliedQuery)
       );
     }
 
@@ -65,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentPageRows = pageRows;
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">No logs match this filter.</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No logs match this filter.</td></tr>`;
       return;
     }
 
@@ -76,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${a.owner}</td>
           <td>${a.type}</td>
           <td>${a.timeLabel}</td>
+          <td>${a.ipAddress || "—"}</td>
           <td>${a.action}</td>
         </tr>`
       )
@@ -102,6 +104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div class="edit-account-card__row"><dt>Account Owner</dt><dd id="logDetailOwner"></dd></div>
           <div class="edit-account-card__row"><dt>Account Type</dt><dd id="logDetailType"></dd></div>
           <div class="edit-account-card__row"><dt>Time/Date</dt><dd id="logDetailTime"></dd></div>
+          <div class="edit-account-card__row"><dt>IP Address</dt><dd id="logDetailIp"></dd></div>
           <div class="edit-account-card__row"><dt>Action</dt><dd id="logDetailAction"></dd></div>
         </dl>
       </div>
@@ -121,6 +124,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     overlay.querySelector("#logDetailOwner").textContent = log.owner;
     overlay.querySelector("#logDetailType").textContent = log.type;
     overlay.querySelector("#logDetailTime").textContent = log.timeLabel;
+    overlay.querySelector("#logDetailIp").textContent = log.ipAddress || "—";
     overlay.querySelector("#logDetailAction").textContent = log.action;
     overlay.hidden = false;
   }

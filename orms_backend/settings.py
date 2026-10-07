@@ -56,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "accounts.middleware.CurrentRequestMiddleware",
 ]
 
 ROOT_URLCONF = "orms_backend.urls"
@@ -192,6 +193,7 @@ REST_FRAMEWORK = {
         "reset_confirm": "5/min",
         "report_send_code": "3/hour",
         "report_verify_code": "5/min",
+        "profile_edit_code": "5/hour",
         # Each OCR call uses several hundred MB of RAM.
         "ordinance_extract": "5/min",
     },

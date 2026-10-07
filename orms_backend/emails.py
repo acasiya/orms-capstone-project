@@ -20,6 +20,13 @@ below:
       fast (suspicious activity)
     - the Secretary or Barangay Captain posts a new Announcement (every
       citizen gets this one — see announcements/views.py)
+  Any account (citizen, staff, or admin) gets emailed when...
+    - an Administrator disables or deletes it (accounts/views.py's
+      AdminAccountDetailView)
+    - they (or anyone with access to their account) change their email,
+      mobile number, or address from My Profile → Edit Account Information
+      (a 6-digit code, sent to the address already on file, not any new
+      one being entered — see MeView.patch)
   Staff gets emailed when...
     - a report is submitted (needs review)
     - a suggestion is submitted (needs review)
@@ -200,6 +207,42 @@ def send_staff_setup_code_email(user, code, expires_minutes, with_setup_link=Fal
         subject="Your account setup code",
         template_name="staff_setup_code",
         context={"user": user, "code": code, "expires_minutes": expires_minutes, "setup_url": setup_url},
+    )
+
+
+def send_account_deactivated_email(user):
+    # Sent when an Administrator disables the account from Manage Accounts
+    # (AdminAccountDetailView.patch) — distinct from
+    # send_account_suspicious_activity_email, which is the automatic
+    # abuse-lockout case in reports/verification.py.
+    send_templated_email(
+        to=user.email,
+        subject="SafeSpace — Your account has been disabled",
+        template_name="account_deactivated",
+        context={"user": user},
+    )
+
+
+def send_account_deleted_email(name, email):
+    # Takes name/email directly rather than a user object — sent right
+    # before AdminAccountDetailView.delete() actually deletes the row, same
+    # reasoning as send_account_rejected_email.
+    send_templated_email(
+        to=email,
+        subject="SafeSpace — Your account has been deleted",
+        template_name="account_deleted",
+        context={"name": name},
+    )
+
+
+def send_profile_edit_code_email(user, code, expires_minutes):
+    # Sent to the address already on file, not whatever new one is being
+    # entered — see accounts.views.ProfileEditCodeRequestView.
+    send_templated_email(
+        to=user.email,
+        subject="SafeSpace — Confirm your account changes",
+        template_name="profile_edit_code",
+        context={"user": user, "code": code, "expires_minutes": expires_minutes},
     )
 
 

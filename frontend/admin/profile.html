@@ -111,6 +111,24 @@
     </div>
   </div>
 
+  <!-- Confirms the real account owner before changing email/mobile/address -->
+  <div class="modal-overlay" id="verifyEditModal" hidden>
+    <div class="modal-card">
+      <h2>Confirm It's You</h2>
+      <p class="auth-card__subtitle">We've emailed a 6-digit code to your account's email address. Enter it below to save these changes.</p>
+      <form id="verifyEditForm" novalidate>
+        <div class="field field--boxed field--code">
+          <label for="verifyEditCode">Code</label>
+          <input type="text" id="verifyEditCode" name="code" inputmode="numeric" placeholder="XXXXXX" maxlength="6" required />
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn">Confirm</button>
+          <button type="button" class="btn btn-muted" id="verifyEditCancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="profileUpdatedModal" hidden>
     <div class="modal-card">
       <h2 id="profileUpdatedTitle">Information Changed!</h2>

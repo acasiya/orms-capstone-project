@@ -83,6 +83,9 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* Matches body's background so a browser repaint (e.g. switching back to
+     this tab) never shows a flash of white at the root before body paints. */
+  background: var(--green-mist);
 }
 
 body {
@@ -229,7 +232,7 @@ button {
   justify-content: center;
   padding: 60px 20px;
   overflow: hidden;
-  background: url("../assets/background.jpg") center / cover no-repeat;
+  background: url("../assets/barangay hall 5 pix.png") center / cover no-repeat;
 }
 
 /* ---------- Plain section (Forgot Password flow) ---------- */
@@ -240,7 +243,7 @@ button {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  background: var(--plain-bg);
+  background: url("../assets/barangay hall 5 pix.png") center center / cover no-repeat fixed;
 }
 
 /* ---------- Auth card ---------- */
@@ -975,7 +978,7 @@ button {
 
 .plain-page {
   min-height: calc(100vh - 60px);
-  background: var(--plain-bg);
+  background: url("../assets/barangay hall 5 pix.png") center center / cover no-repeat fixed;
   padding: 32px 28px 64px;
 }
 
@@ -993,6 +996,24 @@ button {
   font-weight: 700;
   margin: 0 0 20px;
   color: var(--text);
+}
+
+.cd-subtitle {
+  margin: -14px 0 20px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+/* ---------- Reports: assign-to-Investigator row (Reports page) ---------- */
+
+.assign-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assign-row select {
+  min-width: 160px;
 }
 
 .report-card {
@@ -1548,6 +1569,48 @@ button {
   flex-shrink: 0;
 }
 
+/* Combines an Order filter dropdown with the search bar into one row —
+   Order first, then the search input/button filling the rest of the width.
+   Used wherever a page has both (currently just Audit Logs). */
+.reports-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.reports-controls > .reports-filters-row,
+.reports-controls > .admin-toolbar {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+}
+
+.reports-controls > .reports-search-row {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: 860px) {
+  .reports-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .reports-controls > .reports-search-row {
+    order: -1;
+    margin-bottom: 18px;
+  }
+
+  .reports-controls > .reports-filters-row,
+  .reports-controls > .admin-toolbar {
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+}
+
 @media (max-width: 860px) {
   .reports-search-row {
     gap: 10px;
@@ -1991,7 +2054,7 @@ button {
 }
 
 .profile-sidebar {
-  background: var(--cream);
+  background: var(--white);
   border-radius: var(--radius);
   padding: 24px 22px;
   min-height: 320px;
@@ -2283,7 +2346,7 @@ button {
 .admin-main {
   flex: 1;
   min-width: 0;
-  background: var(--plain-bg);
+  background: url("../assets/barangay hall 5 pix.png") center center / cover no-repeat fixed;
 }
 
 .admin-topbar {
@@ -2671,13 +2734,15 @@ button {
     display: none;
   }
 
-  /* Audit Logs' table collapses to Time/Date + Action (columns 3 and 4) —
-     those are what actually matter on this page; Owner/Type move into the
-     tap-to-open popup (see audit-logs.js). */
+  /* Audit Logs' table collapses to Time/Date + Action (columns 3 and 5) —
+     those are what actually matter on this page; Owner/Type/IP Address move
+     into the tap-to-open popup (see audit-logs.js). */
   .admin-table--audit thead th:nth-child(1),
   .admin-table--audit thead th:nth-child(2),
+  .admin-table--audit thead th:nth-child(4),
   .admin-table--audit tbody td:nth-child(1),
-  .admin-table--audit tbody td:nth-child(2) {
+  .admin-table--audit tbody td:nth-child(2),
+  .admin-table--audit tbody td:nth-child(4) {
     display: none;
   }
 

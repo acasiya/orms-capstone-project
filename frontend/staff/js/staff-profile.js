@@ -170,11 +170,65 @@ document.addEventListener("DOMContentLoaded", async () => {
     onUpdatedConfirm();
   });
 
+  // ---- Email verification for sensitive changes ----
+  // Changing email/mobile/address requires a code emailed to the address
+  // already on file (see accounts.views.MeView.patch) — a profile photo
+  // change alone doesn't. openVerifyCodeModal() just collects the code the
+  // user was emailed; the real check happens server-side on the PATCH itself.
+  function openVerifyCodeModal() {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("verifyEditModal");
+      const form = document.getElementById("verifyEditForm");
+      const input = document.getElementById("verifyEditCode");
+      const cancelBtn = document.getElementById("verifyEditCancel");
+      input.value = "";
+      modal.hidden = false;
+      input.focus();
+
+      function cleanup(result) {
+        modal.hidden = true;
+        form.removeEventListener("submit", onSubmit);
+        cancelBtn.removeEventListener("click", onCancel);
+        resolve(result);
+      }
+      function onSubmit(e) {
+        e.preventDefault();
+        const code = input.value.trim();
+        if (code) cleanup(code);
+      }
+      function onCancel() {
+        cleanup(null);
+      }
+      form.addEventListener("submit", onSubmit);
+      cancelBtn.addEventListener("click", onCancel);
+    });
+  }
+
+  async function promptForVerificationCode() {
+    try {
+      await authFetch("/api/auth/profile-edit/request-code/", { method: "POST" });
+    } catch {
+      // Best-effort — if sending failed, the PATCH below will just reject
+      // whatever code the user enters, which surfaces its own error.
+    }
+    return openVerifyCodeModal();
+  }
+
   // Returns true on success — shared between the form's own submit handler
   // and the unsaved-changes modal's "Save Changes" button.
   async function commitEditSave() {
     clearFormError(editForm);
     const submitBtn = editForm.querySelector('button[type="submit"]');
+
+    const sensitiveChanged =
+      emailInput.value.trim() !== savedSnapshot.email ||
+      mobileInput.value.trim() !== savedSnapshot.mobile ||
+      addressInput.value.trim() !== savedSnapshot.address;
+    let verificationCode = null;
+    if (sensitiveChanged) {
+      verificationCode = await promptForVerificationCode();
+      if (!verificationCode) return false;
+    }
 
     const formData = new FormData();
     formData.append("first_name", firstNameInput.value.trim());
@@ -183,6 +237,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     formData.append("contact_number", mobileInput.value.trim());
     formData.append("address", addressInput.value.trim());
     if (avatarUpload.files[0]) formData.append("profile_picture", avatarUpload.files[0]);
+    if (verificationCode) formData.append("verification_code", verificationCode);
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Saving...";
@@ -190,6 +245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const response = await authFetch("/api/auth/me/", { method: "PATCH", body: formData });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+        if (typeof data.detail === "string") throw new Error(data.detail);
         const firstError = Object.values(data)[0];
         throw new Error(Array.isArray(firstError) ? firstError[0] : "Could not update your profile.");
       }

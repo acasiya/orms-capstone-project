@@ -10,15 +10,26 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from orms_backend.codes import generate_code
+from orms_backend.codes import CODE_EXHAUSTED, CODE_OK, check_code, generate_code
 from orms_backend.emails import (
     send_account_approved_email,
     send_account_created_admin_emails,
+    send_account_deactivated_email,
+    send_account_deleted_email,
     send_account_rejected_email,
+    send_profile_edit_code_email,
     send_staff_setup_code_email,
 )
 
-from .models import AuditLog, LoginSession, PasswordResetCode, User, VoterVerification, log_action
+from .models import (
+    AuditLog,
+    LoginSession,
+    PasswordResetCode,
+    ProfileEditVerificationCode,
+    User,
+    VoterVerification,
+    log_action,
+)
 from .serializers import (
     AdminAccountSerializer,
     CitizenInviteSerializer,
@@ -232,23 +243,95 @@ class StaffAccountSetupView(APIView):
         })
 
 
+class ProfileEditCodeRequestView(APIView):
+    """
+    POST /api/auth/profile-edit/request-code/ — emails a 6-digit code to the
+    logged-in user's current email. MeView.patch requires it whenever
+    email/contact_number/address is actually changing (a profile picture
+    change alone doesn't need it).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "profile_edit_code"
+
+    def post(self, request):
+        user = request.user
+        ProfileEditVerificationCode.objects.filter(user=user, used_at__isnull=True).update(used_at=timezone.now())
+        code = generate_code()
+        ProfileEditVerificationCode.objects.create(
+            user=user,
+            code=code,
+            expires_at=timezone.now() + timedelta(minutes=ProfileEditVerificationCode.CODE_TTL_MINUTES),
+        )
+        send_profile_edit_code_email(user, code, ProfileEditVerificationCode.CODE_TTL_MINUTES)
+        return Response({"detail": "We've emailed a verification code to your account's email address."})
+
+
 class MeView(APIView):
     """
     GET /api/auth/me/ — the logged-in user's own profile (requires Bearer token).
     PATCH /api/auth/me/ — edits it (My Profile → Edit Information, all three
     portals) — name/email/contact/address/profile picture only, see
     ProfileUpdateSerializer for why role/position/is_verified aren't here.
+
+    Changing email/contact_number/address requires a `verification_code`
+    from ProfileEditCodeRequestView (a profile picture change alone doesn't)
+    — proves whoever's doing this still controls the inbox on file before
+    letting them change contact details, same reasoning as Forgot Password's
+    code (see orms_backend/codes.py).
     """
     permission_classes = [permissions.IsAuthenticated]
+
+    # Fields whose change needs a freshly verified code — not first/last
+    # name (ProfileUpdateSerializer already blocks those outright) or
+    # profile_picture (low-stakes, and blocking it on an inbox check would
+    # just be friction for friction's sake).
+    SENSITIVE_FIELDS = ("email", "contact_number", "address")
 
     def get(self, request):
         return Response(UserSerializer(request.user, context={"request": request}).data)
 
+    def _sensitive_fields_changing(self, user, data):
+        return any(
+            field in data and str(data[field]).strip() != (getattr(user, field) or "")
+            for field in self.SENSITIVE_FIELDS
+        )
+
     def patch(self, request):
-        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        user = request.user
+
+        if self._sensitive_fields_changing(user, request.data):
+            submitted_code = str(request.data.get("verification_code") or "").strip()
+            if not submitted_code:
+                return Response(
+                    {
+                        "detail": "Enter the verification code sent to your email to save these changes.",
+                        "code_required": True,
+                    },
+                    status=400,
+                )
+            code_obj = (
+                ProfileEditVerificationCode.objects.filter(user=user, used_at__isnull=True)
+                .order_by("-created_at")
+                .first()
+            )
+            if not code_obj or not code_obj.is_valid():
+                return Response(
+                    {"detail": "That code has expired. Request a new one.", "code_required": True}, status=400
+                )
+            result = check_code(code_obj, submitted_code)
+            if result == CODE_EXHAUSTED:
+                return Response(
+                    {"detail": "Too many incorrect attempts. Request a new code.", "code_required": True}, status=400
+                )
+            if result != CODE_OK:
+                return Response({"detail": "That code is incorrect."}, status=400)
+            code_obj.expire()
+
+        serializer = ProfileUpdateSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(UserSerializer(request.user, context={"request": request}).data)
+        return Response(UserSerializer(user, context={"request": request}).data)
 
 
 class ChangePasswordView(APIView):
@@ -484,6 +567,7 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
                 if release and claim_count:
                     _release_claims(request.user, user, "account disabled")
                 log_action(request.user, f"Disabled {name}'s account{_claims_note(claim_count, release)}")
+                send_account_deactivated_email(user)
         if "staff_role" in request.data:
             log_action(request.user, f"Changed {name}'s role to {user.position}")
 
@@ -499,12 +583,14 @@ class AdminAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"detail": "Can't remove the last remaining Administrator."}, status=400)
 
         name = user.get_full_name() or user.username
+        email = user.email
         # Released explicitly (rather than left to SET_NULL) so each freed
         # report gets its own audit entry naming who deleted the account.
         with transaction.atomic():
             claim_count = _release_claims(request.user, user, "account deleted")
             log_action(request.user, f"Deleted {name}'s account{_claims_note(claim_count, True)}")
             user.delete()
+        send_account_deleted_email(name, email)
         return Response(status=204)
 
 

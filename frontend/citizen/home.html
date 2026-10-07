@@ -40,14 +40,14 @@
 
       <section class="home-section">
         <h1 class="page-heading">News and Announcements</h1>
-        <div id="announcementList" class="news-grid">
+        <div id="announcementList">
           <div class="ordinances-empty">Loading...</div>
         </div>
       </section>
 
       <section class="home-section">
         <h1 class="page-heading">Ordinances by Category</h1>
-        <div id="categorySummary" class="category-summary">
+        <div id="categorySummary">
           <div class="ordinances-empty">Loading...</div>
         </div>
       </section>
@@ -64,7 +64,6 @@
         <div id="notificationsBody"></div>
       </section>
 
-
     </div>
   </div>
 
@@ -73,6 +72,14 @@
     <div class="modal-card news-modal">
       <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
       <div id="announcementModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Ordinances in one category, opened by clicking its bar in "Ordinances by Category" -->
+  <div class="modal-overlay" id="categoryOrdinancesModal" hidden>
+    <div class="modal-card news-modal">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <div id="categoryOrdinancesModalBody"></div>
     </div>
   </div>
 

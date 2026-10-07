@@ -194,12 +194,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
-  function visibilityBadge(isVisible) {
-    return isVisible
-      ? `<span class="status-badge status-badge--resolved">Shown</span>`
-      : `<span class="status-badge status-badge--submitted">Hidden</span>`;
-  }
-
   // Swap an item with its neighbour inside `list`, then save the whole order.
   async function moveItem(list, id, direction, save) {
     const index = list.findIndex((item) => item.id === id);
@@ -244,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderMembers() {
     sortMembers();
     if (!members.length) {
-      membersBody.innerHTML = `<tr><td colspan="5" class="admin-table__empty">No officials yet. Add the Punong Barangay to get started.</td></tr>`;
+      membersBody.innerHTML = `<tr><td colspan="4" class="admin-table__empty">No officials yet. Add the Punong Barangay to get started.</td></tr>`;
       return;
     }
     membersBody.innerHTML = members
@@ -260,7 +254,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           }</td>
           <td><strong>${escapeHtml(m.name)}</strong><br /><span class="setup-sub">${escapeHtml(m.position)}</span></td>
           <td>${COUNCIL_GROUP_LABELS[m.group] || escapeHtml(m.group_display)}</td>
-          <td>${visibilityBadge(m.is_visible)}</td>
           <td>
             <div class="table-row-actions">
               <button type="button" data-member-up="${m.id}" ${pos === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(m.name)} up">&uarr;</button>
@@ -389,7 +382,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderLogos() {
     logos.sort((a, b) => a.order - b.order);
     if (!logos.length) {
-      logosBody.innerHTML = `<tr><td colspan="4" class="admin-table__empty">No logos yet.</td></tr>`;
+      logosBody.innerHTML = `<tr><td colspan="3" class="admin-table__empty">No logos yet.</td></tr>`;
       return;
     }
     logosBody.innerHTML = logos
@@ -398,7 +391,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         <tr>
           <td><img class="setup-thumb setup-thumb--logo" src="${escapeHtml(l.imageUrl)}" alt="" /></td>
           <td>${escapeHtml(l.alt_text)}</td>
-          <td>${visibilityBadge(l.is_visible)}</td>
           <td>
             <div class="table-row-actions">
               <button type="button" data-logo-up="${l.id}" ${i === 0 ? "disabled" : ""} aria-label="Move left">&larr;</button>

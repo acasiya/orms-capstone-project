@@ -350,6 +350,44 @@ class StaffReportForfeitView(APIView):
         return Response(StaffReportSerializer(report, context={"request": request}).data)
 
 
+class StaffReportAssignView(APIView):
+    """
+    POST /api/reports/staff/<id>/assign/ {"investigator_id": "<uuid>"} —
+    Administrator-only: picks an Investigator directly, rather than leaving
+    it to whoever claims it first (see StaffReportClaimView). Works whether
+    the report is unclaimed or already held by someone else — reassigning
+    it like this doesn't need StaffReportForfeitView first.
+    """
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        report = get_object_or_404(Report.objects.select_related("citizen", "assigned_investigator"), pk=pk)
+        investigator_id = request.data.get("investigator_id")
+        if not investigator_id:
+            return Response({"detail": "investigator_id is required."}, status=400)
+
+        investigator = get_object_or_404(
+            User, pk=investigator_id, role=User.Role.STAFF, position="Investigator"
+        )
+        if not investigator.is_active:
+            return Response(
+                {"detail": f"{investigator.get_full_name() or investigator.username}'s account is disabled."},
+                status=400,
+            )
+
+        previous_holder = report.assigned_investigator
+        reassigned = bool(previous_holder) and previous_holder.id != investigator.id
+        report.assigned_investigator = investigator
+        report.previous_investigator = None
+        report.save(update_fields=["assigned_investigator", "previous_investigator"])
+
+        investigator_name = investigator.get_full_name() or investigator.username
+        log_action(request.user, f"Assigned a report to {investigator_name} — {report.ordinance}")
+        if reassigned:
+            send_report_reassigned_email(report)
+        return Response(StaffReportSerializer(report, context={"request": request}).data)
+
+
 class StaffConcernListView(generics.ListAPIView):
     """GET /api/concerns/staff/ — every citizen's submitted concerns/suggestions (Staff/Admin Dashboard)."""
     queryset = Concern.objects.select_related("citizen", "folder").all()

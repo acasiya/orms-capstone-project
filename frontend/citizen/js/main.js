@@ -397,7 +397,7 @@ async function apiLogin(email, password, remember) {
     response = await fetch(`${API_BASE}/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, portal: "citizen" }),
     });
   } catch {
     throw new Error("Could not reach the server. Check your connection and try again.");
@@ -809,7 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".navbar__brand").forEach((brand) => {
     brand.style.cursor = "pointer";
     brand.addEventListener("click", () => {
-      window.location.href = "home.html";
+      window.location.href = "/citizen/home.html";
     });
   });
   expireStaleSession();
@@ -1579,11 +1579,11 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       profileBtn.textContent = "Login";
       profileBtn.classList.add("navbar__profile--login");
-      if (window.location.pathname.endsWith("/index.html") || window.location.pathname.endsWith("/citizen/")) {
+      if (window.location.pathname.startsWith("/citizen/login")) {
         profileBtn.classList.add("active");
       }
       const signUpLink = document.createElement("a");
-      signUpLink.href = "signup.html";
+      signUpLink.href = "/citizen/signup.html";
       signUpLink.textContent = "Sign Up";
       signUpLink.className = "navbar__profile--login";
       if (window.location.pathname.endsWith("/signup.html")) signUpLink.classList.add("active");
@@ -1592,7 +1592,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const openProfileModal = () => {
       if (!(loggedIn && user)) {
-        window.location.href = "index.html";
+        window.location.href = "/citizen/login.html";
         return;
       }
       if (loggedIn && user) {
@@ -1637,7 +1637,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // ignore — logging out locally still proceeds below
       }
       logOut();
-      window.location.href = "index.html";
+      window.location.href = "/citizen/login.html";
     });
   }
   if (logoutNo) {
