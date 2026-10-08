@@ -3806,6 +3806,168 @@ button {
   flex-shrink: 0;
 }
 
+/* ---------- Reports by Category: SVG pie, hover/focus tooltip, expand
+   modal (dedicated classes — not shared with .pie-chart/.pie-legend above,
+   which Concerns by Category on secretary-dashboard.html still uses as a
+   plain conic-gradient div) ---------- */
+
+.dash-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pie-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--text);
+}
+
+.pie-expand-btn:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.category-pie {
+  display: block;
+  width: 210px;
+  height: 210px;
+  overflow: visible;
+}
+
+.category-pie__wedge {
+  stroke: var(--white);
+  stroke-width: 1;
+  transform-box: view-box;
+  transform-origin: 50px 50px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+.category-pie__wedge:hover,
+.category-pie__wedge:focus-visible {
+  transform: scale(1.035);
+  filter: brightness(1.08);
+}
+
+.category-pie__label {
+  font-size: 7px;
+  font-weight: 700;
+  fill: var(--white);
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 0.6px;
+  paint-order: stroke fill;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.category-pie__empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* Floating hover/focus tooltip — positioned via JS next to the cursor
+   (hover) or the wedge's centroid (keyboard focus). */
+.chart-tooltip {
+  position: fixed;
+  z-index: 300;
+  pointer-events: none;
+  background: var(--text);
+  color: var(--white);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  max-width: 220px;
+}
+
+.chart-tooltip strong {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-bottom: 2px;
+}
+
+.chart-tooltip span {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+/* Expand modal — the big pie plus every category's percent and count,
+   always visible (no hover needed here). */
+.category-pie-modal__card {
+  max-width: 640px;
+  text-align: left;
+}
+
+.category-pie-modal__body {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.category-pie--large {
+  width: 280px;
+  height: 280px;
+}
+
+.category-pie-modal__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.category-pie-modal__list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.category-pie-modal__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.category-pie-modal__list-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-pie-modal__list-value {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
 /* Reports by Status + Investigator Performance — side by side, same
    2-column pattern as .dash-row-bottom above. */
 

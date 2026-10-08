@@ -249,56 +249,156 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // ---- Reports by Category pie ----
+  // An SVG pie — each wedge is its own <path>/<circle> with a hover/focus
+  // tooltip (category, percent, count) instead of a permanent side legend.
+  // The expand button opens a bigger version of the same pie alongside a
+  // full breakdown list, which is what stands in for a legend here (see
+  // dataviz guidance: identity must be reachable as text, just not
+  // necessarily always visible on the small card).
+
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const PIE_RADIUS = 46;
+  const PIE_LABEL_RADIUS = 30;
 
   const categoryPie = document.getElementById("categoryPie");
-  const categoryLegend = document.getElementById("categoryLegend");
+  const categoryPieEmpty = document.getElementById("categoryPieEmpty");
+  const categoryPieTooltip = document.getElementById("categoryPieTooltip");
+  const categoryPieTooltipName = document.getElementById("categoryPieTooltipName");
+  const categoryPieTooltipValue = document.getElementById("categoryPieTooltipValue");
+  const categoryExpandBtn = document.getElementById("categoryExpandBtn");
+  const categoryExpandModal = document.getElementById("categoryExpandModal");
+  const categoryPieExpanded = document.getElementById("categoryPieExpanded");
+  const categoryPieExpandedList = document.getElementById("categoryPieExpandedList");
 
-  function renderCategoryPie() {
-    categoryPie.querySelectorAll(".pie-chart__label, .pie-chart__empty").forEach((el) => el.remove());
+  // Reused by both the small card pie and the expanded modal's pie, so the
+  // two always agree — computed once per render from the same report list.
+  let lastCategorySlices = [];
 
-    const reports = getReportsForPeriod(effectivePeriod("category"));
-    if (!reports.length) {
-      categoryPie.style.background = "var(--border)";
-      categoryPie.insertAdjacentHTML("beforeend", `<div class="pie-chart__empty">No data yet</div>`);
-      categoryLegend.innerHTML = "";
-      return;
-    }
-
+  function pieSliceData(reports) {
     const counts = {};
     REPORT_CATEGORIES.forEach((c) => (counts[c] = 0));
     reports.forEach((r) => (counts[r.category] = (counts[r.category] || 0) + 1));
     const total = reports.length;
-
-    let cumRaw = 0;
-    const stops = [];
-    const labels = [];
-    REPORT_CATEGORIES.forEach((c) => {
-      const startB = Math.round(cumRaw * 100);
-      cumRaw += (counts[c] || 0) / total;
-      const endB = Math.round(cumRaw * 100);
-      stops.push(`${categoryColor(c)} ${startB}% ${endB}%`);
-      if (endB > startB) labels.push({ mid: (startB + endB) / 2, pct: endB - startB });
+    let cum = 0;
+    return REPORT_CATEGORIES.map((category) => {
+      const count = counts[category] || 0;
+      const startFrac = cum;
+      cum += total ? count / total : 0;
+      const endFrac = cum;
+      return { category, count, pct: total ? Math.round((count / total) * 100) : 0, startFrac, endFrac };
     });
-
-    categoryPie.style.background = `conic-gradient(${stops.join(", ")})`;
-
-    const R = 30;
-    labels.forEach(({ mid, pct }) => {
-      const theta = (mid / 100) * 2 * Math.PI;
-      const x = 50 + R * Math.sin(theta);
-      const y = 50 - R * Math.cos(theta);
-      const span = document.createElement("span");
-      span.className = "pie-chart__label";
-      span.style.left = `${x}%`;
-      span.style.top = `${y}%`;
-      span.textContent = `${pct}%`;
-      categoryPie.appendChild(span);
-    });
-
-    categoryLegend.innerHTML = REPORT_CATEGORIES.map(
-      (c) => `<li title="${c} (${counts[c] || 0})"><span class="pie-legend__dot" style="background:${categoryColor(c)}"></span><span class="pie-legend__label">${c} (${counts[c] || 0})</span></li>`
-    ).join("");
   }
+
+  // fraction 0 is the top (12 o'clock), increasing clockwise — matches how
+  // the old conic-gradient version read.
+  function pieEdgePoint(fraction, radius) {
+    const theta = fraction * 2 * Math.PI;
+    return { x: 50 + radius * Math.sin(theta), y: 50 - radius * Math.cos(theta) };
+  }
+
+  function describeWedgePath(startFrac, endFrac, radius) {
+    const start = pieEdgePoint(startFrac, radius);
+    const end = pieEdgePoint(endFrac, radius);
+    const largeArc = endFrac - startFrac > 0.5 ? 1 : 0;
+    return `M 50 50 L ${start.x.toFixed(3)} ${start.y.toFixed(3)} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)} Z`;
+  }
+
+  function hidePieTooltip() {
+    categoryPieTooltip.hidden = true;
+  }
+
+  function showPieTooltip(slice, x, y) {
+    categoryPieTooltipName.textContent = slice.category;
+    categoryPieTooltipValue.textContent = `${slice.pct}% • ${slice.count} ${slice.count === 1 ? "report" : "reports"}`;
+    categoryPieTooltip.hidden = false;
+    const rect = categoryPieTooltip.getBoundingClientRect();
+    categoryPieTooltip.style.left = `${Math.min(Math.max(8, x), window.innerWidth - rect.width - 8)}px`;
+    categoryPieTooltip.style.top = `${Math.min(Math.max(8, y), window.innerHeight - rect.height - 8)}px`;
+  }
+
+  function wireWedgeInteraction(el, slice) {
+    el.addEventListener("mouseenter", (e) => showPieTooltip(slice, e.clientX + 14, e.clientY + 14));
+    el.addEventListener("mousemove", (e) => showPieTooltip(slice, e.clientX + 14, e.clientY + 14));
+    el.addEventListener("mouseleave", hidePieTooltip);
+    el.addEventListener("focus", () => {
+      const rect = el.getBoundingClientRect();
+      showPieTooltip(slice, rect.left + rect.width / 2 - 60, rect.top - 50);
+    });
+    el.addEventListener("blur", hidePieTooltip);
+  }
+
+  function renderPieSVG(svg, slices) {
+    svg.innerHTML = "";
+    const nonZero = slices.filter((s) => s.count > 0);
+    const single = nonZero.length === 1 ? nonZero[0] : null;
+
+    nonZero.forEach((slice) => {
+      const el = document.createElementNS(SVG_NS, single ? "circle" : "path");
+      if (single) {
+        el.setAttribute("cx", "50");
+        el.setAttribute("cy", "50");
+        el.setAttribute("r", String(PIE_RADIUS));
+      } else {
+        el.setAttribute("d", describeWedgePath(slice.startFrac, slice.endFrac, PIE_RADIUS));
+      }
+      el.setAttribute("fill", categoryColor(slice.category));
+      el.setAttribute("class", "category-pie__wedge");
+      el.setAttribute("tabindex", "0");
+      el.setAttribute("role", "img");
+      el.setAttribute(
+        "aria-label",
+        `${slice.category}: ${slice.pct}% — ${slice.count} ${slice.count === 1 ? "report" : "reports"}`
+      );
+      wireWedgeInteraction(el, slice);
+      svg.appendChild(el);
+
+      const mid = single ? 0.5 : (slice.startFrac + slice.endFrac) / 2;
+      const pt = pieEdgePoint(mid, PIE_LABEL_RADIUS);
+      const text = document.createElementNS(SVG_NS, "text");
+      text.setAttribute("x", pt.x.toFixed(3));
+      text.setAttribute("y", pt.y.toFixed(3));
+      text.setAttribute("class", "category-pie__label");
+      text.textContent = `${slice.pct}%`;
+      svg.appendChild(text);
+    });
+  }
+
+  function renderCategoryPie() {
+    hidePieTooltip();
+    const reports = getReportsForPeriod(effectivePeriod("category"));
+    if (!reports.length) {
+      categoryPie.innerHTML = "";
+      categoryPieEmpty.hidden = false;
+      lastCategorySlices = [];
+      return;
+    }
+    categoryPieEmpty.hidden = true;
+    lastCategorySlices = pieSliceData(reports);
+    renderPieSVG(categoryPie, lastCategorySlices);
+  }
+
+  categoryExpandBtn.addEventListener("click", () => {
+    if (!lastCategorySlices.length) return;
+    renderPieSVG(categoryPieExpanded, lastCategorySlices);
+
+    categoryPieExpandedList.innerHTML = "";
+    lastCategorySlices.forEach((slice) => {
+      const li = document.createElement("li");
+      const dot = document.createElement("span");
+      dot.className = "category-pie-modal__dot";
+      dot.style.background = categoryColor(slice.category);
+      const label = document.createElement("span");
+      label.className = "category-pie-modal__list-label";
+      label.textContent = slice.category;
+      const value = document.createElement("span");
+      value.className = "category-pie-modal__list-value";
+      value.textContent = `${slice.pct}% (${slice.count})`;
+      li.append(dot, label, value);
+      categoryPieExpandedList.appendChild(li);
+    });
+
+    categoryExpandModal.hidden = false;
+  });
 
   // ---- Reports by Status bar chart ----
 

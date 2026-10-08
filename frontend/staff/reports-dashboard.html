@@ -207,16 +207,21 @@
           <div class="dash-card category-card">
             <div class="dash-card__header">
               <h2>Reports by Category</h2>
-              <div class="dash-dropdown dash-dropdown--small" id="categoryFilterDropdown" data-graph-filter="category">
-                <button type="button" class="dash-dropdown__btn dash-dropdown__btn--small" id="categoryFilterBtn">
-                  <span id="categoryFilterLabel"></span> <span class="dash-dropdown__chevron">&#9662;</span>
+              <div class="dash-card__header-actions">
+                <div class="dash-dropdown dash-dropdown--small" id="categoryFilterDropdown" data-graph-filter="category">
+                  <button type="button" class="dash-dropdown__btn dash-dropdown__btn--small" id="categoryFilterBtn">
+                    <span id="categoryFilterLabel"></span> <span class="dash-dropdown__chevron">&#9662;</span>
+                  </button>
+                  <ul class="dash-dropdown-menu" id="categoryFilterMenu" hidden></ul>
+                </div>
+                <button type="button" class="pie-expand-btn" id="categoryExpandBtn" aria-label="Expand Reports by Category" title="Expand">
+                  <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M21 15v6h-6M3 15v6h6"/></svg>
                 </button>
-                <ul class="dash-dropdown-menu" id="categoryFilterMenu" hidden></ul>
               </div>
             </div>
             <div class="category-card__body">
-              <div class="pie-chart" id="categoryPie"></div>
-              <ul class="pie-legend" id="categoryLegend"></ul>
+              <svg class="category-pie" id="categoryPie" viewBox="0 0 100 100" role="img" aria-label="Reports by category"></svg>
+              <div class="category-pie__empty" id="categoryPieEmpty" hidden>No data yet</div>
             </div>
           </div>
 
@@ -283,6 +288,26 @@
   <script src="js/reports-data.js"></script>
   <script src="js/reports-dashboard.js"></script>
   <script src="js/admin.js"></script>
+
+  <!-- Hover/focus tooltip for the Reports by Category pie — positioned via JS, see renderCategoryPie -->
+  <div class="chart-tooltip" id="categoryPieTooltip" role="tooltip" hidden>
+    <strong id="categoryPieTooltipName"></strong>
+    <span id="categoryPieTooltipValue"></span>
+  </div>
+
+  <!-- Reports by Category, expanded — a bigger pie plus every category's
+       percent and count, always visible (the small card's hover tooltip is
+       this view's compact equivalent). -->
+  <div class="modal-overlay" id="categoryExpandModal" hidden>
+    <div class="modal-card category-pie-modal__card">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <h2>Reports by Category</h2>
+      <div class="category-pie-modal__body">
+        <svg class="category-pie category-pie--large" id="categoryPieExpanded" viewBox="0 0 100 100" role="img" aria-label="Reports by category"></svg>
+        <ul class="category-pie-modal__list" id="categoryPieExpandedList"></ul>
+      </div>
+    </div>
+  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>
