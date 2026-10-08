@@ -1,5 +1,5 @@
 """
-SafeSpace — failed-login lockout. Guessing a password gets an account locked
+Barangay Platero OVRMS — failed-login lockout. Guessing a password gets an account locked
 for a while after MAX_FAILED_LOGINS wrong attempts, and the owner is emailed so
 they know someone has been trying.
 

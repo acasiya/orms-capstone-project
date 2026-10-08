@@ -1,4 +1,4 @@
-// SafeSpace — My Report detail: fetch the real report by the ?id= query param.
+// Barangay Platero OVRMS — My Report detail: fetch the real report by the ?id= query param.
 
 const REPORT_TIMELINE_STEPS = [
   { label: "Submitted", description: "Your report has been submitted successfully." },
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.title = `${report.ordinance} — SafeSpace`;
+  document.title = `${report.ordinance} — Barangay Platero OVRMS`;
 
   document.getElementById("reportLocation").value = report.location;
   document.getElementById("reportOrdinance").append(new Option(report.ordinance, report.ordinance, true, true));

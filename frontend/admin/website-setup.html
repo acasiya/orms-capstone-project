@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Website Setup</title>
+  <title>Barangay Platero OVRMS — Website Setup</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -13,7 +13,8 @@
       <div class="admin-sidebar__brand">
         <span class="admin-sidebar__logo" aria-hidden="true"></span>
         <div class="admin-sidebar__brand-text">
-          <strong>SafeSpace</strong>
+          <strong>Barangay Platero</strong>
+          <small>Ordinance Violation Reporting and Monitoring System</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -81,7 +82,8 @@
             </div>
             <div class="field">
               <label for="brandingSiteName">Website name</label>
-              <input type="text" id="brandingSiteName" name="site_name" maxlength="60" required />
+              <input type="text" id="brandingSiteName" name="site_name" maxlength="120" required />
+              <p class="field-hint">Anything after a <strong>|</strong> is shown on a smaller line under the name, e.g. "Barangay Platero | Ordinance Violation Reporting and Monitoring System".</p>
             </div>
             <div class="setup-actions">
               <span class="setup-status" id="brandingStatus" role="status"></span>

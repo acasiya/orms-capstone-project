@@ -259,7 +259,7 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER
 # The citizen portal's own origin, for the handful of emails that include an
 # actual clickable link back to the site (e.g. an Announcement's "quick
 # link" — see orms_backend/emails.py's send_announcement_posted_email).
-# Everything else just says "Log in to SafeSpace" as plain text, so this
+# Everything else just says "Log in to Barangay Platero OVRMS" as plain text, so this
 # isn't needed more broadly. Frontend is same-origin via WhiteNoise (see
 # CORS note below), so this is also where the backend itself is reachable.
 FRONTEND_BASE_URL = config("FRONTEND_BASE_URL", default="http://127.0.0.1:8000").rstrip("/")

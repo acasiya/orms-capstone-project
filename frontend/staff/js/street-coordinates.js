@@ -1,4 +1,4 @@
-// SafeSpace — lat/lng for each barangay street, used by the staff
+// Barangay Platero OVRMS — lat/lng for each barangay street, used by the staff
 // dashboards' incident heatmap (a report without a device location is
 // plotted at its street's point). Each point sits on the street itself,
 // taken from OpenStreetMap road geometry.

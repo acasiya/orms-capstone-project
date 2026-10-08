@@ -1,4 +1,4 @@
-// SafeSpace — Map Boundary (Admin Portal): draw, upload or edit the
+// Barangay Platero OVRMS — Map Boundary (Admin Portal): draw, upload or edit the
 // barangay outline shown on the staff incident heatmap. Backed by
 // GET/PUT /api/site/boundary/ (see siteinfo/views.py's BoundaryView), which
 // stores one ring of [lat, lng] points.

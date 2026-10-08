@@ -1,4 +1,4 @@
-// SafeSpace — in-page PDF preview for the ordinance detail pages (citizen
+// Barangay Platero OVRMS — in-page PDF preview for the ordinance detail pages (citizen
 // and staff both load this file).
 //
 // Renders each page of the PDF onto a <canvas> with PDF.js instead of

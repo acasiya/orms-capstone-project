@@ -1,17 +1,15 @@
-// SafeSpace — Reports Dashboard: a top date-range filter (presets or a
+// Barangay Platero OVRMS — Reports Dashboard: a top date-range filter (presets or a
 // custom "Date From - Date To" range) sets the default period for the
 // stats and all four graphs; each graph can then override it with its own
 // dropdown until the top filter changes again or Clear Filters is pressed.
 // All real data, from reports-data.js's API-backed source (category comes
 // from matching each report's ordinance against the real uploaded
 // ordinances — see reports-data.js's categoryForOrdinance). The heatmap is
-// a Leaflet + OpenStreetMap density map keyed on each report's street
-// (geocoded to a centroid in street-coordinates.js) — see js/heatmap.js.
+// a Leaflet density map keyed on each report's street (geocoded to a
+// centroid in street-coordinates.js) — see js/heatmap.js; its full analysis
+// lives on its own page (geo-analysis.html).
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const MONTHS_BACK_COUNT = 5;
-  const QUARTERS_BACK_COUNT = 3;
-  const YEARS_BACK_COUNT = 2;
   const CATEGORY_COLOR_PALETTE = [
     "#5b7fd1", "#2fd6c4", "#d13ec4", "#e8a33d",
     "#6fcf5b", "#e85b5b", "#8a6fd1", "#3ba3c9",
@@ -97,24 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function buildPeriodOptions() {
-    const opts = [{ value: "week", label: "This Week" }];
-    for (let m = 0; m <= MONTHS_BACK_COUNT; m++) {
-      const { start } = getMonthRange(m);
-      opts.push({
-        value: `month${m}`,
-        label: m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-      });
-    }
-    for (let q = 0; q <= QUARTERS_BACK_COUNT; q++) {
-      const { quarter, year } = getQuarterRange(q);
-      opts.push({ value: `quarter${q}`, label: q === 0 ? `This Quarter (Q${quarter} ${year})` : `Q${quarter} ${year}` });
-    }
-    for (let y = 0; y <= YEARS_BACK_COUNT; y++) {
-      const { year } = getYearRange(y);
-      opts.push({ value: `year${y}`, label: y === 0 ? `This Year (${year})` : `${year}` });
-    }
-    opts.push({ value: "all", label: "All Time" });
-    return opts;
+    return buildReportPeriodOptions();
   }
 
   // ---- Dropdown open/close ----
@@ -158,15 +139,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return stats;
   }
 
-  // The comparison period for a delta — one week/month/quarter/year further
-  // back than the selected one. "all" and a custom date range have no
-  // previous period to compare against.
   function getPreviousPeriodValue(period) {
-    if (typeof period !== "string") return null;
-    if (period === "week") return "week1";
-    const match = period.match(/^(week|month|quarter|year)(\d+)$/);
-    if (!match) return null;
-    return `${match[1]}${Number(match[2]) + 1}`;
+    return previousReportPeriod(period);
   }
 
   function periodDeltaSuffix(period) {
@@ -457,20 +431,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "status-pill--new";
   }
 
-  // ---- Incident heatmap (real Leaflet + OpenStreetMap density map) ----
+  // ---- Incident heatmap (real Leaflet density map) + its summary ----
   //
   // Intensity = number of reports per street for the selected period, placed
-  // at that street's centroid (street-coordinates.js). The small card is a
-  // static map that opens the enlarged, pannable/zoomable modal on click.
+  // at that street's centroid (street-coordinates.js). The card's map is
+  // static; clicking it (or the summary's button) opens the Geospatial
+  // Analysis page on the same period. Beside it, renderGeoSummary
+  // (geo-analysis.js) gives the headline figures for that period.
 
   const heatmapCanvasEl = document.getElementById("heatmapCanvas");
-  const heatmapModal = document.getElementById("heatmapModal");
-  const heatmapCanvasModalEl = document.getElementById("heatmapCanvasModal");
+  const geoSummaryEl = document.getElementById("geoSummary");
 
-  // No-op unless setupHeatmap() succeeds — a failed map init (Leaflet or the
-  // tile host unreachable) then just leaves an empty heatmap card instead of
-  // taking down the stats, table, and pie with it.
-  let renderHeatmaps = () => {};
+  function geoAnalysisHref() {
+    return `geo-analysis.html?${reportPeriodToQuery(effectivePeriod("heatmap"))}`;
+  }
+
+  // The summary doesn't need the map — it still renders if Leaflet or the
+  // tile host is unreachable (see setupHeatmap's catch below).
+  let registeredCitizens = null;
+  function renderGeoSummaryCard() {
+    renderGeoSummary(geoSummaryEl, {
+      reports: getReportsForPeriod(effectivePeriod("heatmap")),
+      registeredCitizens,
+      href: geoAnalysisHref(),
+    });
+  }
+  loadRegisteredCitizenCount().then((count) => {
+    registeredCitizens = count;
+    renderGeoSummaryCard();
+  });
+
+  // No-op unless setupHeatmap() succeeds — a failed map init then just
+  // leaves an empty map instead of taking down the stats, table, and pie
+  // with it.
+  let renderHeatmapCard = () => {};
+  const renderHeatmaps = () => {
+    renderHeatmapCard();
+    renderGeoSummaryCard();
+  };
 
   function setupHeatmap() {
     if (typeof L === "undefined" || typeof createIncidentHeatmap !== "function") {
@@ -478,54 +476,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const cardHeatmap = createIncidentHeatmap(heatmapCanvasEl, { interactive: false });
-    let modalHeatmap = null;
 
-    const heatmapCounts = () => countByLocation(getReportsForPeriod(effectivePeriod("heatmap")));
-
-    renderHeatmaps = () => {
-      const counts = heatmapCounts();
-      const unmapped = cardHeatmap.render(counts) || [];
-      if (modalHeatmap) modalHeatmap.render(counts);
+    renderHeatmapCard = () => {
+      const unmapped = cardHeatmap.render(countByLocation(getReportsForPeriod(effectivePeriod("heatmap")))) || [];
       if (unmapped.length) {
         console.warn("[heatmap] reports on streets with no known coordinates:", unmapped);
       }
     };
 
-    function openHeatmapModal() {
-      heatmapModal.hidden = false;
-      if (!modalHeatmap) {
-        modalHeatmap = createIncidentHeatmap(heatmapCanvasModalEl, { interactive: true });
-      }
-      // The modal container was display:none until now — Leaflet sized it as
-      // 0×0. Wait two frames for the browser to lay the shown modal out, then
-      // recalc size, repaint the heat, and frame it to the incident spread.
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          modalHeatmap.invalidate();
-          modalHeatmap.render(heatmapCounts());
-          modalHeatmap.fit();
-        })
-      );
-    }
-
-    heatmapCanvasEl.addEventListener("click", openHeatmapModal);
+    const openGeoAnalysis = () => {
+      window.location.href = geoAnalysisHref();
+    };
+    heatmapCanvasEl.addEventListener("click", openGeoAnalysis);
     heatmapCanvasEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        openHeatmapModal();
+        openGeoAnalysis();
       }
     });
 
-    window.addEventListener("resize", () => {
-      cardHeatmap.invalidate();
-      if (modalHeatmap) modalHeatmap.invalidate();
-    });
+    window.addEventListener("resize", () => cardHeatmap.invalidate());
 
     // Defer the first paint: during DOMContentLoaded the card hasn't been
     // laid out yet, so Leaflet would measure it at 0×0 and mis-fit the view.
     requestAnimationFrame(() => {
       cardHeatmap.invalidate();
-      renderHeatmaps();
+      renderHeatmapCard();
     });
   }
 

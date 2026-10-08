@@ -1,5 +1,5 @@
 """
-SafeSpace — File Report anti-abuse rules: identity verification, a cooldown
+Barangay Platero OVRMS — File Report anti-abuse rules: identity verification, a cooldown
 between submissions, and an automatic lockout for rapid-fire filing.
 
 Three independent checks, all enforced in ReportListCreateView.create():

@@ -1,4 +1,4 @@
-// SafeSpace — Secretary Dashboard: a workload overview across the three
+// Barangay Platero OVRMS — Secretary Dashboard: a workload overview across the three
 // things a Secretary maintains — concerns/suggestions, the ordinance
 // repository, and citizen questions — rather than the incident-geography
 // view Barangay Captain gets on the Reports Dashboard. No date-range

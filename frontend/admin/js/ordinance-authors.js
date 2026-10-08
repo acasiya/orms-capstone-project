@@ -1,4 +1,4 @@
-// SafeSpace — Ordinance Authors: Administrator-only management of the roster
+// Barangay Platero OVRMS — Ordinance Authors: Administrator-only management of the roster
 // behind Upload/Edit Ordinance's Author autocomplete suggestions (see
 // ordinance-authors-data.js — the field itself stays free text). List, add,
 // edit (name/position/active), and remove — deactivating (rather than

@@ -1,4 +1,4 @@
-// SafeSpace — Upload Ordinance: a dedicated page (not a modal). Secretary/
+// Barangay Platero OVRMS — Upload Ordinance: a dedicated page (not a modal). Secretary/
 // Admin only — everyone else with access to ordinances.html is sent back,
 // same as OrdinanceListCreateView's IsDocumentManager check on the backend.
 

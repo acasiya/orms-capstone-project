@@ -1,4 +1,4 @@
-// SafeSpace — My Concern/Suggestion detail: fetch the real concern by the ?id= query param.
+// Barangay Platero OVRMS — My Concern/Suggestion detail: fetch the real concern by the ?id= query param.
 
 const CONCERN_VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"];
 
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.title = "Concern/Suggestion — SafeSpace";
+  document.title = "Concern/Suggestion — Barangay Platero OVRMS";
   document.getElementById("concernLocation").value = concern.location;
   document.getElementById("concernDescription").value = concern.description;
   renderConcernEvidence(document.getElementById("concernEvidence"), concern.attachments);

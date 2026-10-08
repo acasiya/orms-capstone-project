@@ -300,3 +300,36 @@ class ConcernReviewedAtTests(APITestCase):
         self.client.patch(self.url, {"status": "submitted"}, format="json")
         self.concern.refresh_from_db()
         self.assertIsNone(self.concern.reviewed_at)
+
+
+class StaffReportAnalysisBaseTests(APITestCase):
+    def setUp(self):
+        self.citizen = User.objects.create_user(username="cit", email="cit@test.com", password="x", is_verified=True)
+        User.objects.create_user(username="pending", email="pending@test.com", password="x", is_verified=False)
+        User.objects.create_user(
+            username="gone", email="gone@test.com", password="x", is_verified=True, is_active=False
+        )
+        self.captain = User.objects.create_user(
+            username="cap", email="cap@test.com", password="x", role=User.Role.STAFF,
+            position="Barangay Captain", is_verified=True,
+        )
+
+    def test_counts_only_approved_active_citizens(self):
+        self.client.force_authenticate(self.captain)
+        response = self.client.get("/api/reports/staff/analysis-base/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"registered_citizens": 1})
+
+    def test_citizens_cannot_read_it(self):
+        self.client.force_authenticate(self.citizen)
+        self.assertEqual(self.client.get("/api/reports/staff/analysis-base/").status_code, 403)
+
+    def test_staff_report_list_identifies_the_reporter(self):
+        report = Report.objects.create(
+            citizen=self.citizen, location="Block 1, Lot 2, Main Street", ordinance="Ord 1 — Curfew",
+            incident_date="2026-10-01", nature_of_violation="Out past curfew.",
+        )
+        self.client.force_authenticate(self.captain)
+        rows = self.client.get("/api/reports/staff/").json()
+        self.assertEqual(rows[0]["id"], str(report.id))
+        self.assertEqual(rows[0]["reporterId"], str(self.citizen.id))

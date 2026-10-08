@@ -1,4 +1,4 @@
-// SafeSpace — Citizen Profile: tab switching, real field population from the
+// Barangay Platero OVRMS — Citizen Profile: tab switching, real field population from the
 // API, a real Apply Changes save (including profile picture upload) to
 // PATCH /api/auth/me/, and a real Change Password to POST /api/auth/change-password/.
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Announcements</title>
+  <title>Barangay Platero OVRMS — Announcements</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -13,7 +13,8 @@
       <div class="admin-sidebar__brand">
         <span class="admin-sidebar__logo" aria-hidden="true"></span>
         <div class="admin-sidebar__brand-text">
-          <strong>SafeSpace</strong>
+          <strong>Barangay Platero</strong>
+          <small>Ordinance Violation Reporting and Monitoring System</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -122,11 +123,11 @@
     </div>
   </div>
 
-  <!-- New announcement -->
+  <!-- New announcement / edit an existing one (see openForm in announcements.js) -->
   <div class="modal-overlay" id="announcementFormModal" data-modal-guarded hidden>
     <div class="modal-card setup-modal">
       <button type="button" class="modal-close" id="announcementX" aria-label="Close">&times;</button>
-      <h2>New Announcement</h2>
+      <h2 id="announcementFormTitle">New Announcement</h2>
       <form id="announcementForm" novalidate>
         <div class="field">
           <label for="announcementTitleInput">Title</label>
@@ -140,7 +141,7 @@
           <span class="field__label">Picture (optional)</span>
           <label class="btn announcement-picture__pick" for="announcementImageInput">Choose picture</label>
           <input type="file" id="announcementImageInput" accept="image/jpeg,image/png,image/webp" hidden />
-          <p class="field-hint">JPG, PNG or WebP, up to 5 MB.</p>
+          <p class="field-hint">JPG, PNG or WebP, up to 5 MB. A <strong>landscape</strong> picture around <strong>1200 &times; 800 px</strong> works best. Keep the main subject near the centre &mdash; the home page shows a small cropped thumbnail, and the full picture opens with "Read more".</p>
           <div class="announcement-picture__file" id="announcementFilePreview" hidden>
             <img id="announcementFileThumb" alt="" />
             <div class="announcement-picture__meta">
@@ -176,8 +177,8 @@
   <!-- Discard unsaved announcement? -->
   <div class="modal-overlay" id="announcementExitModal" hidden>
     <div class="modal-card">
-      <h2>Exit without posting?</h2>
-      <p class="auth-card__subtitle">Your announcement hasn't been posted yet. If you exit now, what you've typed will be lost.</p>
+      <h2>Exit without saving?</h2>
+      <p class="auth-card__subtitle">Your announcement hasn't been saved yet. If you exit now, what you've typed will be lost.</p>
       <div class="btn-row">
         <button type="button" class="btn btn-danger" id="announcementExitConfirm">Exit</button>
         <button type="button" class="btn" id="announcementExitStay">Continue editing</button>

@@ -1,4 +1,4 @@
-// SafeSpace — Reports Management: search + filter (type/date/status) +
+// Barangay Platero OVRMS — Reports Management: search + filter (type/date/status) +
 // paginate across real reports from reports-data.js (GET /api/reports/staff/).
 // Reports is the Investigator's claimable work queue — see reports-data.js's
 // claimReport. Claims are permanent (no forfeiting), so claiming confirms first.

@@ -1,4 +1,4 @@
-// SafeSpace — site footer (About Us, Privacy Policy, Terms and Agreements),
+// Barangay Platero OVRMS — site footer (About Us, Privacy Policy, Terms and Agreements),
 // plus the shared loader for the barangay's details.
 //
 // The details (address, phone, email, About Us text, council, logos) are
@@ -113,7 +113,7 @@ function renderFooterLists(profile) {
           <div>
             <p class="site-footer__name" data-barangay="name">Barangay Platero</p>
             <p class="site-footer__sub" data-barangay="city"></p>
-            <p class="site-footer__tagline" data-barangay="footer_tagline">SafeSpace — Online Reporting and Management System</p>
+            <p class="site-footer__tagline" data-barangay="footer_tagline">Ordinance Violation Reporting and Monitoring System</p>
           </div>
         </div>
 
@@ -135,7 +135,7 @@ function renderFooterLists(profile) {
             <li data-barangay-line hidden><span data-barangay="email" data-barangay-link></span></li>
             <li data-barangay-line hidden><span data-barangay="office_hours"></span></li>
           </ul>
-          <p class="site-footer__emergency">Emergency? Call <a id="footerEmergencyLink" href="tel:911">911</a>. SafeSpace is not an emergency service.</p>
+          <p class="site-footer__emergency">Emergency? Call <a id="footerEmergencyLink" href="tel:911">911</a>. Barangay Platero OVRMS is not an emergency service.</p>
         </div>
       </div>
 

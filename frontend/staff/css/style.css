@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SafeSpace — Ordinance Reporting and Monitoring System
+   Barangay Platero — Ordinance Violation Reporting and Monitoring System
    Shared stylesheet for all pages
    ========================================================================== */
 
@@ -129,8 +129,6 @@ button {
   font-weight: 400;
   font-size: 1.3rem;
   letter-spacing: 0.5px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
   white-space: nowrap;
 }
 
@@ -141,6 +139,32 @@ button {
   font-size: 1.1rem;
   letter-spacing: 0.5px;
   white-space: nowrap;
+}
+
+/* Brand name with the kind of system on a smaller line under it. The
+   underline moves from .navbar__brand onto the name alone (see below). */
+.navbar__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.navbar__brand-text strong {
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.navbar__brand-text small {
+  font-size: 0.68rem;
+  letter-spacing: 0.2px;
+  opacity: 0.85;
+}
+
+@media (max-width: 1100px) {
+  .navbar__brand-text small {
+    display: none;
+  }
 }
 
 .navbar__logo {
@@ -3536,14 +3560,12 @@ button {
 
 /* Keep the period dropdown (in the card/modal header, a sibling above the
    map) and its open menu clickable over the trapped map. */
-.heatmap-card .dash-card__header,
-.heatmap-modal-card .dash-card__header {
+.heatmap-card .dash-card__header {
   position: relative;
   z-index: 1;
 }
 
-.heatmap-card .dash-dropdown-menu,
-.heatmap-modal-card .dash-dropdown-menu {
+.heatmap-card .dash-dropdown-menu {
   z-index: 30;
 }
 
@@ -3881,20 +3903,475 @@ button {
   }
 }
 
-.heatmap-modal-card {
-  max-width: 1400px;
-  width: 94vw;
-  text-align: left;
-  padding: 26px 30px 30px;
+/* ---------- Geospatial Analysis page (geo-analysis.html) + the dashboard's summary ---------- */
+/* Figures come from js/geo-analysis.js. */
+
+.geo-back {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--link);
 }
 
-.heatmap-modal-card .dash-card__header h2 {
-  font-size: 1.15rem;
+.geo-filters__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
-.heatmap-modal-back {
+.geo-filters__field input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.geo-filters__custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.geo-filters__apply {
+  width: auto;
+  padding: 9px 16px;
+  font-size: 0.85rem;
+}
+
+.geo-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* The map stays in view (under the sticky top bar) while the longer
+   analysis panel beside it scrolls with the page. */
+.geo-layout__map {
+  position: sticky;
+  top: 84px;
+}
+
+.geo-layout .heatmap-canvas--large {
+  height: clamp(380px, calc(100vh - 250px), 820px);
+}
+
+.geo-map-hint {
+  margin-left: auto;
+  font-style: italic;
+}
+
+.geo-panel {
+  font-size: 0.86rem;
+  color: var(--text);
+}
+
+.geo-panel > .geo-section:first-child,
+.geo-panel > .geo-tiles:first-child {
+  margin-top: 0;
+}
+
+/* On the page there's room for all four summary tiles in one row. */
+.geo-panel > .geo-tiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1500px) {
+  .geo-panel > .geo-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .geo-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .geo-layout__map {
+    position: static;
+  }
+
+  .geo-layout .heatmap-canvas--large {
+    height: clamp(320px, 55vh, 600px);
+  }
+
+  .geo-map-hint {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}
+
+/* Reports Dashboard: the heatmap card spans the row — map on the left, the
+   period's headline figures on the right. */
+.heatmap-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: 22px;
+  flex: 1;
+}
+
+.heatmap-card__map {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.heatmap-card__map .heatmap-canvas {
+  min-height: 300px;
+}
+
+.geo-summary {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.86rem;
+}
+
+.geo-summary h3 {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+}
+
+.geo-summary h3 small {
+  margin-left: 6px;
+  font-size: 0.74rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.geo-summary__facts {
+  margin: 12px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.geo-summary__facts > div {
+  padding: 8px 12px;
+  background: var(--green-mist);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.geo-summary__facts dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.geo-summary__facts dd {
+  margin: 2px 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-muted);
+}
+
+.geo-summary__facts dd b {
+  color: var(--navy);
+  font-size: 1rem;
+}
+
+.geo-summary__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.geo-summary__facts dd > span:last-child {
+  white-space: nowrap;
+}
+
+.geo-summary__empty {
+  margin: 0 0 14px;
+  color: var(--text-muted);
+}
+
+.geo-summary__link {
+  margin-top: auto;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .heatmap-card__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Reports by Category / by Status / Investigator Performance share one row
+   on a wide screen instead of two rows of half-width cards. */
+.dash-row-charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
   margin-top: 20px;
+  align-items: stretch;
 }
+
+@media (max-width: 1300px) {
+  .dash-row-charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-row-charts > .category-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 980px) {
+  .dash-row-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.geo-filter-chip {
+  margin: 0 0 10px;
+  padding: 7px 12px;
+  background: var(--highlight);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.geo-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.geo-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--green-mist);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.geo-tile__label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.geo-tile__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.geo-tile__note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.geo-tile__note b {
+  color: var(--navy);
+}
+
+.geo-section {
+  margin-top: 18px;
+}
+
+.geo-section h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.geo-section h4 {
+  margin: 14px 0 6px;
+  font-size: 0.82rem;
+}
+
+.geo-section h3 small,
+.geo-section h4 small {
+  margin-left: 6px;
+  font-size: 0.74rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.geo-section__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.geo-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--link);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.geo-link:hover {
+  text-decoration: underline;
+}
+
+.geo-profile {
+  padding: 12px 14px 14px;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+}
+
+.geo-findings {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.55;
+}
+
+.geo-findings li + li {
+  margin-top: 4px;
+}
+
+.geo-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.geo-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(50px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+
+.geo-row--clickable {
+  cursor: pointer;
+}
+
+.geo-row--clickable:hover,
+.geo-row--clickable:focus-visible,
+.geo-row.is-active {
+  background: var(--highlight);
+}
+
+.geo-row__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.geo-row__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  overflow: hidden;
+}
+
+.geo-row__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.geo-row__value {
+  min-width: 78px;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.geo-row__value b,
+.geo-table td b {
+  color: var(--text);
+}
+
+.geo-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.geo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.geo-table th,
+.geo-table td {
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.geo-table th {
+  background: var(--green-mist);
+  font-size: 0.76rem;
+}
+
+.geo-table tbody tr {
+  cursor: pointer;
+}
+
+.geo-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.geo-table tbody tr:hover,
+.geo-table tbody tr:focus-visible,
+.geo-table tbody tr.is-active {
+  background: var(--highlight);
+}
+
+.geo-table td {
+  color: var(--text-muted);
+}
+
+.geo-table td:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.geo-table__ordinance {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.geo-sort {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.geo-sort.is-active {
+  color: var(--navy);
+}
+
+.geo-note {
+  margin: 6px 0 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
 
 /* ---------- Reports Management (search + filters + list) ---------- */
 
@@ -4371,8 +4848,7 @@ button {
   }
 
   .modal-card,
-  .edit-account-card,
-  .heatmap-modal-card {
+  .edit-account-card {
     max-width: calc(100vw - 32px);
   }
 

@@ -1,4 +1,4 @@
-// SafeSpace — Create Account: Account Type picks which form shows —
+// Barangay Platero OVRMS — Create Account: Account Type picks which form shows —
 // "Barangay Staff" (just an email + role, see AdminCreateUserSerializer)
 // or "Barangay Citizen" (full details + password, created and pre-verified
 // right away, see AdminCreateCitizenSerializer). Citizens can still

@@ -1,4 +1,4 @@
-// SafeSpace — Website Setup: the Administrator's site-wide settings — the
+// Barangay Platero OVRMS — Website Setup: the Administrator's site-wide settings — the
 // navbar/sidebar brand name and logo, and the footer's text and links. Saves
 // go to the same /api/site/ endpoints as About Us Setup (see siteinfo/views.py).
 

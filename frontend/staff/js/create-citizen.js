@@ -1,4 +1,4 @@
-// SafeSpace — Create Citizen Account (Barangay Secretary): sends a citizen an
+// Barangay Platero OVRMS — Create Citizen Account (Barangay Secretary): sends a citizen an
 // invite by email. The citizen adds their own name, phone, address, and password.
 
 document.addEventListener("DOMContentLoaded", () => {

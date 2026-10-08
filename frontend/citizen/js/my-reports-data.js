@@ -1,4 +1,4 @@
-// SafeSpace — My Reports data, backed by the real API.
+// Barangay Platero OVRMS — My Reports data, backed by the real API.
 
 async function getMyReports() {
   const response = await authFetch("/api/reports/");

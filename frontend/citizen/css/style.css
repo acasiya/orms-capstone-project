@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SafeSpace — Ordinance Reporting and Monitoring System
+   Barangay Platero — Ordinance Violation Reporting and Monitoring System
    Shared stylesheet for all pages
    ========================================================================== */
 
@@ -132,9 +132,33 @@ button {
   font-weight: 400;
   font-size: 1.3rem;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Brand name with the kind of system on a smaller line under it. The
+   underline moves from .navbar__brand onto the name alone (see below). */
+.navbar__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.navbar__brand-text strong {
+  font-weight: 400;
   text-decoration: underline;
   text-underline-offset: 4px;
-  white-space: nowrap;
+}
+
+.navbar__brand-text small {
+  font-size: 0.68rem;
+  letter-spacing: 0.2px;
+  opacity: 0.85;
+}
+
+@media (max-width: 1100px) {
+  .navbar__brand-text small {
+    display: none;
+  }
 }
 
 .navbar__logo {
@@ -3516,7 +3540,7 @@ button {
 .news-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px;
+  gap: 16px;
 }
 
 .news-grid > .news-card {
@@ -3535,10 +3559,12 @@ button {
   }
 }
 
+/* Compact on purpose: thumbnail beside the text rather than a tall image on
+   top, so Latest Ordinances / Ordinances by Category below are already in
+   view when the home page opens. The full text and image are in the popup. */
 .news-card {
   position: relative;
   display: flex;
-  flex-direction: column;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -3549,25 +3575,73 @@ button {
   box-shadow: inset 0 3px 0 #e8c53d;
 }
 
-.news-card__image {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+/* The thumbnail's own box clips the image, so the hover zoom below grows
+   inside it instead of spilling over the text. */
+.news-card__thumb {
+  position: relative;
+  width: 120px;
+  flex-shrink: 0;
+  overflow: hidden;
   background: #e9e6dc;
+}
+
+.news-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.news-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.news-card:hover,
+.news-card:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 22px rgba(20, 60, 30, 0.16);
+}
+
+/* Keeps the unread card's yellow top edge while it's lifted. */
+.news-card--unread:hover,
+.news-card--unread:focus-within {
+  box-shadow: inset 0 3px 0 #e8c53d, 0 10px 22px rgba(20, 60, 30, 0.16);
+}
+
+.news-card:hover .news-card__image,
+.news-card:focus-within .news-card__image {
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-card,
+  .news-card__image {
+    transition: none;
+  }
+
+  .news-card:hover,
+  .news-card:focus-within,
+  .news-card:hover .news-card__image,
+  .news-card:focus-within .news-card__image {
+    transform: none;
+  }
 }
 
 .news-card__body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 16px 18px 14px;
+  min-width: 0;
+  padding: 12px 16px 10px;
 }
 
 .news-card__banner {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  align-self: flex-start;
+  margin-bottom: 6px;
   background: #e8c53d;
   color: #3d3510;
   font-size: 0.7rem;
@@ -3579,19 +3653,28 @@ button {
 }
 
 .news-card__title {
-  margin: 0 0 10px;
-  font-size: 1.1rem;
+  margin: 0 0 6px;
+  font-size: 1rem;
   line-height: 1.35;
   font-weight: 700;
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .news-card__excerpt {
-  margin: 0 0 14px;
-  font-size: 0.9rem;
-  line-height: 1.55;
+  margin: 0 0 10px;
+  font-size: 0.86rem;
+  line-height: 1.5;
   color: var(--text-muted);
-  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .news-card__footer {
@@ -3600,7 +3683,7 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
   font-size: 0.8rem;
 }
@@ -3947,8 +4030,247 @@ button {
 }
 
 .home-see-more__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   width: auto;
   padding: 10px 28px;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.home-see-more__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(20, 60, 30, 0.2);
+  text-decoration: none;
+}
+
+.home-see-more__btn:active {
+  transform: translateY(0) scale(0.96);
+  box-shadow: none;
+}
+
+.home-see-more__icon,
+.home-see-more__arrow {
+  transition: transform 0.25s ease;
+}
+
+.home-see-more__btn:hover .home-see-more__icon {
+  transform: translateY(3px);
+}
+
+.home-see-more__btn.is-open .home-see-more__icon {
+  transform: rotate(180deg);
+}
+
+.home-see-more__btn.is-open:hover .home-see-more__icon {
+  transform: rotate(180deg) translateY(3px);
+}
+
+.home-see-more__btn:hover .home-see-more__arrow {
+  transform: translateX(5px);
+}
+
+/* ---------- Home: cards/rows animate in as they scroll into view ---------- */
+/* See revealItems() in home.js. `backwards` (not `both`) so the animation
+   lets go of transform once it ends and the cards' own hover lift still works. */
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes category-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.home-reveal:not(.is-visible) {
+  opacity: 0;
+}
+
+.home-reveal.is-visible {
+  animation: home-rise 0.45s ease backwards;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+.home-reveal .category-bar__fill {
+  transform-origin: left center;
+}
+
+.home-reveal.is-visible .category-bar__fill {
+  animation: category-bar-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--reveal-delay, 0ms) + 200ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reveal:not(.is-visible) {
+    opacity: 1;
+  }
+
+  .home-reveal.is-visible,
+  .home-reveal.is-visible .category-bar__fill {
+    animation: none;
+  }
+
+  .home-see-more__btn,
+  .home-see-more__icon,
+  .home-see-more__arrow,
+  .latest-ord-row__chevron {
+    transition: none;
+  }
+}
+
+/* ---------- Home: each section is one whole card ---------- */
+/* The page sits on a photo background, which bare headings and loose cards
+   were hard to read against — heading, content and button share one panel. */
+.home-section {
+  margin-bottom: 24px;
+  padding: 18px 22px 20px;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(20, 60, 30, 0.18);
+}
+
+.home-section > .page-heading {
+  color: var(--text);
+  font-size: 1.4rem;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--accent);
+}
+
+/* Already inside a panel, so the inner list/bars don't need their own lift. */
+.home-section .latest-ord-rows,
+.home-section .category-bar {
+  box-shadow: none;
+}
+
+@media (max-width: 560px) {
+  .home-section {
+    padding: 14px 14px 16px;
+  }
+}
+
+.home-section .home-see-more {
+  margin-top: 12px;
+}
+
+/* ---------- Home: Latest Ordinances + Ordinances by Category, side by side ---------- */
+.home-split {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .home-split {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.latest-ord-rows {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(20, 60, 30, 0.06);
+  overflow: hidden;
+}
+
+.latest-ord-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.latest-ord-row:last-child {
+  border-bottom: none;
+}
+
+.latest-ord-row:hover,
+.latest-ord-row:focus-visible {
+  background: var(--plain-bg);
+  text-decoration: none;
+}
+
+.latest-ord-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.latest-ord-row__title {
+  font-weight: 700;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.latest-ord-row__meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.latest-ord-row .latest-ord-card__new {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.latest-ord-row__chevron {
+  flex-shrink: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--accent, #2f7d4a);
+  transition: transform 0.2s ease;
+}
+
+.latest-ord-row__title {
+  transition: color 0.15s ease;
+}
+
+.latest-ord-row:hover .latest-ord-row__chevron,
+.latest-ord-row:focus-visible .latest-ord-row__chevron {
+  transform: translateX(5px);
+}
+
+.latest-ord-row:hover .latest-ord-row__title,
+.latest-ord-row:focus-visible .latest-ord-row__title {
+  color: var(--link);
+}
+
+/* The bars' label | track | count row is too cramped at column width, so
+   the track drops to its own line under the label and count. */
+.home-split .category-bar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label pct"
+    "track track";
+  gap: 8px 12px;
+}
+
+.home-split .category-bar__label {
+  grid-area: label;
+}
+
+.home-split .category-bar__track {
+  grid-area: track;
+}
+
+.home-split .category-bar__pct {
+  grid-area: pct;
 }
 
 /* ---------- Home: Ordinances by Category bar list ---------- */

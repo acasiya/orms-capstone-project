@@ -1,4 +1,4 @@
-// SafeSpace — Legal pages (Privacy Policy, Terms and Agreements): render the
+// Barangay Platero OVRMS — Legal pages (Privacy Policy, Terms and Agreements): render the
 // Administrator-edited sections from GET /api/site/legal/<key>/ into the
 // #legalSections container. The text format is described on siteinfo's
 // LegalDocument model: blank lines separate blocks; "- " bullets, "1. " numbered

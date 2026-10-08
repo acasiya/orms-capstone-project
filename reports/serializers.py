@@ -129,6 +129,9 @@ class StaffReportSerializer(serializers.ModelSerializer):
     """
 
     reporter = serializers.SerializerMethodField()
+    # Lets the dashboard's geospatial analysis count distinct reporters —
+    # two citizens can share a name, so `reporter` alone can't.
+    reporterId = serializers.UUIDField(source="citizen_id", read_only=True)
     contact_number = serializers.CharField(source="citizen.contact_number", read_only=True)
     attachments = serializers.SerializerMethodField()
     assignedInvestigator = serializers.SerializerMethodField()
@@ -137,7 +140,7 @@ class StaffReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            "id", "reporter", "contact_number", "location", "latitude", "longitude", "ordinance",
+            "id", "reporter", "reporterId", "contact_number", "location", "latitude", "longitude", "ordinance",
             "incident_date", "incident_time", "nature_of_violation",
             "status", "remarks", "created_at", "updated_at", "attachments",
             "assignedInvestigator", "assignedInvestigatorId",

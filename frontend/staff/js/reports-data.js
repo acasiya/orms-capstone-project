@@ -1,4 +1,4 @@
-// SafeSpace — Reports data, backed by the real API (GET /api/reports/staff/).
+// Barangay Platero OVRMS — Reports data, backed by the real API (GET /api/reports/staff/).
 // Replaces the previous randomly-generated 28-week mock dataset. The rest
 // of the dashboard/list/detail code was written assuming a synchronously-
 // available array, so this loads once per page into a cache — call
@@ -61,6 +61,7 @@ function mapReport(r) {
     latitude: r.latitude,
     longitude: r.longitude,
     reporter: r.reporter,
+    reporterId: r.reporterId,
     contactNumber: r.contact_number,
     natureOfViolation: r.nature_of_violation,
     status: REPORT_STATUS_TO_LABEL[r.status] || r.status,
@@ -91,6 +92,21 @@ async function ensureReportsLoaded() {
 
 function liveReports() {
   return _reportsCache || [];
+}
+
+// How many approved, active citizen accounts exist — the base the Reports
+// Dashboard's geospatial analysis uses for "% of registered citizens".
+// Resolves to null if it can't be loaded; the analysis then shows the count
+// without that percentage rather than failing.
+let _registeredCitizensPromise = null;
+function loadRegisteredCitizenCount() {
+  if (!_registeredCitizensPromise) {
+    _registeredCitizensPromise = authFetch("/api/reports/staff/analysis-base/")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => (data && typeof data.registered_citizens === "number" ? data.registered_citizens : null))
+      .catch(() => null);
+  }
+  return _registeredCitizensPromise;
 }
 
 function getReportById(id) {
@@ -219,6 +235,66 @@ function getYearRange(yearsBack) {
   const start = new Date(year, 0, 1);
   const end = new Date(year, 11, 31);
   return { start, end, year };
+}
+
+// The period choices both the Reports Dashboard's dropdowns and the
+// Geospatial Analysis page's Period select offer — values are what
+// getReportsForPeriod below takes.
+const REPORT_PERIOD_MONTHS_BACK = 5;
+const REPORT_PERIOD_QUARTERS_BACK = 3;
+const REPORT_PERIOD_YEARS_BACK = 2;
+
+function buildReportPeriodOptions() {
+  const opts = [{ value: "week", label: "This Week" }];
+  for (let m = 0; m <= REPORT_PERIOD_MONTHS_BACK; m++) {
+    const { start } = getMonthRange(m);
+    opts.push({
+      value: `month${m}`,
+      label: m === 0 ? "This Month" : start.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    });
+  }
+  for (let q = 0; q <= REPORT_PERIOD_QUARTERS_BACK; q++) {
+    const { quarter, year } = getQuarterRange(q);
+    opts.push({ value: `quarter${q}`, label: q === 0 ? `This Quarter (Q${quarter} ${year})` : `Q${quarter} ${year}` });
+  }
+  for (let y = 0; y <= REPORT_PERIOD_YEARS_BACK; y++) {
+    const { year } = getYearRange(y);
+    opts.push({ value: `year${y}`, label: y === 0 ? `This Year (${year})` : `${year}` });
+  }
+  opts.push({ value: "all", label: "All Time" });
+  return opts;
+}
+
+// The comparison period for a delta — one week/month/quarter/year further
+// back than the given one. "all" and a custom date range have no previous
+// period to compare against (null).
+function previousReportPeriod(period) {
+  if (typeof period !== "string") return null;
+  if (period === "week") return "week1";
+  const match = period.match(/^(week|month|quarter|year)(\d+)$/);
+  if (!match) return null;
+  return `${match[1]}${Number(match[2]) + 1}`;
+}
+
+// A period as a query string and back, so the dashboard's heatmap can open
+// the Geospatial Analysis page on the same period (and that page's address
+// can be bookmarked). reportPeriodFromQuery returns null for anything it
+// doesn't recognise.
+function reportPeriodToQuery(period) {
+  if (period && typeof period === "object") {
+    return `from=${encodeURIComponent(period.from)}&to=${encodeURIComponent(period.to)}`;
+  }
+  return `period=${encodeURIComponent(period)}`;
+}
+
+function reportPeriodFromQuery(search) {
+  const params = new URLSearchParams(search);
+  const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value || "");
+  const from = params.get("from");
+  const to = params.get("to");
+  if (isDate(from) && isDate(to) && from <= to) return { type: "custom", from, to };
+  const period = params.get("period");
+  return buildReportPeriodOptions().some((o) => o.value === period) ? period : null;
 }
 
 function getReportsForWeekOffset(offset) {

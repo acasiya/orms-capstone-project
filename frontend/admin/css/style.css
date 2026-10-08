@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SafeSpace — Ordinance Reporting and Monitoring System
+   Barangay Platero — Ordinance Violation Reporting and Monitoring System
    Shared stylesheet for all pages
    ========================================================================== */
 
@@ -129,8 +129,6 @@ button {
   font-weight: 400;
   font-size: 1.3rem;
   letter-spacing: 0.5px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
   white-space: nowrap;
 }
 
@@ -141,6 +139,32 @@ button {
   font-size: 1.1rem;
   letter-spacing: 0.5px;
   white-space: nowrap;
+}
+
+/* Brand name with the kind of system on a smaller line under it. The
+   underline moves from .navbar__brand onto the name alone (see below). */
+.navbar__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.navbar__brand-text strong {
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.navbar__brand-text small {
+  font-size: 0.68rem;
+  letter-spacing: 0.2px;
+  opacity: 0.85;
+}
+
+@media (max-width: 1100px) {
+  .navbar__brand-text small {
+    display: none;
+  }
 }
 
 .navbar__logo {

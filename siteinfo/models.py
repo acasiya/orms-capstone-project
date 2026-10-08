@@ -17,10 +17,13 @@ class BarangayProfile(models.Model):
     # The website's own brand — the navbar/sidebar logo + name shown across
     # all 3 portals (frontend/*/js/main.js and admin.js pull this live).
     # Deliberately separate from `name` above: that's the barangay's own
-    # name (About Us), this is the system's. The browser tab title stays a
-    # static "SafeSpace" regardless of this field — only the visible
-    # navbar/sidebar brand follows it.
-    site_name = models.CharField(max_length=60, default="SafeSpace")
+    # name (About Us), this is the system's. Written "Name | Kind of system":
+    # the part after the bar is shown on a smaller line under the name. The
+    # browser tab title stays a static "Barangay Platero OVRMS" regardless of
+    # this field — only the visible navbar/sidebar brand follows it.
+    site_name = models.CharField(
+        max_length=120, default="Barangay Platero | Ordinance Violation Reporting and Monitoring System"
+    )
     site_logo = models.ImageField(upload_to="site/", blank=True)
     city = models.CharField(max_length=100, default="City of Biñan, Laguna")
     address = models.CharField(max_length=255, blank=True)
@@ -28,13 +31,13 @@ class BarangayProfile(models.Model):
     email = models.EmailField(blank=True)
     office_hours = models.CharField(max_length=120, blank=True)
     emergency_hotline = models.CharField(max_length=50, default="911")
-    # About Us' "What is SafeSpace" and "Our Mission" cards.
+    # About Us' "What is OVRMS" and "Our Mission" cards.
     about_text = models.TextField(blank=True)
     mission_text = models.TextField(blank=True)
     # The site footer's own copy (frontend/citizen/js/site-footer.js). The
     # link lists are [{"label": ..., "url": ...}] — empty falls back to the
     # built-in defaults the footer ships with.
-    footer_tagline = models.CharField(max_length=255, default="SafeSpace — Online Reporting and Management System")
+    footer_tagline = models.CharField(max_length=255, default="Ordinance Violation Reporting and Monitoring System")
     footer_notice = models.CharField(
         max_length=255, default="Personal data is processed under the Data Privacy Act of 2012 (Republic Act No. 10173)."
     )

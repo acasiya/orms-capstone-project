@@ -1,5 +1,5 @@
 """
-SafeSpace — stashes the current request in a thread-local so log_action()
+Barangay Platero OVRMS — stashes the current request in a thread-local so log_action()
 (accounts/models.py) can read the caller's IP without every one of its ~60
 call sites across the codebase having to thread a request object through.
 """

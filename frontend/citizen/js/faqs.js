@@ -1,4 +1,4 @@
-// SafeSpace — FAQs page: renders the public FAQ accordion. (The floating
+// Barangay Platero OVRMS — FAQs page: renders the public FAQ accordion. (The floating
 // "Ask a Question" "?" button itself is wired globally in main.js — it's on
 // every citizen page, not just this one.)
 

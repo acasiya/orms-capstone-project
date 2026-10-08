@@ -1,4 +1,4 @@
-// SafeSpace — Admin Portal "Reports" page: every unclaimed report, oldest
+// Barangay Platero OVRMS — Admin Portal "Reports" page: every unclaimed report, oldest
 // first, with an inline "Assign to Investigator" control per row — lets an
 // Administrator hand a report straight to a specific Investigator instead
 // of leaving it for one to self-claim (see reports.StaffReportAssignView).

@@ -1,4 +1,4 @@
-// SafeSpace — My Concerns/Suggestions data, backed by the real API.
+// Barangay Platero OVRMS — My Concerns/Suggestions data, backed by the real API.
 
 async function getMyConcerns() {
   const response = await authFetch("/api/concerns/");

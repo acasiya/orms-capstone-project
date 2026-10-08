@@ -1,4 +1,4 @@
-// SafeSpace — Manage Accounts: render + sort + filter the account list.
+// Barangay Platero OVRMS — Manage Accounts: render + sort + filter the account list.
 // Data now comes from the real API (see accounts-data.js) instead of a
 // hardcoded array, so this file is async where it fetches/updates accounts.
 

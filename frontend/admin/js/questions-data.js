@@ -1,4 +1,4 @@
-// SafeSpace — Questions data, backed by the real API (GET /api/questions/staff/).
+// Barangay Platero OVRMS — Questions data, backed by the real API (GET /api/questions/staff/).
 
 async function getQuestions() {
   const response = await authFetch("/api/questions/staff/");

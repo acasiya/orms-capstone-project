@@ -1,4 +1,4 @@
-// SafeSpace — Approve Accounts data, backed by the real API.
+// Barangay Platero OVRMS — Approve Accounts data, backed by the real API.
 // Used to return a hardcoded PENDING_ACCOUNTS array; now fetches from
 // GET /api/auth/admin/verifications/ (see PendingVerificationSerializer),
 // shaped to match what approve-accounts.js already expects (id/owner/

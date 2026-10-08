@@ -1,4 +1,4 @@
-// SafeSpace — Home page: announcements as news cards (full text in a popup,
+// Barangay Platero OVRMS — Home page: announcements as news cards (full text in a popup,
 // with per-citizen unread banners), Latest Ordinances (unread for logged-in
 // citizens, the most recent for guests), and notifications (logged-in only).
 
@@ -34,11 +34,6 @@ function tagFor(o) {
   return fresh ? '<span class="latest-ord-card__new">New</span>' : "";
 }
 
-function excerptOrdinance(text) {
-  const flat = String(text || "").replace(/\s+/g, " ").trim();
-  return flat.length > 140 ? `${flat.slice(0, 140).trimEnd()}…` : flat;
-}
-
 function excerpt(text) {
   return text.length > NEWS_EXCERPT_LENGTH ? `${text.slice(0, NEWS_EXCERPT_LENGTH).trimEnd()}…` : text;
 }
@@ -48,11 +43,43 @@ function isUnread(announcement, loggedIn) {
 }
 
 const HOME_PAGE_SIZE = 3;
+// Latest Ordinances and Ordinances by Category sit side by side, so both
+// start with the same number of rows to keep the two columns level.
+const LATEST_ORDINANCES_COUNT = 5;
 
 // Matches the page's own 560px "mobile" breakpoint (where these grids drop to
 // a single column) — a smaller starting count reads better stacked that narrow.
 function isMobileWidth() {
   return window.matchMedia("(max-width: 560px)").matches;
+}
+
+const SEE_MORE_CHEVRON =
+  '<svg class="home-see-more__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+// Fades/slides each element in, one after another, the first time it scrolls
+// into view (see .home-reveal in style.css — a category bar's fill also grows
+// from zero then). Without IntersectionObserver they're simply shown.
+const _revealObserver =
+  "IntersectionObserver" in window
+    ? new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("is-visible");
+            _revealObserver.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.15 }
+      )
+    : null;
+
+function revealItems(elements) {
+  Array.from(elements).forEach((el, i) => {
+    el.classList.add("home-reveal");
+    el.style.setProperty("--reveal-delay", `${i * 70}ms`);
+    if (_revealObserver) _revealObserver.observe(el);
+    else el.classList.add("is-visible");
+  });
 }
 
 // Shows the first `perPage` cards with a "See more" button below; clicking it
@@ -61,21 +88,27 @@ function isMobileWidth() {
 function renderPaginated(container, gridClass, cardsHtml, perPage, wire) {
   if (cardsHtml.length <= perPage) {
     container.innerHTML = `<div class="${gridClass}">${cardsHtml.join("")}</div>`;
+    revealItems(container.querySelector(`.${gridClass}`).children);
     if (wire) wire(container.querySelector(`.${gridClass}`));
     return;
   }
-  function paint(showAll) {
+  // `initial` is the first paint (everything animates in once scrolled to);
+  // after "See more" only the newly added cards do, and "See less" none.
+  function paint(showAll, initial) {
     const items = showAll ? cardsHtml : cardsHtml.slice(0, perPage);
     container.innerHTML =
       `<div class="${gridClass}">${items.join("")}</div>` +
-      `<div class="home-see-more"><button type="button" class="btn btn-muted home-see-more__btn">${showAll ? "See less" : "See more"}</button></div>`;
-    if (wire) wire(container.querySelector(`.${gridClass}`));
+      `<div class="home-see-more"><button type="button" class="btn btn-muted home-see-more__btn${showAll ? " is-open" : ""}">${showAll ? "See less" : "See more"}${SEE_MORE_CHEVRON}</button></div>`;
+    const grid = container.querySelector(`.${gridClass}`);
+    if (initial) revealItems(grid.children);
+    else if (showAll) revealItems(Array.from(grid.children).slice(perPage));
+    if (wire) wire(grid);
     container.querySelector(".home-see-more__btn").addEventListener("click", () => {
-      paint(!showAll);
+      paint(!showAll, false);
       if (showAll) container.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }
-  paint(false);
+  paint(false, true);
 }
 
 function renderNewsGrid(container, announcements, loggedIn) {
@@ -87,7 +120,7 @@ function renderNewsGrid(container, announcements, loggedIn) {
     const unread = isUnread(a, loggedIn);
     return `
       <article class="news-card${unread ? " news-card--unread" : ""}" data-announcement-id="${a.id}">
-        ${a.image_url ? `<img class="news-card__image" src="${escapeHtml(a.image_url)}" alt="" />` : `<div class="news-card__image news-card__image--empty" aria-hidden="true"></div>`}
+        ${a.image_url ? `<div class="news-card__thumb"><img class="news-card__image" src="${escapeHtml(a.image_url)}" alt="" /></div>` : ""}
         <div class="news-card__body">
           ${unread ? `<span class="news-card__banner">New</span>` : ""}
           <h2 class="news-card__title">${escapeHtml(a.title)}</h2>
@@ -101,8 +134,10 @@ function renderNewsGrid(container, announcements, loggedIn) {
   });
 
   renderPaginated(container, "news-grid", cardsHtml, isMobileWidth() ? 1 : HOME_PAGE_SIZE, () => {
-    container.querySelectorAll("[data-read-more]").forEach((btn) => {
-      btn.addEventListener("click", () => openAnnouncement(btn.dataset.readMore, container));
+    // The whole card opens the announcement, not just "Read more" — that
+    // button stays as the keyboard target, and its click bubbles up to here.
+    container.querySelectorAll(".news-card").forEach((card) => {
+      card.addEventListener("click", () => openAnnouncement(card.dataset.announcementId, container));
     });
   });
 }
@@ -182,16 +217,26 @@ async function renderLatestOrdinances(container, loggedIn) {
     container.innerHTML = `<div class="ordinances-empty">No ordinances have been posted yet.</div>`;
     return;
   }
-  const cardsHtml = rows.map(
+  // A compact list of the few most recent, one row each — it shares the row
+  // with "Ordinances by Category", and the full list lives on the Ordinances
+  // page (linked below) rather than expanding in place here.
+  const rowsHtml = rows.slice(0, isMobileWidth() ? 3 : LATEST_ORDINANCES_COUNT).map(
     (o) => `
-        <a class="latest-ord-card" href="ordinance-detail.html?id=${encodeURIComponent(o.id)}">
+        <a class="latest-ord-row" href="ordinance-detail.html?id=${encodeURIComponent(o.id)}">
+          <span class="latest-ord-row__main">
+            <span class="latest-ord-row__title">${escapeHtml(o.title)}</span>
+            <span class="latest-ord-row__meta">${escapeHtml(o.number)} &middot; ${escapeHtml(o.category)} &middot; Approved ${formatNewsDate(`${o.date_approved}T00:00:00`)}</span>
+          </span>
           ${tagFor(o)}
-          <span class="latest-ord-card__title">${escapeHtml(o.title)}</span>
-          <span class="latest-ord-card__desc">${escapeHtml(excerptOrdinance(o.description))}</span>
-          <span class="latest-ord-card__more">Read more</span>
+          <span class="latest-ord-row__chevron" aria-hidden="true">&rsaquo;</span>
         </a>`
   );
-  renderPaginated(container, "latest-ord-list", cardsHtml, HOME_PAGE_SIZE);
+  container.innerHTML =
+    `<div class="latest-ord-rows">${rowsHtml.join("")}</div>` +
+    (rows.length > rowsHtml.length
+      ? `<div class="home-see-more"><a class="btn btn-muted home-see-more__btn" href="ordinances.html">View all ${rows.length} ordinances<span class="home-see-more__arrow" aria-hidden="true">&rarr;</span></a></div>`
+      : "");
+  revealItems(container.querySelector(".latest-ord-rows").children);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -274,7 +319,7 @@ async function renderCategorySummary() {
           <span class="category-bar__pct">${pct}% (${items.length})</span>
         </button>`;
     });
-    renderPaginated(container, "category-bars", barsHtml, isMobileWidth() ? 2 : HOME_PAGE_SIZE, (scope) => {
+    renderPaginated(container, "category-bars", barsHtml, isMobileWidth() ? 2 : LATEST_ORDINANCES_COUNT, (scope) => {
       scope.querySelectorAll("[data-category]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const [, items] = sortedGroups.find(([c]) => c === btn.dataset.category);
@@ -292,5 +337,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoryModal = document.getElementById("categoryOrdinancesModal");
   categoryModal.addEventListener("click", (e) => {
     if (e.target === categoryModal) categoryModal.hidden = true;
+  });
+
+  // Esc closes whichever of the two home popups is open.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    categoryModal.hidden = true;
+    document.getElementById("announcementModal").hidden = true;
   });
 });

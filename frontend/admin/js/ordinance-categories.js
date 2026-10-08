@@ -1,4 +1,4 @@
-// SafeSpace — Ordinance Categories: Administrator-only management of the
+// Barangay Platero OVRMS — Ordinance Categories: Administrator-only management of the
 // list Upload/Edit Ordinance's Category dropdown is built from (see
 // ordinance-categories-data.js). List, add, rename, retire, or remove.
 // Retiring (rather than deleting) is the normal way a category falls out of

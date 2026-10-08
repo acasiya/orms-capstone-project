@@ -1,4 +1,4 @@
-// SafeSpace — Ordinances list: search, paginate, render, navigate to
+// Barangay Platero OVRMS — Ordinances list: search, paginate, render, navigate to
 // detail, plus uploading (Secretary/Admin — see ordinances-data.js's
 // isDocumentManager).
 

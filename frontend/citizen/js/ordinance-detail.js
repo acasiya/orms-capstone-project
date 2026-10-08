@@ -1,4 +1,4 @@
-// SafeSpace — Ordinance detail: populate the page from the ?id= query param.
+// Barangay Platero OVRMS — Ordinance detail: populate the page from the ?id= query param.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const id = new URLSearchParams(window.location.search).get("id");
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     authFetch(`/api/ordinances/${encodeURIComponent(id)}/view/`, { method: "POST" }).catch(() => {});
   }
 
-  document.title = `${ordinance.number} — SafeSpace`;
+  document.title = `${ordinance.number} — Barangay Platero OVRMS`;
   document.getElementById("detailTitle").textContent = `City Ordinance ${ordinance.number}`;
   document.getElementById("detailAuthor").textContent = ordinance.author;
   document.getElementById("detailDate").textContent = ordinance.dateApproved;

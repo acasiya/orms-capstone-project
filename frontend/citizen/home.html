@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Home</title>
+  <title>Barangay Platero OVRMS — Home</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
   <nav class="navbar">
     <div class="navbar__brand">
       <span class="navbar__logo" aria-hidden="true"></span>
-      SafeSpace
+      <div class="navbar__brand-text"><strong>Barangay Platero</strong><small>Ordinance Violation Reporting and Monitoring System</small></div>
     </div>
     <ul class="navbar__links">
       <li><a href="home.html" class="active">Home</a></li>
@@ -45,19 +45,21 @@
         </div>
       </section>
 
-      <section class="home-section">
-        <h1 class="page-heading">Ordinances by Category</h1>
-        <div id="categorySummary">
-          <div class="ordinances-empty">Loading...</div>
-        </div>
-      </section>
+      <div class="home-split">
+        <section class="home-section" id="latestOrdinancesSection">
+          <h1 class="page-heading">Latest Ordinances</h1>
+          <div class="home-latest" id="latestOrdinancesBody">
+            <div class="ordinances-empty">Loading...</div>
+          </div>
+        </section>
 
-      <section class="home-section" id="latestOrdinancesSection">
-        <h1 class="page-heading">Latest Ordinances</h1>
-        <div class="home-latest" id="latestOrdinancesBody">
-          <div class="ordinances-empty">Loading...</div>
-        </div>
-      </section>
+        <section class="home-section">
+          <h1 class="page-heading">Ordinances by Category</h1>
+          <div id="categorySummary">
+            <div class="ordinances-empty">Loading...</div>
+          </div>
+        </section>
+      </div>
 
       <section class="home-section" id="notificationsSection" hidden>
         <h1 class="page-heading">Notifications</h1>

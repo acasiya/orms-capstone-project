@@ -1,4 +1,4 @@
-// SafeSpace — Concern/Suggestion detail: view real info and let staff change
+// Barangay Platero OVRMS — Concern/Suggestion detail: view real info and let staff change
 // its status (Submitted/Reviewed) and leave remarks. Saves go through
 // updateConcernStatus (PATCH /api/concerns/staff/<id>/) instead of the old
 // localStorage-only folder-assignment mock.
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.title = `Concern/Suggestion — SafeSpace`;
+  document.title = `Concern/Suggestion — Barangay Platero OVRMS`;
 
   document.getElementById("concernName").value = concern.reporter;
   document.getElementById("concernContact").value = concern.contactNumber || "";

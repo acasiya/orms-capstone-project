@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SafeSpace — Reports Dashboard</title>
+  <title>Barangay Platero OVRMS — Reports Dashboard</title>
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -14,7 +14,8 @@
       <div class="admin-sidebar__brand">
         <span class="admin-sidebar__logo" aria-hidden="true"></span>
         <div class="admin-sidebar__brand-text">
-          <strong>SafeSpace</strong>
+          <strong>Barangay Platero</strong>
+          <small>Ordinance Violation Reporting and Monitoring System</small>
         </div>
       </div>
       <ul class="admin-sidebar__nav">
@@ -172,7 +173,7 @@
           </div>
         </div>
 
-        <div class="dash-row-bottom">
+        <div class="dash-row-single">
           <div class="dash-card heatmap-card">
             <div class="dash-card__header">
               <h2>Incident Heatmap</h2>
@@ -183,18 +184,26 @@
                 <ul class="dash-dropdown-menu" id="heatmapFilterMenu" hidden></ul>
               </div>
             </div>
-            <div class="heatmap-canvas" id="heatmapCanvas" role="button" tabindex="0" aria-label="Enlarge incident heatmap">
-              <span class="heatmap-canvas__label">Barangay Platero</span>
-              <span class="heatmap-canvas__expand" aria-hidden="true">&#10530;</span>
-            </div>
-            <div class="heatmap-legend">
-              <span><i class="legend-dot legend-dot--low"></i>Low</span>
-              <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
-              <span><i class="legend-dot legend-dot--high"></i>High</span>
-              <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
+            <div class="heatmap-card__body">
+              <div class="heatmap-card__map">
+                <div class="heatmap-canvas" id="heatmapCanvas" role="link" tabindex="0" aria-label="Open the geospatial analysis">
+                  <span class="heatmap-canvas__label">Barangay Platero</span>
+                  <span class="heatmap-canvas__expand" aria-hidden="true">&#10530;</span>
+                </div>
+                <div class="heatmap-legend">
+                  <span><i class="legend-dot legend-dot--low"></i>Low</span>
+                  <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
+                  <span><i class="legend-dot legend-dot--high"></i>High</span>
+                  <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
+                </div>
+              </div>
+              <!-- At-a-glance figures for the same period — see renderGeoSummary in js/geo-analysis.js -->
+              <div class="geo-summary" id="geoSummary"></div>
             </div>
           </div>
+        </div>
 
+        <div class="dash-row-charts">
           <div class="dash-card category-card">
             <div class="dash-card__header">
               <h2>Reports by Category</h2>
@@ -210,9 +219,7 @@
               <ul class="pie-legend" id="categoryLegend"></ul>
             </div>
           </div>
-        </div>
 
-        <div class="dash-row-status">
           <div class="dash-card status-chart-card">
             <div class="dash-card__header">
               <h2>Reports by Status</h2>
@@ -271,29 +278,11 @@
   <script src="vendor/leaflet/leaflet-heat.js"></script>
   <script src="js/street-coordinates.js"></script>
   <script src="js/heatmap.js"></script>
+  <script src="js/geo-analysis.js"></script>
   <script src="js/ordinances-data.js"></script>
   <script src="js/reports-data.js"></script>
   <script src="js/reports-dashboard.js"></script>
   <script src="js/admin.js"></script>
-
-  <!-- Enlarged incident heatmap -->
-  <div class="modal-overlay" id="heatmapModal" hidden>
-    <div class="modal-card heatmap-modal-card">
-      <div class="dash-card__header">
-        <h2>Incident Heatmap</h2>
-      </div>
-      <div class="heatmap-canvas heatmap-canvas--large" id="heatmapCanvasModal">
-        <span class="heatmap-canvas__label">Barangay Platero</span>
-      </div>
-      <div class="heatmap-legend">
-        <span><i class="legend-dot legend-dot--low"></i>Low</span>
-        <span><i class="legend-dot legend-dot--moderate"></i>Moderate</span>
-        <span><i class="legend-dot legend-dot--high"></i>High</span>
-        <span><i class="legend-dot legend-dot--critical"></i>Critical</span>
-      </div>
-      <button type="button" class="btn heatmap-modal-back" data-close-modal>Go Back</button>
-    </div>
-  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>

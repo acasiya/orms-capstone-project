@@ -1,4 +1,4 @@
-// SafeSpace — View Audit Logs data, backed by the real API.
+// Barangay Platero OVRMS — View Audit Logs data, backed by the real API.
 // GET /api/auth/admin/audit-logs/ (see AuditLog/AuditLogSerializer) — one
 // row per logged action (logins/logouts, submissions, status changes,
 // account management, etc. — see accounts.models.log_action's call sites).

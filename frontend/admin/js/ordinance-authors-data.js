@@ -1,4 +1,4 @@
-// SafeSpace — Ordinance Authors data, backed by GET/POST/PATCH/DELETE
+// Barangay Platero OVRMS — Ordinance Authors data, backed by GET/POST/PATCH/DELETE
 // /api/ordinances/authors/ (Administrator only — see accounts.views.IsAdmin
 // and ordinances/views.py's OrdinanceAuthorListCreateView/DetailView). This
 // is the roster Upload/Edit Ordinance's Author field suggests from as you

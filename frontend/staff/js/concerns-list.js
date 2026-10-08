@@ -1,4 +1,4 @@
-// SafeSpace — Concerns/Suggestions list: search, status filter, folder
+// Barangay Platero OVRMS — Concerns/Suggestions list: search, status filter, folder
 // filter/create/rename/delete, and pagination — all wired to the real API
 // (concerns-data.js). Folder membership is a separate axis from status;
 // selecting a folder narrows the list the same way the status dropdown does.

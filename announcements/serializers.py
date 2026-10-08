@@ -31,6 +31,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     """
 
     image = serializers.ImageField(write_only=True, required=False)
+    # Edit form only: takes the current picture off without uploading another.
+    remove_image = serializers.BooleanField(write_only=True, required=False, default=False)
     image_url = serializers.SerializerMethodField()
     posted_by_name = serializers.SerializerMethodField()
     is_read = serializers.SerializerMethodField()
@@ -38,7 +40,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = [
-            "id", "title", "description", "image", "image_url",
+            "id", "title", "description", "image", "remove_image", "image_url",
             "posted_by_name", "created_at", "is_read",
         ]
         read_only_fields = ["id", "created_at"]
@@ -69,3 +71,21 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
     def validate_image(self, file):
         return validate_image_upload(file)
+
+    def create(self, validated_data):
+        validated_data.pop("remove_image", None)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        remove_image = validated_data.pop("remove_image", False)
+        # The old file isn't referenced by anything once it's replaced or
+        # removed, so it's deleted from storage rather than left orphaned
+        # (same as StaffAnnouncementDetailView.perform_destroy).
+        old_image = instance.image if instance.image else None
+        replacing = "image" in validated_data
+        if remove_image and not replacing:
+            validated_data["image"] = ""
+        instance = super().update(instance, validated_data)
+        if old_image and (replacing or remove_image):
+            old_image.storage.delete(old_image.name)
+        return instance

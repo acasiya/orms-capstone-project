@@ -1,4 +1,4 @@
-// SafeSpace — Manage Accounts data, backed by the real API.
+// Barangay Platero OVRMS — Manage Accounts data, backed by the real API.
 // This used to return a hardcoded ACCOUNTS array plus anything saved to
 // localStorage by the Create Account form; it now fetches real accounts
 // from GET /api/auth/admin/users/. The shape returned by that endpoint

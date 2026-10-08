@@ -1,4 +1,4 @@
-// SafeSpace — FAQs page data: the public curated FAQ list. (askQuestion()
+// Barangay Platero OVRMS — FAQs page data: the public curated FAQ list. (askQuestion()
 // now lives in main.js — the "Ask a Question" FAB is on every citizen page,
 // not just this one.)
 

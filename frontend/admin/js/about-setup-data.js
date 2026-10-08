@@ -1,4 +1,4 @@
-// SafeSpace — About Us Setup data, backed by /api/site/ (Administrator only
+// Barangay Platero OVRMS — About Us Setup data, backed by /api/site/ (Administrator only
 // for everything here; the citizen About Us page reads the public
 // GET /api/site/about/). See siteinfo/views.py.
 

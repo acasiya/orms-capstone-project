@@ -1,4 +1,4 @@
-// SafeSpace — Ordinance Categories data, backed by GET/POST/PATCH/DELETE
+// Barangay Platero OVRMS — Ordinance Categories data, backed by GET/POST/PATCH/DELETE
 // /api/ordinances/categories/ (Administrator only for writes — see
 // accounts.views.IsAdmin and ordinances/views.py's
 // OrdinanceCategoryListCreateView/DetailView). This is the list Upload/Edit

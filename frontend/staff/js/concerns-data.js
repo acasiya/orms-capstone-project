@@ -1,4 +1,4 @@
-// SafeSpace — Concerns/Suggestions data, backed by the real API
+// Barangay Platero OVRMS — Concerns/Suggestions data, backed by the real API
 // (GET /api/concerns/staff/). Status/remarks work the same way as Reports
 // (Submitted/Reviewed + free-text remarks). Folders are a separate,
 // orthogonal categorization staff assign after the fact — backed by

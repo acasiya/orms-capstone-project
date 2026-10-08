@@ -1,4 +1,4 @@
-// SafeSpace — shared pagination controls: First/Prev/[page numbers with
+// Barangay Platero OVRMS — shared pagination controls: First/Prev/[page numbers with
 // ellipsis]/Next/Last, plus a "Page X of Y" button that prompts for a
 // specific page to jump to. Used by every paginated list on this portal.
 

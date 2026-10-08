@@ -1,5 +1,5 @@
 """
-SafeSpace — transactional email sending, shared by accounts/ and reports/.
+Barangay Platero OVRMS — transactional email sending, shared by accounts/ and reports/.
 
 Every "why the system sends an email" case goes through send_templated_email()
 below:
@@ -87,7 +87,7 @@ def _send_to_each(users, **kwargs):
 def send_password_reset_email(user, code, expires_minutes):
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your password reset code",
+        subject="Barangay Platero OVRMS — Your password reset code",
         template_name="password_reset_code",
         context={"user": user, "code": code, "expires_minutes": expires_minutes},
     )
@@ -96,7 +96,7 @@ def send_password_reset_email(user, code, expires_minutes):
 def send_account_approved_email(user):
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your account has been approved",
+        subject="Barangay Platero OVRMS — Your account has been approved",
         template_name="account_approved",
         context={"user": user},
     )
@@ -105,7 +105,7 @@ def send_account_approved_email(user):
 def send_account_rejected_email(name, email, reason):
     send_templated_email(
         to=email,
-        subject="SafeSpace — Update on your account sign-up",
+        subject="Barangay Platero OVRMS — Update on your account sign-up",
         template_name="account_rejected",
         context={"name": name, "reason": reason},
     )
@@ -114,7 +114,7 @@ def send_account_rejected_email(name, email, reason):
 def send_report_submitted_citizen_email(report):
     send_templated_email(
         to=report.citizen.email,
-        subject="SafeSpace — Your report has been submitted",
+        subject="Barangay Platero OVRMS — Your report has been submitted",
         template_name="report_submitted_citizen",
         context={"report": report},
     )
@@ -123,7 +123,7 @@ def send_report_submitted_citizen_email(report):
 def send_suggestion_submitted_citizen_email(concern):
     send_templated_email(
         to=concern.citizen.email,
-        subject="SafeSpace — Your suggestion has been submitted",
+        subject="Barangay Platero OVRMS — Your suggestion has been submitted",
         template_name="suggestion_submitted_citizen",
         context={"concern": concern},
     )
@@ -135,7 +135,7 @@ def send_report_resolved_email(report):
     # separate email.
     send_templated_email(
         to=report.citizen.email,
-        subject="SafeSpace — Your report has reached a final verdict",
+        subject="Barangay Platero OVRMS — Your report has reached a final verdict",
         template_name="report_resolved",
         context={"report": report},
     )
@@ -147,7 +147,7 @@ def send_report_reassigned_email(report):
     # StaffReportClaimView) — not on every claim, just an actual handoff.
     send_templated_email(
         to=report.citizen.email,
-        subject="SafeSpace — A new investigator is handling your report",
+        subject="Barangay Platero OVRMS — A new investigator is handling your report",
         template_name="report_reassigned",
         context={"report": report},
     )
@@ -156,7 +156,7 @@ def send_report_reassigned_email(report):
 def send_question_answered_email(question):
     send_templated_email(
         to=question.citizen.email,
-        subject="SafeSpace — Your question has been answered",
+        subject="Barangay Platero OVRMS — Your question has been answered",
         template_name="question_answered",
         context={"question": question},
     )
@@ -169,7 +169,7 @@ def send_report_verification_code_email(user, code, expires_minutes):
     # same idea.
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your report verification code",
+        subject="Barangay Platero OVRMS — Your report verification code",
         template_name="report_verification_code",
         context={"user": user, "code": code, "expires_minutes": expires_minutes},
     )
@@ -183,7 +183,7 @@ def send_account_suspicious_activity_email(user):
     # manually re-enable the account afterward from Manage Accounts).
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your account has been disabled due to suspicious activity",
+        subject="Barangay Platero OVRMS — Your account has been disabled due to suspicious activity",
         template_name="account_suspicious_activity",
         context={"user": user},
     )
@@ -217,7 +217,7 @@ def send_account_deactivated_email(user):
     # abuse-lockout case in reports/verification.py.
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your account has been disabled",
+        subject="Barangay Platero OVRMS — Your account has been disabled",
         template_name="account_deactivated",
         context={"user": user},
     )
@@ -229,7 +229,7 @@ def send_account_deleted_email(name, email):
     # reasoning as send_account_rejected_email.
     send_templated_email(
         to=email,
-        subject="SafeSpace — Your account has been deleted",
+        subject="Barangay Platero OVRMS — Your account has been deleted",
         template_name="account_deleted",
         context={"name": name},
     )
@@ -240,7 +240,7 @@ def send_profile_edit_code_email(user, code, expires_minutes):
     # entered — see accounts.views.ProfileEditCodeRequestView.
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Confirm your account changes",
+        subject="Barangay Platero OVRMS — Confirm your account changes",
         template_name="profile_edit_code",
         context={"user": user, "code": code, "expires_minutes": expires_minutes},
     )
@@ -254,7 +254,7 @@ def send_account_locked_email(user, minutes):
 
     send_templated_email(
         to=user.email,
-        subject="SafeSpace — Your account has been temporarily locked",
+        subject="Barangay Platero OVRMS — Your account has been temporarily locked",
         template_name="account_locked",
         context={"user": user, "minutes": minutes, "attempts": MAX_FAILED_LOGINS},
     )
@@ -266,7 +266,7 @@ def send_account_locked_email(user, minutes):
 def send_report_submitted_staff_emails(report, staff_users):
     _send_to_each(
         staff_users,
-        subject="SafeSpace — A new report needs review",
+        subject="Barangay Platero OVRMS — A new report needs review",
         template_name="report_submitted_staff",
         context={"report": report},
     )
@@ -275,7 +275,7 @@ def send_report_submitted_staff_emails(report, staff_users):
 def send_suggestion_submitted_staff_emails(concern, staff_users):
     _send_to_each(
         staff_users,
-        subject="SafeSpace — A new suggestion needs review",
+        subject="Barangay Platero OVRMS — A new suggestion needs review",
         template_name="suggestion_submitted_staff",
         context={"concern": concern},
     )
@@ -283,12 +283,12 @@ def send_suggestion_submitted_staff_emails(concern, staff_users):
 
 def send_announcement_posted_email(announcement, citizen_users):
     # The one email with a real clickable link back to the site (the
-    # citizen home page) rather than just "Log in to SafeSpace" as plain
+    # citizen home page) rather than just "Log in to Barangay Platero OVRMS" as plain
     # text — see settings.FRONTEND_BASE_URL.
     link = f"{settings.FRONTEND_BASE_URL}/citizen/home.html"
     _send_to_each(
         citizen_users,
-        subject=f"SafeSpace — New announcement: {announcement.title}",
+        subject=f"Barangay Platero OVRMS — New announcement: {announcement.title}",
         template_name="announcement_posted",
         context={"announcement": announcement, "link": link},
     )
@@ -300,7 +300,7 @@ def send_announcement_posted_email(announcement, citizen_users):
 def send_account_created_admin_emails(user, admin_users):
     _send_to_each(
         admin_users,
-        subject="SafeSpace — A new account is pending approval",
+        subject="Barangay Platero OVRMS — A new account is pending approval",
         template_name="account_created_admin",
         context={"user": user},
     )

@@ -1,4 +1,4 @@
-// SafeSpace — shared front-end behavior, wired to the Django REST API.
+// Barangay Platero OVRMS — shared front-end behavior, wired to the Django REST API.
 
 // The API is served from the same host as this frontend (see
 // WHITENOISE_ROOT in settings.py), so a relative path works both in local
@@ -781,8 +781,8 @@ function enforcePortalAccess() {
 // Pulls the navbar brand name + logo from Admin's Website Branding settings
 // (siteinfo.BarangayProfile.site_name/site_logo — see siteinfo/views.py's
 // BrandingPublicView) so every portal shows the same, admin-editable brand
-// instead of a hardcoded "SafeSpace". Best-effort: on any failure the
-// static "SafeSpace" + default leaf logo already in the HTML stays as-is.
+// instead of a hardcoded "Barangay Platero OVRMS". Best-effort: on any failure the
+// static "Barangay Platero OVRMS" + default leaf logo already in the HTML stays as-is.
 // The browser tab's <title> is untouched on purpose. Public (guests see
 // the navbar too), so a plain fetch — no auth needed.
 function applySiteBranding() {
@@ -790,10 +790,19 @@ function applySiteBranding() {
     .then((r) => (r.ok ? r.json() : null))
     .then((branding) => {
       if (!branding) return;
-      document.querySelectorAll(".navbar__brand").forEach((brand) => {
+      // "Name | Kind of system" — the part after the bar goes on its own
+      // smaller line under the name (dropped if the name has no bar).
+      const [name, ...rest] = (branding.site_name || "").split("|");
+      const sub = rest.join("|").trim();
+      document.querySelectorAll(".navbar__brand-text").forEach((el) => {
         if (!branding.site_name) return;
-        const textNode = Array.from(brand.childNodes).find((n) => n.nodeType === 3 && n.textContent.trim());
-        if (textNode) textNode.textContent = ` ${branding.site_name}`;
+        const strong = el.querySelector("strong");
+        if (strong) strong.textContent = name.trim();
+        const small = el.querySelector("small");
+        if (small) {
+          small.textContent = sub;
+          small.hidden = !sub;
+        }
       });
       if (branding.site_logo_url) {
         document.querySelectorAll(".navbar__logo").forEach((el) => {

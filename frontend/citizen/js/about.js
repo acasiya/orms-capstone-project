@@ -1,4 +1,4 @@
-// SafeSpace — About Us: renders the logo strip and the Sangguniang Barangay
+// Barangay Platero OVRMS — About Us: renders the logo strip and the Sangguniang Barangay
 // from GET /api/site/about/ (shared loader in site-footer.js, which also
 // fills the contact card and description cards). All of it is maintained by
 // an Administrator from the Admin Portal's About Us Setup page, so a new

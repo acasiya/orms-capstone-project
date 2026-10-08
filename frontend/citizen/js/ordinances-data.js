@@ -1,4 +1,4 @@
-// SafeSpace — Ordinances data, backed by the real API (GET /api/ordinances/,
+// Barangay Platero OVRMS — Ordinances data, backed by the real API (GET /api/ordinances/,
 // public — guests can browse without an account). Replaces the old
 // hardcoded placeholder array. createOrdinance/updateOrdinanceById require
 // Staff/Admin (enforced server-side) — harmless to load on every portal,

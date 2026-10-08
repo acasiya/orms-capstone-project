@@ -1,4 +1,4 @@
-// SafeSpace — Notifications: full, unpruned view of everything in the bell
+// Barangay Platero OVRMS — Notifications: full, unpruned view of everything in the bell
 // dropdown (which only shows the current STAFF_NOTIFICATIONS_MAX=20). Reuses
 // the same storage + helpers as the topbar bell (see admin.js) so dismissing
 // or clearing here stays in sync with the dropdown.

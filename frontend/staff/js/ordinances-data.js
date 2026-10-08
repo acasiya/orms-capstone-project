@@ -1,4 +1,4 @@
-// SafeSpace — Ordinances data, backed by the real API (GET /api/ordinances/,
+// Barangay Platero OVRMS — Ordinances data, backed by the real API (GET /api/ordinances/,
 // AllowAny — guests can browse without an account, but this Staff Portal
 // copy always sends the caller's token anyway so Secretary/Admin also see
 // archived ordinances; see ensureOrdinancesLoaded). createOrdinance/

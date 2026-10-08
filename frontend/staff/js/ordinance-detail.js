@@ -1,4 +1,4 @@
-// SafeSpace — Ordinance detail: view real info, and (Secretary/Admin) edit
+// Barangay Platero OVRMS — Ordinance detail: view real info, and (Secretary/Admin) edit
 // it, including optionally replacing the PDF, via PATCH /api/ordinances/<id>/.
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const detailDownload = document.getElementById("detailDownload");
 
   function renderDisplay() {
-    document.title = `${ordinance.number} — SafeSpace`;
+    document.title = `${ordinance.number} — Barangay Platero OVRMS`;
     detailTitle.textContent = `City Ordinance ${ordinance.number}`;
     document.getElementById("detailAuthor").textContent = ordinance.author;
     document.getElementById("detailDate").textContent = ordinance.dateApproved;

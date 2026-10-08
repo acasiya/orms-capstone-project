@@ -1,4 +1,4 @@
-// SafeSpace — About Us Setup: the Administrator maintains everything on the
+// Barangay Platero OVRMS — About Us Setup: the Administrator maintains everything on the
 // citizen About Us page (and the site footer's contact details) here, so a
 // new hotline or a new administration after an election doesn't need a
 // code change. Every save is audit-logged server-side (siteinfo/views.py).

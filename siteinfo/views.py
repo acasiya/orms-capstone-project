@@ -26,7 +26,7 @@ PROFILE_FIELD_LABELS = {
     "email": "email",
     "office_hours": "office hours",
     "emergency_hotline": "emergency hotline",
-    "about_text": "What is SafeSpace",
+    "about_text": "What is OVRMS",
     "mission_text": "Our Mission",
     "footer_tagline": "footer tagline",
     "footer_notice": "footer notice",

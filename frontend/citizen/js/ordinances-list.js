@@ -1,4 +1,4 @@
-// SafeSpace — Ordinances list: filter, search, sort, paginate, render, and navigate to detail.
+// Barangay Platero OVRMS — Ordinances list: filter, search, sort, paginate, render, and navigate to detail.
 
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("ordinanceRows");

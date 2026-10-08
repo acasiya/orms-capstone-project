@@ -229,6 +229,21 @@ class StaffReportListView(generics.ListAPIView):
         return {"request": self.request}
 
 
+class StaffReportAnalysisBaseView(APIView):
+    """
+    GET /api/reports/staff/analysis-base/ — the denominators the Reports
+    Dashboard's geospatial analysis turns its counts into percentages with
+    ("12 citizens reported — 8% of registered citizens"). Registered means
+    an approved, still-active citizen account, i.e. one that can file a report.
+    """
+
+    permission_classes = [IsStaffOrAdmin]
+
+    def get(self, request):
+        registered = User.objects.filter(role=User.Role.CITIZEN, is_active=True, is_verified=True).count()
+        return Response({"registered_citizens": registered})
+
+
 class StaffReportDetailView(APIView):
     """
     GET /api/reports/staff/<id>/ — full detail of any citizen's report; open

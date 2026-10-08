@@ -1,4 +1,4 @@
-// SafeSpace — shared behavior for admin pages (sidebar toggle + logout).
+// Barangay Platero OVRMS — shared behavior for admin pages (sidebar toggle + logout).
 
 const ADMIN_AUTH_STORAGE_KEY = "orms_auth_user";
 const ADMIN_ACCESS_TOKEN_KEY = "orms_access_token";
@@ -129,6 +129,8 @@ const STAFF_NAV_ACCESS = {
   // STAFF_POSITION_HOME, kept in sync with this).
   "investigator-dashboard.html": ["Investigator"],
   "reports-dashboard.html": ["Barangay Captain"],
+  // Opened from the Reports Dashboard's heatmap card rather than the sidebar.
+  "geo-analysis.html": ["Barangay Captain"],
   // Barangay Captain gets read-only Reports too — the Reports Dashboard's
   // Recent Reports table (their only path to an individual report's detail
   // page) was removed in favor of showing the charts up top, so this is now
@@ -515,8 +517,8 @@ function setupPasswordVisibilityToggles() {
 // Pulls the navbar/sidebar brand name + logo from Admin's Website Branding
 // settings (siteinfo.BarangayProfile.site_name/site_logo — see
 // siteinfo/views.py's BrandingPublicView) so every portal shows the same,
-// admin-editable brand instead of a hardcoded "SafeSpace". Best-effort: on
-// any failure the static "SafeSpace" + default leaf logo already in the
+// admin-editable brand instead of a hardcoded "Barangay Platero OVRMS". Best-effort: on
+// any failure the static "Barangay Platero OVRMS" + default leaf logo already in the
 // HTML stays as-is. The browser tab's <title> is untouched on purpose.
 function applySiteBranding() {
   fetch("/api/site/branding/")
@@ -524,8 +526,18 @@ function applySiteBranding() {
     .then((branding) => {
       if (!branding) return;
       if (branding.site_name) {
-        document.querySelectorAll(".admin-sidebar__brand-text strong").forEach((el) => {
-          el.textContent = branding.site_name;
+        // "Name | Kind of system" — the part after the bar goes on its own
+        // smaller line under the name (dropped if the name has no bar).
+        const [name, ...rest] = branding.site_name.split("|");
+        const sub = rest.join("|").trim();
+        document.querySelectorAll(".admin-sidebar__brand-text").forEach((el) => {
+          const strong = el.querySelector("strong");
+          if (strong) strong.textContent = name.trim();
+          const small = el.querySelector("small");
+          if (small) {
+            small.textContent = sub;
+            small.hidden = !sub;
+          }
         });
       }
       if (branding.site_logo_url) {

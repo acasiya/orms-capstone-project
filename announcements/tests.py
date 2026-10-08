@@ -1,5 +1,11 @@
+import io
+import shutil
+import tempfile
+
 from django.core import mail
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
+from PIL import Image
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -63,3 +69,63 @@ class AnnouncementTests(TestCase):
         data = guest.get("/api/announcements/").json()
         self.assertEqual(len(data), 1)
         self.assertFalse(data[0]["is_read"])
+
+
+def _png(color):
+    buffer = io.BytesIO()
+    Image.new("RGB", (8, 8), color).save(buffer, format="PNG")
+    return SimpleUploadedFile("picture.png", buffer.getvalue(), content_type="image/png")
+
+
+class AnnouncementEditTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media_root, ignore_errors=True)
+        override = override_settings(
+            MEDIA_ROOT=self.media_root,
+            STORAGES={
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+            },
+        )
+        override.enable()
+        self.addCleanup(override.disable)
+        self.secretary = User.objects.create_user(
+            username="sec", email="sec@test.com", password="x", role=User.Role.STAFF,
+            position="Secretary", is_verified=True,
+        )
+        User.objects.create_user(username="cit", email="cit@test.com", password="x", is_verified=True)
+        self.announcement = Announcement.objects.create(title="Hi", description="There")
+        self.url = f"/api/announcements/staff/{self.announcement.id}/"
+        self.client = APIClient()
+        _auth(self.client, self.secretary)
+
+    def test_editing_adds_replaces_and_removes_the_picture_without_emailing(self):
+        response = self.client.patch(self.url, {"title": "Hello", "image": _png("red")}, format="multipart")
+        self.assertEqual(response.status_code, 200)
+        self.announcement.refresh_from_db()
+        self.assertEqual(self.announcement.title, "Hello")
+        first = self.announcement.image.name
+        storage = self.announcement.image.storage
+        self.assertTrue(storage.exists(first))
+
+        self.assertEqual(self.client.patch(self.url, {"image": _png("blue")}, format="multipart").status_code, 200)
+        self.announcement.refresh_from_db()
+        second = self.announcement.image.name
+        self.assertNotEqual(first, second)
+        self.assertFalse(storage.exists(first))
+
+        response = self.client.patch(self.url, {"remove_image": "true"}, format="multipart")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["image_url"], "")
+        self.announcement.refresh_from_db()
+        self.assertFalse(self.announcement.image)
+        self.assertFalse(storage.exists(second))
+        self.assertEqual(mail.outbox, [])
+
+    def test_editing_text_alone_keeps_the_picture(self):
+        self.client.patch(self.url, {"image": _png("red")}, format="multipart")
+        self.assertEqual(self.client.patch(self.url, {"description": "Updated"}, format="multipart").status_code, 200)
+        self.announcement.refresh_from_db()
+        self.assertEqual(self.announcement.description, "Updated")
+        self.assertTrue(self.announcement.image)

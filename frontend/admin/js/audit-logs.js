@@ -1,4 +1,4 @@
-// SafeSpace — View Audit Logs: render + search + sort + filter every logged
+// Barangay Platero OVRMS — View Audit Logs: render + search + sort + filter every logged
 // action (not just login/logout — see AuditLog/log_action on the backend).
 // Data comes from the real API (see audit-log-data.js).
 

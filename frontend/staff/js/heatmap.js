@@ -1,4 +1,4 @@
-// SafeSpace — shared incident heatmap for the staff dashboards.
+// Barangay Platero OVRMS — shared incident heatmap for the staff dashboards.
 //
 // Renders a real Leaflet + OpenStreetMap map with a heat layer whose
 // intensity is the number of reports (or concerns) per point. A report
@@ -23,6 +23,18 @@ const HEATMAP_TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 const HEATMAP_TILE_ATTRIBUTION =
   '&copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, DeLorme, NAVTEQ';
+// The light gray canvas only has real tiles up to zoom 16 — past that Esri
+// serves a "Map data not yet available" placeholder for every tile. Esri's
+// World_Street_Map (the same basemap the Admin Portal's Map Boundary page
+// uses) goes down to zoom 19 over Platero, so it takes over from 17: the
+// quiet gray base while zoomed out, where the heat colours need to stand
+// out, and full street detail once zoomed in close.
+const HEATMAP_TILE_MAX_ZOOM = 16;
+const HEATMAP_DETAIL_TILE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
+const HEATMAP_DETAIL_TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, HERE, Garmin, OpenStreetMap contributors';
+const HEATMAP_DETAIL_TILE_MAX_ZOOM = 19;
 
 // Barangay Platero area. The small dashboard card frames the barangay
 // outline when there is one, else this fixed view (a 260px card can't
@@ -45,7 +57,7 @@ if (window.L && L.Icon && L.Icon.Default) {
 }
 
 // Groups reports/concerns by where they happened for the given list.
-// Returns { key: { count, label, ordinances: { "<ordinance>": n } } }, e.g.
+// Returns { key: { count, label, street, ordinances: { "<ordinance>": n } } }, e.g.
 // { "Ferrari Street": {...}, "@14.31234,121.08765": {...} } — an "@" key is
 // an exact device position (rounded to ~1m so repeat filings from the same
 // spot stack), used whenever the item carries one; anything else groups by
@@ -59,7 +71,7 @@ function countByLocation(items) {
     if (!key) return;
     if (!groups[key]) {
       const street = streetOf(location) || location;
-      groups[key] = { count: 0, label: hasCoords ? `${street} (pinned location)` : street, ordinances: {} };
+      groups[key] = { count: 0, label: hasCoords ? `${street} (pinned location)` : street, street, ordinances: {} };
     }
     const g = groups[key];
     g.count += 1;
@@ -91,7 +103,7 @@ function heatmapTooltipHtml(group, compact) {
     return `
       <div class="heatmap-tip__title">${escapeHeatmapHtml(group.label)}</div>
       <div class="heatmap-tip__total">${group.count} report${group.count === 1 ? "" : "s"}</div>
-      <div class="heatmap-tip__hint">Click to enlarge for the ordinance breakdown</div>
+      <div class="heatmap-tip__hint">Click to open the full analysis</div>
     `;
   }
   const rows = Object.entries(group.ordinances || {}).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
@@ -152,9 +164,13 @@ const HEATMAP_BOUNDARY_STYLE = {
 // opts.interactive === false (default for the small dashboard card) gives a
 // static map — no drag/zoom/scroll — so the card as a whole stays a
 // click-to-enlarge target. The enlarged modal map passes interactive: true.
+//
+// opts.onSelect(key, group) — called when a heat spot is clicked (the
+// geospatial analysis panel uses it to open that street's profile).
 function createIncidentHeatmap(el, opts = {}) {
   const interactive = opts.interactive === true;
   const emptyMessage = opts.emptyMessage || "No incidents in this period";
+  const onSelect = typeof opts.onSelect === "function" ? opts.onSelect : null;
 
   const map = L.map(el, {
     zoomControl: interactive,
@@ -169,8 +185,13 @@ function createIncidentHeatmap(el, opts = {}) {
   map.attributionControl.setPrefix("");
 
   L.tileLayer(HEATMAP_TILE_URL, {
-    maxZoom: 19,
+    maxZoom: HEATMAP_TILE_MAX_ZOOM,
     attribution: HEATMAP_TILE_ATTRIBUTION,
+  }).addTo(map);
+  L.tileLayer(HEATMAP_DETAIL_TILE_URL, {
+    minZoom: HEATMAP_TILE_MAX_ZOOM + 1,
+    maxZoom: HEATMAP_DETAIL_TILE_MAX_ZOOM,
+    attribution: HEATMAP_DETAIL_TILE_ATTRIBUTION,
   }).addTo(map);
 
   map.setView(HEATMAP_FALLBACK_CENTER, HEATMAP_FALLBACK_ZOOM);
@@ -247,6 +268,7 @@ function createIncidentHeatmap(el, opts = {}) {
       // A faint ring shows which spot the tooltip belongs to when two are close.
       spot.on("mouseover", () => spot.setStyle({ weight: 1.5 }));
       spot.on("mouseout", () => spot.setStyle({ weight: 0 }));
+      if (onSelect) spot.on("click", () => onSelect(name, group));
       hoverLayer.addLayer(spot);
     });
 
@@ -310,5 +332,27 @@ function createIncidentHeatmap(el, opts = {}) {
     map.invalidateSize();
   }
 
-  return { map, render, invalidate, fit };
+  // Rings the given street (or "@lat,lng" key) and brings it into view at
+  // street level; null clears the ring. Used for the street selected in the
+  // geospatial analysis panel.
+  let highlightRing = null;
+  function highlight(name) {
+    if (highlightRing) {
+      highlightRing.remove();
+      highlightRing = null;
+    }
+    const coord = name ? resolveStreetCoord(name) : null;
+    if (!coord) return;
+    highlightRing = L.circleMarker(coord, {
+      radius: 26,
+      color: "#1f2430",
+      weight: 3,
+      dashArray: "5 5",
+      fill: false,
+      interactive: false,
+    }).addTo(map);
+    map.setView(coord, Math.max(map.getZoom(), 16), { animate: true });
+  }
+
+  return { map, render, invalidate, fit, highlight };
 }
