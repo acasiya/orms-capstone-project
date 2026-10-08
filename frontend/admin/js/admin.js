@@ -196,8 +196,10 @@ function clearFormError(form) {
   if (errEl) errEl.remove();
 }
 
+// Administrator accounts group under "staff" here (not their own "admin"
+// group) — the Filter dropdowns on Approve Accounts/Manage Accounts/Audit
+// Logs only offer Citizens vs. Barangay Staff, with Admins counted as staff.
 function accountTypeGroup(type) {
-  if (type === "Administrator") return "admin";
   if (type === "Barangay Citizen") return "citizen";
   return "staff";
 }
@@ -263,17 +265,20 @@ function timeAgo(timestamp) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-// ---- Notification preferences (opt-in per category) ----
-// Which categories of real backend events raise a bell notification. Off
-// by default — an admin has to explicitly turn each one on, via the
-// checkboxes injected into the notification dropdown below.
+// ---- Notification preferences (per category) ----
+// Which categories of real backend events raise a bell notification. New
+// account verifications (a citizen just registered and needs approval) is
+// on by default — that's core to the job, same reasoning as the Staff
+// Portal's own notifications never being opt-in (see pollNotifications
+// there). Audit log logins stay opt-in; an admin can still turn either off
+// via the checkboxes injected into the notification dropdown below.
 const ADMIN_NOTIF_PREFS_KEY = "orms_admin_notif_prefs";
 
 function getNotifPrefs() {
   try {
-    return { verifications: false, auditLogs: false, ...JSON.parse(localStorage.getItem(ADMIN_NOTIF_PREFS_KEY)) };
+    return { verifications: true, auditLogs: false, ...JSON.parse(localStorage.getItem(ADMIN_NOTIF_PREFS_KEY)) };
   } catch {
-    return { verifications: false, auditLogs: false };
+    return { verifications: true, auditLogs: false };
   }
 }
 
@@ -306,29 +311,34 @@ const NOTIF_SEEN_LOGINS_KEY = "orms_admin_seen_login_ids";
 // Polls GET /api/auth/admin/verifications/ (the same endpoint Approve
 // Accounts uses) and raises a notification for any pending account that
 // wasn't there last time this ran.
+// Returns how many genuinely-new pending accounts were found, so the
+// caller can pop the dropdown open and flash the bell for them — a new
+// citizen registration is easy to miss as a small badge, same reasoning as
+// the Staff Portal's own report/concern notifications (see pollNotifications
+// in frontend/staff/js/admin.js).
 async function checkForNewVerifications() {
-  if (!getNotifPrefs().verifications) return;
+  if (!getNotifPrefs().verifications) return 0;
 
   let list;
   try {
     const res = await authFetch("/api/auth/admin/verifications/");
-    if (!res.ok) return;
+    if (!res.ok) return 0;
     list = await res.json();
   } catch {
-    return;
+    return 0;
   }
 
   const currentIds = list.map((v) => v.id);
   const seen = getSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY);
   if (seen === null) {
     setSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY, currentIds);
-    return;
+    return 0;
   }
 
-  list
-    .filter((v) => !seen.includes(v.id))
-    .forEach((v) => addAdminNotification(`New account verification request from ${v.owner}`, "approve-accounts.html"));
+  const newOnes = list.filter((v) => !seen.includes(v.id));
+  newOnes.forEach((v) => addAdminNotification(`New account verification request from ${v.owner}`, "approve-accounts.html"));
   setSeenIds(NOTIF_SEEN_VERIFICATIONS_KEY, currentIds);
+  return newOnes.length;
 }
 
 // Polls GET /api/auth/admin/audit-logs/ (View Audit Logs' own endpoint) and
@@ -556,6 +566,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Sidebar groups (Account Management / Activity / Setup) — each one's
+  // own dropdown, independent of the others. The group holding the current
+  // page is server-rendered already expanded; this just makes every
+  // toggle button actually clickable.
+  document.querySelectorAll(".admin-sidebar__group-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const subnav = toggle.nextElementSibling;
+      if (!subnav) return;
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      subnav.hidden = expanded;
+    });
+  });
+
   // Topbar name + the profile popup both reflect whoever is actually logged
   // in (rather than a hardcoded placeholder), so an edit made on the My
   // Profile page shows up everywhere right away.
@@ -723,13 +747,32 @@ document.addEventListener("DOMContentLoaded", () => {
       checkForNewAuditLogs().then(renderNotifications);
     });
 
+    // A brief pulse on the bell so a fresh registration catches the eye even
+    // in peripheral vision — the dropdown popping open alone is easy to miss
+    // if the admin isn't already looking at the topbar. Same pattern as the
+    // Staff Portal's own flashNotifBell.
+    function flashNotifBell() {
+      notifBell.classList.remove("navbar__bell--flash");
+      void notifBell.offsetWidth; // restart the animation if it's still mid-flash
+      notifBell.classList.add("navbar__bell--flash");
+    }
+
     // Check immediately on page load, then keep polling — there's no
     // real-time push here, so this is what makes new pending accounts /
-    // logins show up as notifications without a full page reload.
-    Promise.all([checkForNewVerifications(), checkForNewAuditLogs()]).then(renderNotifications);
-    setInterval(() => {
-      Promise.all([checkForNewVerifications(), checkForNewAuditLogs()]).then(renderNotifications);
-    }, 30000);
+    // logins show up as notifications without a full page reload. A
+    // genuinely new account verification request pops the dropdown open on
+    // its own and flashes the bell — new logins stay a quiet badge update.
+    function pollNotifications() {
+      return Promise.all([checkForNewVerifications(), checkForNewAuditLogs()]).then(([newVerifications]) => {
+        renderNotifications();
+        if (newVerifications > 0) {
+          notifDropdown.hidden = false;
+          flashNotifBell();
+        }
+      });
+    }
+    pollNotifications();
+    setInterval(pollNotifications, 30000);
 
     const toggleNotifDropdown = () => {
       notifDropdown.hidden = !notifDropdown.hidden;

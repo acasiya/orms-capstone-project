@@ -37,21 +37,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   // happens to also show "All" selected) excludes Resolved by default.
   let filterTouched = false;
 
+  // Default display order when more than one status is showing: Submitted,
+  // then Under Review, then In Action, with Resolved last — newest first
+  // within each status.
+  const STATUS_RANK = { Submitted: 0, "Under Review": 1, "In Action": 2, Resolved: 3 };
+
   function getFiltered() {
     const filterValue = statusFilter.value;
-    return reports.filter((r) => {
+    const rows = reports.filter((r) => {
       const label = REPORT_STATUS_LABELS[r.status] || r.status;
       if (!filterTouched && filterValue === "All") return label !== "Resolved";
       return filterValue === "All" || label === filterValue;
+    });
+    return rows.slice().sort((a, b) => {
+      const rankA = STATUS_RANK[REPORT_STATUS_LABELS[a.status] || a.status] ?? 99;
+      const rankB = STATUS_RANK[REPORT_STATUS_LABELS[b.status] || b.status] ?? 99;
+      if (rankA !== rankB) return rankA - rankB;
+      return new Date(b.created_at) - new Date(a.created_at);
     });
   }
 
   function render() {
     const rows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const pageRows = rows.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
 
     list.innerHTML = pageRows.length
       ? pageRows
@@ -85,7 +96,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barangay Platero OVRMS — Questions</title>
+  <title>Barangay Platero OVRMS — Answer Questions</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -18,17 +18,33 @@
         </div>
       </div>
       <ul class="admin-sidebar__nav">
-        <li><a href="manage-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5a3.5 3.5 0 00-3.5-3.5h-5A3.5 3.5 0 005 18.5V20"/><circle cx="9.5" cy="8" r="3.25"/><path d="M16 8.2a2.7 2.7 0 010 5.3M19 20v-1.3a3 3 0 00-2.2-2.9"/></svg> Manage Accounts</a></li>
-        <li><a href="create-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.25"/><path d="M3 20v-1.5A3.5 3.5 0 016.5 15h6A3.5 3.5 0 0116 18.5V20"/><path d="M18.5 8v5.5M21.2 10.75h-5.4"/></svg> Create Accounts</a></li>
-        <li><a href="approve-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Approve Accounts</a></li>
+        <li class="admin-sidebar__group">
+          <button type="button" class="admin-sidebar__group-toggle" aria-expanded="false"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5a3.5 3.5 0 00-3.5-3.5h-5A3.5 3.5 0 005 18.5V20"/><circle cx="9.5" cy="8" r="3.25"/><path d="M16 8.2a2.7 2.7 0 010 5.3M19 20v-1.3a3 3 0 00-2.2-2.9"/></svg> Account Management <span class="admin-sidebar__chevron" aria-hidden="true">&#9662;</span></button>
+          <ul class="admin-sidebar__subnav" hidden>
+            <li><a href="approve-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16.3 9"/></svg> Approve Accounts</a></li>
+            <li><a href="create-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.25"/><path d="M3 20v-1.5A3.5 3.5 0 016.5 15h6A3.5 3.5 0 0116 18.5V20"/><path d="M18.5 8v5.5M21.2 10.75h-5.4"/></svg> Create Accounts</a></li>
+            <li><a href="manage-accounts.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5a3.5 3.5 0 00-3.5-3.5h-5A3.5 3.5 0 005 18.5V20"/><circle cx="9.5" cy="8" r="3.25"/><path d="M16 8.2a2.7 2.7 0 010 5.3M19 20v-1.3a3 3 0 00-2.2-2.9"/></svg> Manage Accounts</a></li>
+          </ul>
+        </li>
+        <li class="admin-sidebar__group">
+          <button type="button" class="admin-sidebar__group-toggle" aria-expanded="false"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20V12M10 20V5M15.5 20v-8.5M21 20H3"/></svg> Activity <span class="admin-sidebar__chevron" aria-hidden="true">&#9662;</span></button>
+          <ul class="admin-sidebar__subnav" hidden>
+            <li><a href="activity.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20V12M10 20V5M15.5 20v-8.5M21 20H3"/></svg> Citizen Activity</a></li>
+            <li><a href="reports.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h6.5L18 7.5V20a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M13.5 3v4.5H18"/><path d="M8.5 12.5h7M8.5 16h7M8.5 9h3"/></svg> Investigator Activity</a></li>
+          </ul>
+        </li>
+        <li class="admin-sidebar__group">
+          <button type="button" class="admin-sidebar__group-toggle" aria-expanded="false"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> Setup <span class="admin-sidebar__chevron" aria-hidden="true">&#9662;</span></button>
+          <ul class="admin-sidebar__subnav" hidden>
+            <li><a href="ordinance-authors.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 10h4M14 13h4"/></svg> Ordinance Setup</a></li>
+            <li><a href="website-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> Website Setup</a></li>
+            <li><a href="about-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> About Us Setup</a></li>
+            <li><a href="map-boundary.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> Map Boundary</a></li>
+            <li><a href="manage-faqs.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10a4 4 0 117.4 2.1C14.4 13.3 13 13.6 13 15"/><circle cx="13" cy="18" r="0.2" fill="currentColor"/><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/></svg> Manage FAQs</a></li>
+          </ul>
+        </li>
+        <li><a href="questions.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Answer Questions</a></li>
         <li><a href="audit-logs.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="4" width="13" height="17" rx="1.8"/><path d="M9.3 4a1.2 1.2 0 011.2-1.2h3a1.2 1.2 0 011.2 1.2v.6H9.3z"/><path d="M8.7 11h6.6M8.7 14.3h6.6M8.7 17.6h4.4"/></svg> View Audit Logs</a></li>
-        <li><a href="questions.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Questions</a></li>
-        <li><a href="ordinance-authors.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 10h4M14 13h4"/></svg> Ordinance Setup</a></li>
-        <li><a href="reports.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h6.5L18 7.5V20a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M13.5 3v4.5H18"/><path d="M8.5 12.5h7M8.5 16h7M8.5 9h3"/></svg> Reports</a></li>
-        <li><a href="activity.html" ><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20V12M10 20V5M15.5 20v-8.5M21 20H3"/></svg> Activity</a></li>
-        <li><a href="website-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> Website Setup</a></li>
-        <li><a href="about-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> About Us Setup</a></li>
-        <li><a href="map-boundary.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> Map Boundary</a></li>
       </ul>
       <button type="button" class="admin-sidebar__logout" id="logoutBtn">&#8618; Logout</button>
     </aside>
@@ -59,7 +75,7 @@
       </header>
 
       <div class="admin-content">
-        <h1 style="margin: 0 0 20px; font-size: 1.4rem;">Questions</h1>
+        <h1 style="margin: 0 0 20px; font-size: 1.4rem;">Answer Questions</h1>
         <div class="reports-filters-row reports-filters-row--questions">
           <div class="filters-dropdown">
             <button type="button" class="filters-dropdown__trigger" id="filtersToggleBtn" aria-expanded="false" aria-haspopup="true" aria-label="Order">
@@ -84,6 +100,7 @@
                   <option value="25">25</option>
                   <option value="50">50</option>
                   <option value="100">100</option>
+                  <option value="all">All</option>
                 </select>
               </label>
               <button type="button" class="filters-dropdown__clear">Clear</button>
@@ -91,21 +108,10 @@
           </div>
         </div>
 
-        <div class="concerns-page-layout">
-          <div class="concerns-page-main">
-            <div class="concerns-card" id="questionsList"></div>
+        <div class="concerns-card" id="questionsList"></div>
 
-            <div class="pagination-bar pagination-bar--center">
-              <div class="pagination-controls" id="questionsPagination"></div>
-            </div>
-          </div>
-
-          <div class="dash-card">
-            <h2 class="folders-card__title">Frequently Asked Questions</h2>
-            <p class="auth-card__subtitle" style="margin:-6px 0 12px;text-align:left;font-size:0.8rem;">Shown on the citizen FAQs page.</p>
-            <div id="faqManageList"></div>
-            <button type="button" class="folder-add-btn" id="addFaqBtn" aria-label="Add FAQ">+</button>
-          </div>
+        <div class="pagination-bar pagination-bar--center">
+          <div class="pagination-controls" id="questionsPagination"></div>
         </div>
       </div>
     </div>
@@ -115,37 +121,6 @@
   <script src="js/pagination.js"></script>
   <script src="js/questions-list.js"></script>
   <script src="js/admin.js"></script>
-
-  <!-- Add/Edit FAQ -->
-  <div class="modal-overlay" id="faqModal" hidden>
-    <div class="modal-card">
-      <h2 id="faqModalTitle">Add FAQ</h2>
-      <div class="field field--boxed">
-        <label for="faqQuestionInput">Question</label>
-        <input type="text" id="faqQuestionInput" placeholder="e.g. How do I file a report?" />
-      </div>
-      <div class="field field--boxed">
-        <label for="faqAnswerInput">Answer</label>
-        <textarea id="faqAnswerInput" rows="4" placeholder="Type the answer..."></textarea>
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn" id="faqModalSave">Save</button>
-        <button type="button" class="btn btn-danger" id="faqModalCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete FAQ confirmation -->
-  <div class="modal-overlay" id="faqDeleteModal" hidden>
-    <div class="modal-card">
-      <h2>Delete this FAQ?</h2>
-      <p class="auth-card__subtitle">It will no longer show on the citizen FAQs page.</p>
-      <div class="btn-row">
-        <button type="button" class="btn btn-danger" id="faqDeleteConfirm">Delete</button>
-        <button type="button" class="btn" id="faqDeleteCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Profile popup -->
   <div class="modal-overlay" id="profileModal" hidden>

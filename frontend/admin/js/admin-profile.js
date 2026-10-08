@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (await commitEditSave()) {
       updatedTitle.textContent = "Information Changed!";
       onUpdatedConfirm = () => {
-        window.location.href = "manage-accounts.html";
+        window.location.href = "approve-accounts.html";
       };
       updatedModal.hidden = false;
     }

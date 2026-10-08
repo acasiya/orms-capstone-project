@@ -7,8 +7,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("pendingTableBody");
   const typeFilter = document.getElementById("typeFilter");
+  const pagination = document.getElementById("pendingPagination");
+  const pageSizeSelect = document.getElementById("pendingPageSize");
 
   let accounts = [];
+  // null = "All" (no limit) — the default, since there's usually not enough
+  // pending accounts at once to need paging through them.
+  let pageSize = null;
+  let page = 1;
 
   async function loadAccounts() {
     tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">Loading accounts...</td></tr>`;
@@ -24,12 +30,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     const filterValue = typeFilter.value;
     const rows = accounts.filter((a) => filterValue === "all" || accountTypeGroup(a.type) === filterValue);
 
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
+    page = Math.min(page, totalPages);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
+
+    if (pagination) {
+      renderPaginationControls(pagination, page, totalPages, (n) => {
+        page = n;
+        render();
+      });
+    }
+
     if (!rows.length) {
       tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="4">No accounts are waiting for approval.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = rows
+    tbody.innerHTML = pageRows
       .map(
         (a) => `
         <tr data-id="${a.id}">
@@ -42,7 +60,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  typeFilter.addEventListener("change", render);
+  typeFilter.addEventListener("change", () => {
+    page = 1;
+    render();
+  });
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", () => {
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
+      page = 1;
+      render();
+    });
+  }
 
   wireFiltersDropdown(document.getElementById("filtersToggleBtn"), document.getElementById("filtersPanel"));
 

@@ -232,6 +232,19 @@ button {
   border: 1.5px solid var(--navy);
 }
 
+/* Plays once when a new-account-verification notification pops the
+   dropdown open on its own (see admin.js's flashNotifBell) — catches the
+   eye even if the topbar isn't where the admin is currently looking. */
+@keyframes navbar-bell-flash {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.navbar__bell--flash {
+  animation: navbar-bell-flash 0.35s ease-out 1;
+}
+
 .navbar__profile {
   width: 34px;
   height: 34px;
@@ -1040,6 +1053,106 @@ button {
   min-width: 160px;
 }
 
+/* ---------- Investigator Workload (Reports — Unclaimed page): one stacked
+   bar per active Investigator, Submitted/Under Review/In Action only —
+   Resolved reports drop off the moment they reach Final Verdict. ---------- */
+
+.workload-heading {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.workload-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.workload-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.workload-legend__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.investigator-workload {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.investigator-workload__card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 22px;
+}
+
+.investigator-workload__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.investigator-workload__name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.investigator-workload__total {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.investigator-workload__empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.stacked-bar {
+  display: flex;
+  width: 100%;
+  height: 34px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stacked-bar__segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stacked-bar__segment + .stacked-bar__segment {
+  border-left: 2px solid var(--white);
+}
+
+.stacked-bar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 6px;
+}
+
 .report-card {
   background: var(--white);
   border-radius: var(--radius);
@@ -1786,10 +1899,10 @@ button {
 
 .faq-manage-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 0;
+  gap: 16px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
 }
@@ -1798,12 +1911,22 @@ button {
   border-bottom: none;
 }
 
-.faq-manage-item__text {
+.faq-manage-item__content {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.faq-manage-item__question {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.faq-manage-item__answer {
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .faq-manage-item__actions {
@@ -2347,6 +2470,59 @@ button {
   color: var(--white);
   background: rgba(255, 255, 255, 0.07);
   border-left-color: var(--accent);
+}
+
+/* ---------- Sidebar groups (Account Management / Activity / Setup) —
+   collapsible dropdowns. The group containing the current page starts
+   expanded (see the server-rendered aria-expanded/hidden state on each
+   page); toggling after that is handled in admin.js. ---------- */
+
+.admin-sidebar__group-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  padding: 13px 20px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-sidebar__group-toggle:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-sidebar__group:has(a.active) > .admin-sidebar__group-toggle {
+  color: var(--white);
+}
+
+.admin-sidebar__chevron {
+  margin-left: auto;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  opacity: 1;
+  transition: transform 0.15s ease;
+}
+
+.admin-sidebar__group-toggle[aria-expanded="true"] .admin-sidebar__chevron {
+  transform: rotate(180deg);
+}
+
+.admin-sidebar__subnav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-sidebar__subnav a {
+  padding-left: 46px;
 }
 
 .admin-sidebar__logout {
@@ -3113,6 +3289,20 @@ button {
   color: var(--text);
 }
 
+/* Centers the title, Account Type picker, and whichever form is showing
+   both horizontally and vertically on the page, same approach as
+   frontend/staff/css/style.css's .create-citizen-center — scoped to this
+   page only so it doesn't touch the shared .admin-content layout every
+   other admin page uses. */
+.create-account-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 140px);
+  text-align: center;
+}
+
 .create-account-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -3132,10 +3322,10 @@ button {
 }
 
 /* Account Type dropdown that picks between the Staff (single narrow card)
-   and Citizen (full 2-column) forms below it — see create-accounts.js. */
+   and Citizen (full 2-column) forms above it — see create-accounts.js. */
 .create-account-type-field {
   max-width: 300px;
-  margin-bottom: 22px;
+  margin-top: 28px;
 }
 
 /* Barangay Staff only ever collects an email + role (see
@@ -3278,9 +3468,14 @@ button {
   }
 
   .admin-sidebar__nav a,
+  .admin-sidebar__group-toggle,
   .admin-sidebar__logout {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .admin-sidebar__subnav a {
+    padding-left: 38px;
   }
 
   .admin-table thead th,

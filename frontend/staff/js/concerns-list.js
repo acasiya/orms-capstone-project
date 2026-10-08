@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const folderDeleteCancel = document.getElementById("folderDeleteCancel");
 
   let page = 1;
-  let statusFilterTouched = false;
   // Only re-filters on Search (or pressing Enter in the field), not on every
   // keystroke — this tracks the query that was actually searched for.
   let appliedQuery = "";
@@ -196,12 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (activeFolderId) {
       rows = rows.filter((c) => c.folderId === activeFolderId);
     }
-    // Reviewed concerns stay out of the queue until the status filter is
-    // actually touched — even re-picking "Status" (all) counts, since
-    // that's an explicit "yes, show everything" action.
-    if (!statusFilterTouched && statusFilter.value === "all") {
-      rows = rows.filter((c) => c.status !== "Reviewed");
-    } else if (statusFilter.value !== "all") {
+    if (statusFilter.value !== "all") {
       rows = rows.filter((c) => c.status === statusFilter.value);
     }
     if (appliedQuery) {
@@ -217,10 +211,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const rows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const pageRows = rows.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
 
     list.innerHTML = pageRows.length
       ? pageRows
@@ -249,14 +243,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   });
   statusFilter.addEventListener("change", () => {
-    statusFilterTouched = true;
     page = 1;
     render();
   });
 
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });

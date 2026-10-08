@@ -69,7 +69,7 @@ const RESET_DRAFT_KEY = "orms_reset_draft";
 const ROLE_HOME = {
   citizen: "/citizen/home.html",
   staff: "/staff/reports-dashboard.html",
-  admin: "/admin/manage-accounts.html",
+  admin: "/admin/approve-accounts.html",
 };
 
 // Each Barangay Staff role sees a different slice of the Staff Portal (see

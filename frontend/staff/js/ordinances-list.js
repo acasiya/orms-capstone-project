@@ -85,11 +85,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const allRows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(allRows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(allRows.length / pageSize)) : 1;
     currentPage = Math.min(currentPage, totalPages);
 
-    const start = (currentPage - 1) * pageSize;
-    const rows = allRows.slice(start, start + pageSize);
+    const start = pageSize ? (currentPage - 1) * pageSize : 0;
+    const rows = pageSize ? allRows.slice(start, start + pageSize) : allRows;
 
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="2" class="ordinances-empty">${emptyMessage()}</td></tr>`;
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     paginationInfo.textContent = allRows.length
-      ? `Showing ${start + 1} to ${Math.min(start + pageSize, allRows.length)} of ${allRows.length} entries`
+      ? `Showing ${start + 1} to ${pageSize ? Math.min(start + pageSize, allRows.length) : allRows.length} of ${allRows.length} entries`
       : "Showing 0 entries";
     renderPaginationControls(pagination, currentPage, totalPages, (n) => {
       currentPage = n;
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       currentPage = 1;
       render();
     });

@@ -15,7 +15,7 @@ function formatQuestionDate(iso) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  let pageSize = 5;
+  let pageSize = 10;
 
   const list = document.getElementById("questionsList");
   const statusFilter = document.getElementById("statusFilter");
@@ -37,10 +37,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const filtered = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const rows = filtered.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const rows = pageSize ? filtered.slice(start, start + pageSize) : filtered;
 
     if (pagination) {
       renderPaginationControls(pagination, page, totalPages, (n) => {
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });

@@ -69,7 +69,7 @@ const RESET_DRAFT_KEY = "orms_reset_draft";
 const ROLE_HOME = {
   citizen: "/citizen/ordinances.html",
   staff: "/staff/reports-dashboard.html",
-  admin: "/admin/manage-accounts.html",
+  admin: "/admin/approve-accounts.html",
 };
 
 // Each Barangay Staff role sees a different slice of the Staff Portal (see
@@ -987,25 +987,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const passwordField = form.querySelector('[name="password"]');
         const rememberField = form.querySelector('[name="rememberMe"]');
         clearFormError(form);
-
-        // Staff Portal only: a Staff/Administrator account an admin created
-        // (see accounts/serializers.py's AdminCreateUserSerializer) has no
-        // password yet, so its first login is just the email — leaving
-        // Password blank and clicking Login Now is how that gets triggered,
-        // rather than a separate discoverable link. A normal login (password
-        // filled in) skips this entirely.
-        if (window.location.pathname.startsWith("/staff/") && !passwordField.value) {
-          const email = emailField.value.trim();
-          if (!email) {
-            showFormError(form, "Enter your email, then leave Password blank to set up a new account, or fill it in to log in.");
-            return;
-          }
-          // No lookup here: whether this email has an account waiting on setup
-          // isn't something an anonymous visitor should be able to learn. The
-          // setup page emails a code either way and only the inbox owner can use it.
-          window.location.href = `account-setup.html?email=${encodeURIComponent(email)}`;
-          return;
-        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = "Logging in...";

@@ -64,12 +64,24 @@ document.addEventListener("DOMContentLoaded", () => {
           month: "long", day: "numeric", year: "numeric",
         });
         return `
-        <div class="concern-row" data-id="${a.id}">
-          <span class="concern-row__title">${escapeHtml(a.title)}</span>
-          <span class="concern-row__date">${date}${a.posted_by_name ? ` &middot; ${escapeHtml(a.posted_by_name)}` : ""}</span>
-          ${a.image_url ? `<img src="${escapeHtml(a.image_url)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;" />` : ""}
-          ${canManage ? `<button type="button" class="btn" style="width:auto;padding:6px 12px;" data-edit="${a.id}">Edit</button>` : ""}
-          ${canManage ? `<button type="button" class="btn btn-danger" style="width:auto;padding:6px 12px;" data-delete="${a.id}" data-title="${escapeHtml(a.title)}">Delete</button>` : ""}
+        <div class="announcement-row" data-id="${a.id}">
+          ${
+            a.image_url
+              ? `<img class="announcement-row__image" src="${escapeHtml(a.image_url)}" alt="" />`
+              : `<span class="announcement-row__image announcement-row__image--empty" aria-hidden="true"></span>`
+          }
+          <div class="announcement-row__info">
+            <span class="announcement-row__title">${escapeHtml(a.title)}</span>
+            <span class="announcement-row__date">${date}${a.posted_by_name ? ` &middot; ${escapeHtml(a.posted_by_name)}` : ""}</span>
+          </div>
+          ${
+            canManage
+              ? `<div class="announcement-row__actions">
+                  <button type="button" class="btn" data-edit="${a.id}">Edit</button>
+                  <button type="button" class="btn btn-danger" data-delete="${a.id}" data-title="${escapeHtml(a.title)}">Delete</button>
+                </div>`
+              : ""
+          }
         </div>`;
       })
       .join("");

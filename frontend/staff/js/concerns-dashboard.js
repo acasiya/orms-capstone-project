@@ -527,12 +527,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Latest concerns ----
 
+  let latestListLimit = 5;
+  const latestPageSizeSelect = document.getElementById("latestPageSize");
+
+  if (latestPageSizeSelect) {
+    latestPageSizeSelect.addEventListener("change", () => {
+      latestListLimit = latestPageSizeSelect.value === "all" ? Infinity : Number(latestPageSizeSelect.value);
+      renderLatest();
+    });
+  }
+  wireFiltersDropdown(document.getElementById("latestFiltersToggleBtn"), document.getElementById("latestFiltersPanel"));
+
   function renderLatest() {
     const body = document.getElementById("latestBody");
     const latest = liveConcerns()
       .slice()
       .sort((a, b) => b.dateSubmitted - a.dateSubmitted)
-      .slice(0, 5);
+      .slice(0, latestListLimit);
     if (!latest.length) {
       body.innerHTML = `<tr><td colspan="5" class="ordinances-empty">No concerns or suggestions yet.</td></tr>`;
       return;

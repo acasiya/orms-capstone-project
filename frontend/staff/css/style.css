@@ -865,6 +865,14 @@ button {
   background: var(--navy-hover);
 }
 
+/* Smaller variant for a "Show" trigger sitting inside a dashboard card
+   header (next to its <h2>) instead of at page level. */
+.filters-dropdown__trigger--small {
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
 .filters-dropdown__chevron {
   font-size: 0.7rem;
   opacity: 0.85;
@@ -888,6 +896,15 @@ button {
 
 .filters-dropdown__panel[hidden] {
   display: none;
+}
+
+/* For a trigger sitting at the far right edge of the page (e.g. a dashboard
+   card's "Show" button) — opens leftward from the trigger instead of
+   rightward, so the panel doesn't push past the viewport edge and force a
+   horizontal scrollbar. */
+.filters-dropdown__panel--right {
+  left: auto;
+  right: 0;
 }
 
 .filters-dropdown__field {
@@ -1365,6 +1382,12 @@ button {
   box-shadow: 0 0 0 3px rgba(5, 122, 18, 0.12);
 }
 
+/* Ordinance title — wraps onto a couple of lines instead of a single-line
+   input that scrolls/truncates a long title out of view. */
+.field-textarea--title {
+  min-height: 56px;
+}
+
 .field select {
   width: 100%;
   padding: 11px 13px;
@@ -1797,6 +1820,20 @@ button {
   text-align: center;
 }
 
+/* ---------- Create Citizen: header + card centered both ways on the page,
+   not just horizontally — approximates the viewport height minus the
+   topbar and .admin-content's own padding, scoped to this page only so it
+   doesn't touch the shared .admin-content layout every other page uses. ---------- */
+
+.create-citizen-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 140px);
+  text-align: center;
+}
+
 /* ---------- My Concerns/Suggestions list ---------- */
 
 .concerns-card {
@@ -1834,6 +1871,66 @@ button {
   font-size: 0.88rem;
   text-decoration: underline;
   justify-self: start;
+}
+
+/* ---------- Announcements list row: image, then title, then stacked
+   Edit/Delete — a dedicated layout, not .concern-row (shared with the
+   Concerns list), since this one puts the picture first and the actions
+   on top of each other instead of side by side. ---------- */
+
+.announcement-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.announcement-row:last-child {
+  border-bottom: none;
+}
+
+.announcement-row__image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.announcement-row__image--empty {
+  display: block;
+  background: var(--plain-bg);
+  border: 1px dashed var(--border);
+}
+
+.announcement-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.announcement-row__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.announcement-row__date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.announcement-row__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.announcement-row__actions .btn {
+  width: auto;
+  padding: 8px 22px;
 }
 
 /* ---------- Reports (Investigator's claimable queue) ---------- */
@@ -2587,6 +2684,25 @@ button {
   .status-badge {
     justify-self: start;
     width: auto;
+  }
+
+  .announcement-row {
+    grid-template-columns: 56px 1fr;
+    gap: 10px 14px;
+  }
+
+  .announcement-row__image {
+    width: 56px;
+    height: 56px;
+  }
+
+  .announcement-row__actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+
+  .announcement-row__actions .btn {
+    flex: 1;
   }
 
   .concern-detail {
@@ -3937,13 +4053,58 @@ button {
   min-width: 0;
 }
 
-.category-pie-modal__list li {
+.category-pie-modal__item {
+  display: flex;
+  flex-direction: column;
+}
+
+.category-pie-modal__row {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.category-pie-modal__chevron {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.category-pie-modal__item--open .category-pie-modal__chevron {
+  transform: rotate(180deg);
+}
+
+/* Ordinances belonging to this category, revealed when its row is clicked —
+   one dropdown per category rather than a single shared panel, so several
+   can be open at once. */
+.category-pie-modal__sublist {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 0 0 21px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category-pie-modal__sublist li {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.category-pie-modal__sublist-empty {
+  font-style: italic;
 }
 
 .category-pie-modal__dot {
@@ -5104,6 +5265,12 @@ button {
 .cd-card-hint {
   font-size: 0.76rem;
   color: var(--text-muted);
+}
+
+.cd-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .cd-empty {

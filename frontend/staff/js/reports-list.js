@@ -81,11 +81,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (statusFilter.value !== "all") {
       rows = rows.filter((r) => r.status === statusFilter.value);
     } else {
-      // "all" — the default on load, and also selectable explicitly: every
-      // status shows, but ranked so whatever isn't Resolved yet (New
-      // Submission/Under Review/In Action) comes ahead of Resolved reports,
-      // newest first within each group — so a backlog of old resolved
-      // reports doesn't bury what's still active.
+      // "all": every status shows, but ranked so whatever isn't Resolved yet
+      // (New Submission/Under Review/In Action) comes ahead of Resolved
+      // reports, newest first within each group — so a backlog of old
+      // resolved reports doesn't bury what's still active.
       rows = rows.slice().sort((a, b) => {
         const aResolved = a.status === "Resolved" ? 1 : 0;
         const bResolved = b.status === "Resolved" ? 1 : 0;
@@ -108,10 +107,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const rows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const pageRows = rows.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
 
     const currentUser = getAdminUser();
     // Claiming is Investigator-only (same rule as report-detail.js and
@@ -202,7 +201,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });

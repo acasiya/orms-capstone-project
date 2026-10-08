@@ -48,13 +48,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const sortValue = sortSelect.value;
     rows = rows.slice().sort((a, b) => {
       if (sortValue === "owner") return a.owner.localeCompare(b.owner);
+      if (sortValue === "owner_desc") return b.owner.localeCompare(a.owner);
+      if (sortValue === "time_asc") return new Date(a.timeAt) - new Date(b.timeAt);
       return new Date(b.timeAt) - new Date(a.timeAt);
     });
 
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const pageRows = rows.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
 
     if (pagination) {
       renderPaginationControls(pagination, page, totalPages, (n) => {
@@ -152,7 +154,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });

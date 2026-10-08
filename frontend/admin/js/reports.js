@@ -20,17 +20,27 @@ const REPORT_STATUS_BADGE_CLASS = {
   resolved: "status-badge--resolved",
 };
 
+// The 3 "currently being worked" statuses shown in the workload bars —
+// Resolved is deliberately excluded (see WORKLOAD_STATUSES's own comment).
+// Same colors as the Staff Portal's Reports Dashboard "Reports by Status"
+// bar chart (.status-bar-chart__bar--new/--process/--remarks), for the same
+// statuses to always mean the same color everywhere in the app.
+const WORKLOAD_STATUSES = [
+  { key: "submitted", label: "Submitted", color: "#9aa0a6" },
+  { key: "under_review", label: "Under Review", color: "#e8c547" },
+  { key: "in_action", label: "In Action", color: "#a8c957" },
+];
+
 document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("unclaimedReportsBody");
   const pagination = document.getElementById("unclaimedReportsPagination");
-  const searchForm = document.getElementById("reportSearchForm");
-  const searchInput = document.getElementById("reportSearchInput");
+  const workloadEl = document.getElementById("investigatorWorkload");
 
   const PAGE_SIZE = 10;
   let reports = [];
+  let allReports = [];
   let investigators = [];
   let page = 1;
-  let appliedQuery = "";
 
   function escapeHtml(str) {
     const div = document.createElement("div");
@@ -50,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         authFetch("/api/auth/admin/users/"),
       ]);
       if (!reportsRes.ok) throw new Error("Could not load reports.");
-      const allReports = await reportsRes.json();
+      allReports = await reportsRes.json();
       reports = allReports
         .filter((r) => !r.assignedInvestigatorId)
         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -59,10 +69,72 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? (await usersRes.json()).filter((u) => u.position === "Investigator" && u.active)
         : [];
 
+      renderInvestigatorWorkload();
       render();
     } catch (err) {
       tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">${escapeHtml(err.message)}</td></tr>`;
     }
+  }
+
+  // One stacked bar per active Investigator: their currently-claimed
+  // reports that aren't Resolved yet, broken down by status. A report
+  // leaves this the moment it's claimed-and-resolved or reassigned away,
+  // same as it leaves the unclaimed table the moment it's claimed.
+  function renderInvestigatorWorkload() {
+    if (!workloadEl) return;
+    if (!investigators.length) {
+      workloadEl.innerHTML = `<p class="investigator-workload__empty">No active Investigators.</p>`;
+      return;
+    }
+
+    const sortedInvestigators = investigators.slice().sort((a, b) => a.owner.localeCompare(b.owner));
+
+    workloadEl.innerHTML = sortedInvestigators
+      .map((inv) => {
+        const current = allReports.filter((r) => r.assignedInvestigatorId === inv.id && r.status !== "resolved");
+        const total = current.length;
+
+        if (!total) {
+          return `
+            <div class="investigator-workload__card">
+              <div class="investigator-workload__header">
+                <span class="investigator-workload__name">${escapeHtml(inv.owner)}</span>
+              </div>
+              <p class="investigator-workload__empty">No active reports.</p>
+            </div>`;
+        }
+
+        const segments = WORKLOAD_STATUSES.map((s) => {
+          const count = current.filter((r) => r.status === s.key).length;
+          const pct = Math.round((count / total) * 100);
+          return { ...s, count, pct };
+        }).filter((s) => s.count > 0);
+
+        const bars = segments
+          .map(
+            (s) => `
+            <div
+              class="stacked-bar__segment"
+              style="width:${s.pct}%;background:${s.color};"
+              title="${escapeHtml(s.label)}: ${s.pct}% (${s.count} ${s.count === 1 ? "report" : "reports"})"
+              role="img"
+              aria-label="${escapeHtml(s.label)}: ${s.pct}% — ${s.count} ${s.count === 1 ? "report" : "reports"}"
+            >
+              <span class="stacked-bar__label">${s.pct}% (${s.count})</span>
+            </div>`
+          )
+          .join("");
+
+        return `
+          <div class="investigator-workload__card">
+            <div class="investigator-workload__header">
+              <span class="investigator-workload__name">${escapeHtml(inv.owner)}</span>
+              <span class="investigator-workload__total">${total} active ${total === 1 ? "report" : "reports"}</span>
+            </div>
+            <div class="stacked-bar">${bars}</div>
+          </div>`;
+      })
+      .join("");
   }
 
   function assignControlHtml(report) {
@@ -79,14 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function render() {
-    let rows = reports;
-    if (appliedQuery) {
-      rows = rows.filter(
-        (r) =>
-          (r.reporter || "").toLowerCase().includes(appliedQuery) ||
-          (r.ordinance || "").toLowerCase().includes(appliedQuery)
-      );
-    }
+    const rows = reports;
 
     const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
     page = Math.min(page, totalPages);
@@ -99,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No unclaimed reports${appliedQuery ? " match this search" : ""}.</td></tr>`;
+      tbody.innerHTML = `<tr><td class="admin-table__empty" colspan="5">No unclaimed reports.</td></tr>`;
       return;
     }
 
@@ -136,6 +201,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             throw new Error(data.detail || "Could not assign this report.");
           }
           reports = reports.filter((r) => r.id !== reportId);
+          const assigned = allReports.find((r) => r.id === reportId);
+          if (assigned) assigned.assignedInvestigatorId = investigatorId;
+          renderInvestigatorWorkload();
           render();
         } catch (err) {
           siteAlert(err.message);
@@ -144,13 +212,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
   }
-
-  searchForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    appliedQuery = searchInput.value.trim().toLowerCase();
-    page = 1;
-    render();
-  });
 
   await loadData();
 });

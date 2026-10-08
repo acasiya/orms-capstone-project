@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barangay Platero OVRMS — Website Setup</title>
+  <title>Barangay Platero OVRMS — Manage FAQs</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -37,10 +37,10 @@
           <button type="button" class="admin-sidebar__group-toggle" aria-expanded="true"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> Setup <span class="admin-sidebar__chevron" aria-hidden="true">&#9662;</span></button>
           <ul class="admin-sidebar__subnav">
             <li><a href="ordinance-authors.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/><path d="M14 10h4M14 13h4"/></svg> Ordinance Setup</a></li>
-            <li><a href="website-setup.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> Website Setup</a></li>
+            <li><a href="website-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> Website Setup</a></li>
             <li><a href="about-setup.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.7" r="1.1" fill="currentColor" stroke="none"/></svg> About Us Setup</a></li>
             <li><a href="map-boundary.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> Map Boundary</a></li>
-            <li><a href="manage-faqs.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10a4 4 0 117.4 2.1C14.4 13.3 13 13.6 13 15"/><circle cx="13" cy="18" r="0.2" fill="currentColor"/><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/></svg> Manage FAQs</a></li>
+            <li><a href="manage-faqs.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10a4 4 0 117.4 2.1C14.4 13.3 13 13.6 13 15"/><circle cx="13" cy="18" r="0.2" fill="currentColor"/><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/></svg> Manage FAQs</a></li>
           </ul>
         </li>
         <li><a href="questions.html"><svg class="nav-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 014.7-1.2c.5.9.3 1.7-.5 2.4l-.7.6c-.6.5-1 .9-1 1.7v.3"/><circle cx="12" cy="17" r="0.2" fill="currentColor"/></svg> Answer Questions</a></li>
@@ -75,125 +75,51 @@
       </header>
 
       <div class="admin-content">
-        <div class="admin-toolbar" style="justify-content: space-between;">
-          <div>
-            <h1 style="margin: 0 0 20px; font-size: 1.4rem;">Website Setup</h1>
+        <h1 style="margin: 0 0 20px; font-size: 1.4rem;">Manage FAQs</h1>
+
+        <div class="dash-card">
+          <div class="admin-toolbar" style="justify-content: space-between; align-items: center;">
+            <h2 class="folders-card__title" style="margin: 0;">Frequently Asked Questions</h2>
+            <button type="button" class="btn" style="width: auto; padding: 10px 20px;" id="addFaqBtn">+ Add FAQ</button>
           </div>
+          <p class="auth-card__subtitle" style="margin:-6px 0 16px;text-align:left;font-size:0.8rem;">Shown on the citizen FAQs page.</p>
+          <div id="faqManageList"></div>
         </div>
-
-        <!-- Website branding -->
-        <section class="setup-card" aria-labelledby="brandingHeading">
-          <h2 class="setup-card__title" id="brandingHeading">Website Branding</h2>
-          <p class="field-hint" style="margin: -4px 0 16px;">The brand shown in the navbar/sidebar across the Citizen, Staff and Admin portals. Takes effect right away everywhere, but doesn't change the browser tab's title.</p>
-          <form id="brandingForm" novalidate>
-            <div class="setup-photo setup-photo--logo">
-              <img id="brandingLogoPreview" alt="" hidden />
-              <span class="setup-photo__empty" id="brandingLogoEmpty">No custom logo</span>
-              <div>
-                <label class="btn btn-muted setup-photo__pick" for="brandingLogoInput">Choose Logo</label>
-                <input type="file" id="brandingLogoInput" accept="image/jpeg,image/png,image/webp" hidden />
-                <p class="field-hint">Recommended: a <strong>square</strong> image, ideally a <strong>PNG with a transparent background</strong>. JPG or WebP also work, up to 5 MB. Leave unset to keep the default leaf icon.</p>
-                <p class="setup-photo__warn" id="brandingLogoWarn" role="status" hidden></p>
-              </div>
-            </div>
-            <div class="field">
-              <label for="brandingSiteName">Website name</label>
-              <input type="text" id="brandingSiteName" name="site_name" maxlength="120" required />
-              <p class="field-hint">Anything after a <strong>|</strong> is shown on a smaller line under the name, e.g. "Barangay Platero | Ordinance Violation Reporting and Monitoring System".</p>
-            </div>
-            <div class="setup-actions">
-              <span class="setup-status" id="brandingStatus" role="status"></span>
-              <button type="submit" class="btn" style="width: auto; padding: 12px 28px;" id="brandingSave">Save Branding</button>
-            </div>
-          </form>
-        </section>
-
-        <!-- Site footer -->
-        <section class="setup-card" aria-labelledby="footerHeading">
-          <h2 class="setup-card__title" id="footerHeading">Site Footer</h2>
-          <p class="field-hint" style="margin: -4px 0 16px;">The text and links at the bottom of every citizen page. The contact details and emergency hotline above also appear there. Leave a list empty to use the built-in links.</p>
-          <form id="footerForm" novalidate>
-            <div class="setup-grid">
-              <div class="field setup-grid__wide">
-                <label for="footerTagline">Tagline under the site name</label>
-                <input type="text" id="footerTagline" maxlength="255" />
-              </div>
-              <div class="field setup-grid__wide">
-                <label for="footerNotice">Bottom line (privacy notice)</label>
-                <input type="text" id="footerNotice" maxlength="255" />
-              </div>
-              <div class="field">
-                <span class="field__label">Quick Links</span>
-                <div id="footerQuickEditor"></div>
-                <button type="button" class="btn btn-muted" style="width: auto; padding: 8px 14px; margin-top: 8px;" data-footer-add="quick">+ Add link</button>
-              </div>
-              <div class="field">
-                <span class="field__label">Legal</span>
-                <div id="footerLegalEditor"></div>
-                <button type="button" class="btn btn-muted" style="width: auto; padding: 8px 14px; margin-top: 8px;" data-footer-add="legal">+ Add link</button>
-              </div>
-            </div>
-            <p class="field-hint">A link can be a page name such as <code>faqs.html</code>, or a full address starting with <code>https://</code>, <code>mailto:</code> or <code>tel:</code>.</p>
-            <div class="setup-actions">
-              <span class="setup-status" id="footerStatus" role="status"></span>
-              <button type="submit" class="btn" style="width: auto; padding: 12px 28px;" id="footerSave">Save Footer</button>
-            </div>
-          </form>
-        </section>
-
       </div>
     </div>
   </div>
 
-  <!-- Legal page editor — opened from the footer's Legal list ("Edit page text") -->
-  <div class="modal-overlay" id="legalModal" data-modal-guarded hidden>
-    <div class="modal-card legal-modal">
-      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
-      <h2 id="legalModalTitle">Edit Legal Page</h2>
-      <p class="field-hint" style="margin: -8px 0 14px; text-align: left;">Leave a blank line between blocks. Use <code>- item</code> for a bullet, <code>1. item</code> for a numbered item, <code>| cell | cell |</code> for a table row (first row is the header), <code>**bold**</code>, <code>[link text](faqs.html)</code>, and <code>{{address}}</code>, <code>{{email}}</code>, <code>{{phone}}</code> or <code>{{name}}</code> from Barangay Details.</p>
-      <form id="legalForm" class="legal-modal__form" novalidate>
-        <div class="legal-modal__body">
-        <div class="field">
-          <label for="legalEffectiveInput">Effective date</label>
-          <input type="text" id="legalEffectiveInput" maxlength="60" placeholder="e.g. October 1, 2026" />
-          <p class="field-hint">Shown at the top of the page. Leave blank to hide it.</p>
-        </div>
-        <div id="legalSectionsEditor"></div>
-        <button type="button" class="btn btn-muted" style="width: auto; padding: 10px 16px; margin: 8px 0 16px;" id="legalAddSection">+ Add section</button>
-        <p class="setup-photo__warn" id="legalFormError" role="status" hidden></p>
-        </div>
-        <div class="legal-modal__actions">
-          <button type="submit" class="btn" id="legalSave">Save Page</button>
-          <button type="button" class="btn btn-danger" id="legalClose">Close</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Unsaved legal page changes -->
-  <div class="modal-overlay" id="legalExitModal" hidden>
-    <div class="modal-card">
-      <h2>Leave without saving?</h2>
-      <p class="auth-card__subtitle">You have unsaved changes to this page.</p>
-      <div class="stacked-buttons">
-        <button type="button" class="btn" id="legalExitSave">Save and exit</button>
-        <button type="button" class="btn btn-danger" id="legalExitDiscard">Exit without saving</button>
-        <button type="button" class="btn btn-muted" id="legalExitStay">Keep editing</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/about-setup-data.js"></script>
-  <script src="js/website-setup.js"></script>
+  <script src="js/questions-data.js"></script>
+  <script src="js/faqs-manage.js"></script>
   <script src="js/admin.js"></script>
 
-  <!-- Logout confirmation -->
-  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+  <!-- Add/Edit FAQ -->
+  <div class="modal-overlay" id="faqModal" hidden>
     <div class="modal-card">
-      <h2>Continue to Logout?</h2>
+      <h2 id="faqModalTitle">Add FAQ</h2>
+      <div class="field field--boxed">
+        <label for="faqQuestionInput">Question</label>
+        <input type="text" id="faqQuestionInput" placeholder="e.g. How do I file a report?" />
+      </div>
+      <div class="field field--boxed">
+        <label for="faqAnswerInput">Answer</label>
+        <textarea id="faqAnswerInput" rows="4" placeholder="Type the answer..."></textarea>
+      </div>
       <div class="btn-row">
-        <button type="button" class="btn" id="logoutYes">Yes</button>
-        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+        <button type="button" class="btn" id="faqModalSave">Save</button>
+        <button type="button" class="btn btn-danger" id="faqModalCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete FAQ confirmation -->
+  <div class="modal-overlay" id="faqDeleteModal" hidden>
+    <div class="modal-card">
+      <h2>Delete this FAQ?</h2>
+      <p class="auth-card__subtitle">It will no longer show on the citizen FAQs page.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-danger" id="faqDeleteConfirm">Delete</button>
+        <button type="button" class="btn" id="faqDeleteCancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -211,6 +137,17 @@
       </div>
       <a class="btn btn-muted" href="profile.html">View Details</a>
       <button type="button" class="btn btn-muted" id="profileLogoutBtn">Log Out</button>
+    </div>
+  </div>
+
+  <!-- Logout confirmation -->
+  <div class="modal-overlay" id="logoutConfirmModal" hidden>
+    <div class="modal-card">
+      <h2>Continue to Logout?</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="logoutYes">Yes</button>
+        <button type="button" class="btn btn-danger" id="logoutNo">No</button>
+      </div>
     </div>
   </div>
 </body>

@@ -384,6 +384,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     categoryPieExpandedList.innerHTML = "";
     lastCategorySlices.forEach((slice) => {
       const li = document.createElement("li");
+      li.className = "category-pie-modal__item";
+
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "category-pie-modal__row";
+      row.setAttribute("aria-expanded", "false");
+
       const dot = document.createElement("span");
       dot.className = "category-pie-modal__dot";
       dot.style.background = categoryColor(slice.category);
@@ -393,7 +400,40 @@ document.addEventListener("DOMContentLoaded", async () => {
       const value = document.createElement("span");
       value.className = "category-pie-modal__list-value";
       value.textContent = `${slice.pct}% (${slice.count})`;
-      li.append(dot, label, value);
+      const chevron = document.createElement("span");
+      chevron.className = "category-pie-modal__chevron";
+      chevron.setAttribute("aria-hidden", "true");
+      chevron.textContent = "▾";
+      row.append(dot, label, value, chevron);
+
+      // Every ordinance filed under this category, not just the ones a
+      // report happened to cite this period — lets staff see the full
+      // picture (including a category sitting at 0%) when they drill in.
+      const ordinances = liveOrdinances().filter((o) => o.category === slice.category);
+      const sublist = document.createElement("ul");
+      sublist.className = "category-pie-modal__sublist";
+      sublist.hidden = true;
+      if (ordinances.length) {
+        ordinances.forEach((o) => {
+          const subLi = document.createElement("li");
+          subLi.textContent = `${o.number} — ${o.title}`;
+          sublist.appendChild(subLi);
+        });
+      } else {
+        const subLi = document.createElement("li");
+        subLi.className = "category-pie-modal__sublist-empty";
+        subLi.textContent = "No ordinances under this category.";
+        sublist.appendChild(subLi);
+      }
+
+      row.addEventListener("click", () => {
+        const expanded = row.getAttribute("aria-expanded") === "true";
+        row.setAttribute("aria-expanded", String(!expanded));
+        sublist.hidden = expanded;
+        li.classList.toggle("category-pie-modal__item--open", !expanded);
+      });
+
+      li.append(row, sublist);
       categoryPieExpandedList.appendChild(li);
     });
 
@@ -482,8 +522,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // past its submission date. Report has no resolved_at (see reports/
   // models.py), so "days open" is measured from created_at to now for
   // anything not yet Resolved, which is the closest honest proxy available.
-  const AGING_LIST_LIMIT = 8;
+  let agingListLimit = 5;
   const agingReportsBody = document.getElementById("agingReportsBody");
+  const timelinePageSizeSelect = document.getElementById("timelinePageSize");
+
+  if (timelinePageSizeSelect) {
+    timelinePageSizeSelect.addEventListener("change", () => {
+      agingListLimit = timelinePageSizeSelect.value === "all" ? Infinity : Number(timelinePageSizeSelect.value);
+      renderAgingReports();
+    });
+  }
+  wireFiltersDropdown(document.getElementById("timelineFiltersToggleBtn"), document.getElementById("timelineFiltersPanel"));
 
   function daysBetween(from, to) {
     return Math.max(0, Math.floor((to - from) / (1000 * 60 * 60 * 24)));
@@ -504,7 +553,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .filter((r) => r.status !== "Resolved")
       .slice()
       .sort((a, b) => a.dateSubmitted - b.dateSubmitted)
-      .slice(0, AGING_LIST_LIMIT);
+      .slice(0, agingListLimit);
 
     agingReportsBody.innerHTML = open.length
       ? open

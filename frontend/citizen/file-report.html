@@ -114,8 +114,22 @@
           </div>
 
           <div class="field">
-            <label for="ordinanceSelect">Ordinance in Violation</label>
-            <select id="ordinanceSelect" name="ordinance" required>
+            <label for="ordinanceTrigger">Ordinance in Violation</label>
+            <!-- A native <select> can't wrap its option text (Chrome ignores
+                 white-space/text-overflow on <option>), so a long ordinance
+                 title either gets clipped or blows the popup past the page
+                 edge. This is a custom dropdown instead — full titles wrap
+                 inside it — backed by the real (hidden) <select> below so
+                 the rest of this page's existing logic (change handling,
+                 TF-IDF suggestions, submit) keeps reading/writing it. -->
+            <div class="combobox" id="ordinanceCombobox">
+              <button type="button" class="combobox__trigger" id="ordinanceTrigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="combobox__trigger-label" id="ordinanceTriggerLabel">Select</span>
+                <span class="combobox__chevron" aria-hidden="true">&#9662;</span>
+              </button>
+              <ul class="combobox__list combobox__list--wrap" id="ordinanceOptionsList" role="listbox" hidden></ul>
+            </div>
+            <select id="ordinanceSelect" name="ordinance" hidden aria-hidden="true" tabindex="-1">
               <option value="" selected disabled>Select</option>
             </select>
           </div>

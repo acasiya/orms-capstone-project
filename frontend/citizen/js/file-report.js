@@ -159,13 +159,64 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (isLoggedIn()) refreshGateStatus();
 
   const select = document.getElementById("ordinanceSelect");
+  const ordinanceCombobox = document.getElementById("ordinanceCombobox");
+  const ordinanceTrigger = document.getElementById("ordinanceTrigger");
+  const ordinanceTriggerLabel = document.getElementById("ordinanceTriggerLabel");
+  const ordinanceOptionsList = document.getElementById("ordinanceOptionsList");
+
+  function ordinanceLabel(o) {
+    return `${o.number} — ${o.title}`;
+  }
+
+  let ordinancesForPicker = [];
+  let ordinanceLoadError = false;
   try {
     await ensureOrdinancesLoaded();
-    select.append(...liveOrdinances().map((o) => new Option(`${o.number} — ${o.title}`, o.id)));
+    ordinancesForPicker = liveOrdinances();
+    select.append(...ordinancesForPicker.map((o) => new Option(ordinanceLabel(o), o.id)));
   } catch {
+    ordinanceLoadError = true;
     select.append(new Option("Could not load ordinances — try reloading the page.", ""));
   }
   select.append(new Option("Other", "other"));
+
+  ordinanceOptionsList.innerHTML = ordinanceLoadError
+    ? `<li class="combobox__empty">Could not load ordinances — try reloading the page.</li><li role="option" data-id="other">Other</li>`
+    : `${ordinancesForPicker.map((o) => `<li role="option" data-id="${o.id}">${ordinanceLabel(o)}</li>`).join("")}<li role="option" data-id="other">Other</li>`;
+
+  // Single entry point for picking an ordinance, whichever UI triggered it
+  // (the dropdown itself or a TF-IDF suggestion below) — drives the real
+  // (hidden) <select> so its one "change" listener is the only place the
+  // rest of the form's state (Other field, trigger label) gets synced.
+  function selectOrdinance(id) {
+    select.value = id;
+    select.dispatchEvent(new Event("change"));
+  }
+
+  function openOrdinanceList() {
+    ordinanceOptionsList.hidden = false;
+    ordinanceTrigger.setAttribute("aria-expanded", "true");
+  }
+  function closeOrdinanceList() {
+    ordinanceOptionsList.hidden = true;
+    ordinanceTrigger.setAttribute("aria-expanded", "false");
+  }
+  ordinanceTrigger.addEventListener("click", () => {
+    if (ordinanceOptionsList.hidden) openOrdinanceList();
+    else closeOrdinanceList();
+  });
+  ordinanceOptionsList.addEventListener("click", (e) => {
+    const item = e.target.closest("li[data-id]");
+    if (!item) return;
+    selectOrdinance(item.dataset.id);
+    closeOrdinanceList();
+  });
+  document.addEventListener("click", (e) => {
+    if (!ordinanceCombobox.contains(e.target)) closeOrdinanceList();
+  });
+  ordinanceTrigger.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeOrdinanceList();
+  });
 
   // "Other" reveals a free-text field for whatever isn't in the list —
   // that text is what actually gets submitted as the ordinance, not the
@@ -177,6 +228,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     otherField.hidden = !isOther;
     otherInput.required = isOther;
     if (!isOther) otherInput.value = "";
+    ordinanceTriggerLabel.textContent = select.value ? select.options[select.selectedIndex].text : "Select";
+  });
+
+  // The Clear button is a native type="reset" — it puts the hidden <select>
+  // back to its default option but (per spec) doesn't fire "change" for it,
+  // so the custom dropdown's label and the Other field would otherwise be
+  // left showing the old selection. Deferred so it runs after the browser's
+  // own reset of the form's controls, not before.
+  form.addEventListener("reset", () => {
+    setTimeout(() => select.dispatchEvent(new Event("change")), 0);
   });
 
   // ---- Nature of Violation: TF-IDF ordinance suggestions (GET /api/ordinances/suggest/) ----
@@ -224,8 +285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   suggestionsList.addEventListener("click", (e) => {
     const item = e.target.closest("li[data-id]");
     if (!item) return;
-    select.value = item.dataset.id;
-    select.dispatchEvent(new Event("change"));
+    selectOrdinance(item.dataset.id);
     suggestionsPanel.hidden = true;
   });
 
@@ -334,6 +394,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const blockLot = document.getElementById("reportBlockLot").value.trim();
     if (!blockLot) {
       showFormError(form, "Please enter the Block, Lot, etc.");
+      return;
+    }
+
+    // The real <select> is hidden (see the custom dropdown above it), which
+    // takes it out of native constraint validation — so "required" has to
+    // be enforced here instead of relying on the browser to block submit.
+    if (!select.value) {
+      showFormError(form, "Please select the ordinance in violation.");
       return;
     }
 

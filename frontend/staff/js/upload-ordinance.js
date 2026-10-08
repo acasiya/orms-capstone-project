@@ -257,7 +257,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const fields = {
       number: numberInput.value.trim(),
-      title: titleInput.value.trim(),
+      // Collapsed to a single line — the field is now a wrapping textarea
+      // (so a long title is never scrolled out of view while typing), but
+      // the title itself is still conceptually one line, not a paragraph.
+      title: titleInput.value.replace(/\s+/g, " ").trim(),
       author: authors.join(", "),
       category: categoryInput.value,
       dateApproved: dateInput.value,

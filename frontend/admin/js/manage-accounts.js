@@ -31,16 +31,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     const sortValue = sortSelect.value;
     rows = rows.slice().sort((a, b) => {
       if (sortValue === "owner") return a.owner.localeCompare(b.owner);
+      if (sortValue === "owner_desc") return b.owner.localeCompare(a.owner);
+      // Lower activityMinutes = less time since last activity = more recent.
       if (sortValue === "recent") return a.activityMinutes - b.activityMinutes;
-      // Account IDs are UUIDs (not sequential numbers), so "Newest" sorts
-      // by join date instead of trying to compare IDs numerically.
+      if (sortValue === "recent_desc") return b.activityMinutes - a.activityMinutes;
+      // Account IDs are UUIDs (not sequential numbers), so "Newest"/"Oldest"
+      // sort by join date instead of trying to compare IDs numerically.
+      if (sortValue === "id_asc") return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const pageRows = rows.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
 
     if (pagination) {
       renderPaginationControls(pagination, page, totalPages, (n) => {
@@ -85,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });

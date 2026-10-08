@@ -27,20 +27,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let concerns = [];
   let page = 1;
+  // Default display order when both statuses are showing: Submitted first,
+  // Reviewed last — newest first within each status.
   function getFiltered() {
     const filterValue = statusFilter.value;
-    return concerns.filter((c) => {
+    const rows = concerns.filter((c) => {
       const label = c.status === "reviewed" ? "Reviewed" : "Submitted";
       return filterValue === "All" || label === filterValue;
+    });
+    return rows.slice().sort((a, b) => {
+      const rankA = a.status === "reviewed" ? 1 : 0;
+      const rankB = b.status === "reviewed" ? 1 : 0;
+      if (rankA !== rankB) return rankA - rankB;
+      return new Date(b.created_at) - new Date(a.created_at);
     });
   }
 
   function render() {
     const rows = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const totalPages = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
     page = Math.min(page, totalPages);
-    const start = (page - 1) * pageSize;
-    const pageRows = rows.slice(start, start + pageSize);
+    const start = pageSize ? (page - 1) * pageSize : 0;
+    const pageRows = pageSize ? rows.slice(start, start + pageSize) : rows;
 
     list.innerHTML = pageRows.length
       ? pageRows
@@ -71,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener("change", () => {
-      pageSize = Number(pageSizeSelect.value);
+      pageSize = pageSizeSelect.value === "all" ? null : Number(pageSizeSelect.value);
       page = 1;
       render();
     });
