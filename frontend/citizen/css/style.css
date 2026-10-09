@@ -3106,6 +3106,17 @@ label.geo-toggle {
   color: var(--text);
 }
 
+/* Same white panel + green rule as the other pages' headings (see
+   .plain-page__inner > .page-heading) — these two also sit on the photo. */
+.about-title,
+.council__heading {
+  padding: 14px 22px;
+  background: var(--white);
+  border-radius: 14px;
+  border-bottom: 3px solid var(--accent);
+  box-shadow: 0 8px 24px rgba(20, 60, 30, 0.18);
+}
+
 .about-title {
   font-size: 2.4rem;
 }
@@ -4192,6 +4203,143 @@ label.geo-toggle {
   margin-bottom: 14px;
   padding-bottom: 10px;
   border-bottom: 3px solid var(--accent);
+}
+
+/* Every other page's heading (Ordinances, File Report, FAQs, My Reports…)
+   sat bare on the same photo background — it gets the same white panel and
+   green rule as the home sections above. On the list pages the heading
+   shares its row with the Order/Clear All control, so the whole toolbar
+   is the panel there. */
+.plain-page__inner > .page-heading,
+.plain-page .reports-toolbar {
+  padding: 14px 22px;
+  background: var(--white);
+  border-radius: 14px;
+  border-bottom: 3px solid var(--accent);
+  box-shadow: 0 8px 24px rgba(20, 60, 30, 0.18);
+}
+
+.plain-page__inner > .page-heading,
+.plain-page .reports-toolbar .page-heading {
+  font-size: 1.4rem;
+}
+
+/* Where one card follows the heading (Ordinances, My Reports, My Concerns,
+   Notifications) the two join into a single panel — the heading keeps only
+   its top corners and the card only its bottom ones, with the green rule as
+   the divider. z-index keeps the card's shadow from tinting the heading.
+   The two-column pages (--split: File Report, FAQs…) are handled further
+   down, as one panel around the heading and both columns. */
+.plain-page__inner--wide > .page-heading,
+.plain-page .reports-toolbar {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  box-shadow: none;
+}
+
+.plain-page__inner--wide > .page-heading + .ordinances-card,
+.plain-page .reports-toolbar + .concerns-card,
+.plain-page .reports-toolbar + .notif-page__list {
+  border-radius: 0 0 14px 14px;
+}
+
+@media (max-width: 560px) {
+  .plain-page__inner > .page-heading,
+  .plain-page .reports-toolbar {
+    padding: 12px 14px;
+  }
+
+  .plain-page__inner > .page-heading,
+  .plain-page .reports-toolbar .page-heading {
+    font-size: 1.2rem;
+  }
+}
+
+/* The joined panels' green rule is inset like the home sections' (and the
+   two-column pages' below) rather than running edge to edge: it's drawn as
+   an ::after bar inside the heading's padding instead of the heading's own
+   bottom border. The side padding matches the card underneath so the rule
+   lines up with that card's content. */
+.plain-page__inner--wide > .page-heading,
+.plain-page .reports-toolbar {
+  padding: 18px 28px 0;
+  border-bottom: none;
+}
+
+.plain-page__inner--wide > .page-heading {
+  padding-inline: 32px;
+}
+
+.plain-page .reports-toolbar:has(+ .notif-page__list) {
+  padding-inline: 22px;
+}
+
+.plain-page__inner--wide > .page-heading::after,
+.plain-page .reports-toolbar::after {
+  content: "";
+  display: block;
+  height: 3px;
+  margin-top: 10px;
+  background: var(--accent);
+}
+
+/* The toolbar is a flex row (heading + Order/Clear All), so its rule has
+   to wrap onto a line of its own under them. */
+.plain-page .reports-toolbar {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+.plain-page .reports-toolbar::after {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+.plain-page__inner--wide > .page-heading + .ordinances-card {
+  padding-top: 18px;
+}
+
+/* The two-column pages (File Report, Submit a Concern/Suggestion, FAQs) get
+   the home sections' treatment whole: one white panel holding the heading
+   (with the green rule under it) and both columns. The cards inside trade
+   their own shadow for a border, same as the home panels' inner lists. */
+.plain-page__inner--split {
+  padding: 18px 22px 22px;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(20, 60, 30, 0.18);
+}
+
+.plain-page__inner--split > .page-heading {
+  margin-bottom: 18px;
+  padding: 0 0 10px;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.plain-page__inner--split .report-card,
+.plain-page__inner--split .faq-card,
+.plain-page__inner--split .info-panel {
+  box-shadow: none;
+}
+
+.plain-page__inner--split .report-card:not(.reporting-as-card),
+.plain-page__inner--split .faq-card,
+.plain-page__inner--split .info-panel {
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 560px) {
+  .plain-page__inner--split {
+    padding: 14px 14px 16px;
+  }
+
+  .plain-page__inner--split > .page-heading {
+    padding: 0 0 10px;
+  }
 }
 
 /* Already inside a panel, so the inner list/bars don't need their own lift. */

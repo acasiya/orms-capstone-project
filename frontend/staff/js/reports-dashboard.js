@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const state = {
     topPeriod: "week",
     customRange: null, // {from: "YYYY-MM-DD", to: "YYYY-MM-DD"} once topPeriod === "custom"
-    graphOverride: { heatmap: null, category: null, status: null, investigator: null },
+    graphOverride: { heatmap: null, category: null, status: null, investigator: null, trend: null },
   };
 
   function topPeriodValue() {
@@ -381,8 +381,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!lastCategorySlices.length) return;
     renderPieSVG(categoryPieExpanded, lastCategorySlices);
 
+    // Only the categories that actually have a slice this period — one at 0%
+    // has no wedge to match its colour to, so listing it is just noise.
     categoryPieExpandedList.innerHTML = "";
-    lastCategorySlices.forEach((slice) => {
+    lastCategorySlices.filter((slice) => slice.count > 0).forEach((slice) => {
       const li = document.createElement("li");
       li.className = "category-pie-modal__item";
 
@@ -408,7 +410,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Every ordinance filed under this category, not just the ones a
       // report happened to cite this period — lets staff see the full
-      // picture (including a category sitting at 0%) when they drill in.
+      // picture when they drill in.
       const ordinances = liveOrdinances().filter((o) => o.category === slice.category);
       const sublist = document.createElement("ul");
       sublist.className = "category-pie-modal__sublist";
@@ -662,6 +664,180 @@ document.addEventListener("DOMContentLoaded", async () => {
     heatmapCanvasEl.innerHTML = `<div class="ordinances-empty">Map unavailable</div>`;
   }
 
+  // ---- Reports Filed Over Time (line chart) ----
+  //
+  // One line: how many reports were filed in each step of the selected
+  // period — days for anything up to about six weeks, weeks up to about half
+  // a year, months beyond that. Same drawing approach and .cd-trend styles as
+  // the Concerns Dashboard's "Submissions over time" (concerns-dashboard.js).
+
+  const reportsTrendChart = document.getElementById("reportsTrendChart");
+  const reportsTrendSummary = document.getElementById("reportsTrendSummary");
+  const TREND = { height: 240, left: 34, right: 18, top: 14, bottom: 30 };
+  const TREND_MAX_LABELS = 10;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  // First and last moment of a period value (see getReportsForPeriod).
+  function periodDateRange(period) {
+    if (period && typeof period === "object") {
+      return { start: new Date(`${period.from}T00:00:00`), end: endOfDay(new Date(`${period.to}T00:00:00`)) };
+    }
+    if (period === "all") {
+      const first = liveReports().reduce((min, r) => (r.dateSubmitted < min ? r.dateSubmitted : min), new Date());
+      return { start: new Date(first.getFullYear(), first.getMonth(), 1), end: endOfDay(new Date()) };
+    }
+    const [, kind, back] = period === "week" ? [null, "week", "0"] : period.match(/^(week|month|quarter|year)(\d+)$/);
+    const range = { week: getWeekRange, month: getMonthRange, quarter: getQuarterRange, year: getYearRange }[kind](Number(back));
+    return { start: range.start, end: endOfDay(range.end) };
+  }
+
+  // Splits start..end into the chart's steps: [{ start, end, label, title }].
+  function trendBuckets(start, end) {
+    const days = Math.round((end - start) / DAY_MS);
+    const unit = days <= 45 ? "day" : days <= 200 ? "week" : "month";
+    const short = (date, options) => date.toLocaleDateString("en-US", options);
+    const buckets = [];
+
+    if (unit === "month") {
+      const spansYears = start.getFullYear() !== end.getFullYear();
+      for (let first = new Date(start.getFullYear(), start.getMonth(), 1); first <= end; first = new Date(first.getFullYear(), first.getMonth() + 1, 1)) {
+        buckets.push({
+          start: first,
+          end: endOfDay(new Date(first.getFullYear(), first.getMonth() + 1, 0)),
+          // "Mar '25", not "Mar 25", which reads as a day of the month.
+          label: short(first, { month: "short" }) + (spansYears ? ` '${String(first.getFullYear()).slice(2)}` : ""),
+          title: short(first, { month: "long", year: "numeric" }),
+        });
+      }
+    } else {
+      const step = unit === "week" ? 7 : 1;
+      for (let day = new Date(start); day <= end; day = addDays(day, step)) {
+        const last = unit === "week" ? new Date(Math.min(addDays(day, 6), end)) : day;
+        buckets.push({
+          start: day,
+          end: endOfDay(last),
+          label: unit === "day" && days <= 7 ? short(day, { weekday: "short" }) : short(day, { month: "short", day: "numeric" }),
+          title:
+            unit === "week"
+              ? `${short(day, { month: "short", day: "numeric" })} – ${short(last, { month: "short", day: "numeric", year: "numeric" })}`
+              : short(day, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+        });
+      }
+    }
+
+    // Thin the axis labels so a 31-day month doesn't print 31 of them.
+    const every = Math.ceil(buckets.length / TREND_MAX_LABELS);
+    buckets.forEach((b, i) => {
+      if (i % every !== 0) b.label = "";
+    });
+    return { unit, buckets };
+  }
+
+  function renderReportsTrend() {
+    const period = effectivePeriod("trend");
+    const reports = getReportsForPeriod(period);
+    const total = reports.length;
+    if (!total) {
+      reportsTrendSummary.textContent = "";
+      reportsTrendChart.innerHTML = `<p class="cd-empty">No reports filed in this period.</p>`;
+      return;
+    }
+
+    const { start, end } = periodDateRange(period);
+    const { unit, buckets } = trendBuckets(start, end);
+    const now = new Date();
+    const points = buckets.map((b) => ({
+      ...b,
+      // Steps that haven't started yet have no value at all — the line
+      // stops at today instead of dropping to a misleading zero.
+      future: b.start > now,
+      count: reports.filter((r) => r.dateSubmitted >= b.start && r.dateSubmitted <= b.end).length,
+    }));
+    const drawn = points.filter((p) => !p.future);
+    const pct = (count) => `${Math.round((count / total) * 1000) / 10}%`;
+
+    const peak = drawn.reduce((best, p) => (p.count > best.count ? p : best), drawn[0]);
+    reportsTrendSummary.innerHTML = `<b>${total}</b> ${total === 1 ? "report" : "reports"} filed, shown by ${unit}. Busiest ${unit}: ${peak.title} — <b>${pct(peak.count)}</b> (${peak.count}).`;
+
+    const { height, left, right, top, bottom } = TREND;
+    const width = Math.max(reportsTrendChart.clientWidth, 280);
+    const plotW = width - left - right;
+    const plotH = height - top - bottom;
+    // Whole-number gridlines: a count of reports is never fractional.
+    const rawMax = Math.max(...points.map((p) => p.count), 1);
+    const step = Math.max(1, Math.ceil(rawMax / 4));
+    const max = step * Math.ceil(rawMax / step);
+    const x = (i) => left + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
+    const y = (v) => top + plotH - (v / max) * plotH;
+    const line = drawn.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.count).toFixed(1)}`).join(" ");
+
+    const grid = [];
+    for (let v = 0; v <= max; v += step) {
+      grid.push(`<line class="cd-trend__grid" x1="${left}" x2="${left + plotW}" y1="${y(v)}" y2="${y(v)}"/>
+        <text class="cd-trend__tick" x="${left - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`);
+    }
+    const xLabels = points
+      .map((p, i) => (p.label ? `<text class="cd-trend__tick" x="${x(i)}" y="${height - 8}" text-anchor="middle">${p.label}</text>` : ""))
+      .join("");
+    // A single plotted step has no line to draw — show its point.
+    const lonePoint =
+      drawn.length === 1 ? `<circle class="cd-trend__dot cd-trend__dot--received" r="4.5" cx="${x(0)}" cy="${y(drawn[0].count)}"/>` : "";
+
+    reportsTrendChart.innerHTML = `
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Reports filed over time: ${total} in the selected period, by ${unit}">
+        ${grid.join("")}
+        ${xLabels}
+        <path class="cd-trend__line cd-trend__line--received" d="${line}"/>
+        ${lonePoint}
+        <g class="cd-trend__hover" hidden>
+          <line class="cd-trend__cursor" y1="${top}" y2="${top + plotH}"/>
+          <circle class="cd-trend__dot cd-trend__dot--received" r="4.5"/>
+        </g>
+        <rect class="cd-trend__hit" x="${left}" y="${top}" width="${plotW}" height="${plotH}" fill="transparent"/>
+      </svg>
+      <div class="cd-trend__tip" hidden></div>`;
+
+    const svg = reportsTrendChart.querySelector("svg");
+    const hover = reportsTrendChart.querySelector(".cd-trend__hover");
+    const cursor = hover.querySelector(".cd-trend__cursor");
+    const dot = hover.querySelector(".cd-trend__dot");
+    const tip = reportsTrendChart.querySelector(".cd-trend__tip");
+    const hit = reportsTrendChart.querySelector(".cd-trend__hit");
+
+    function show(clientX) {
+      const box = svg.getBoundingClientRect();
+      const svgX = ((clientX - box.left) / box.width) * width;
+      const i = Math.max(0, Math.min(drawn.length - 1, Math.round(((svgX - left) / plotW) * (points.length - 1))));
+      const p = drawn[i];
+      hover.removeAttribute("hidden");
+      cursor.setAttribute("x1", x(i));
+      cursor.setAttribute("x2", x(i));
+      dot.setAttribute("cx", x(i));
+      dot.setAttribute("cy", y(p.count));
+      tip.hidden = false;
+      tip.innerHTML = `<strong>${p.title}</strong>
+        <span>Reports filed <b>${p.count}</b></span>
+        <span>Share of this period <b>${pct(p.count)}</b></span>`;
+      // Keep the tooltip inside the card on either side of the cursor.
+      const px = (x(i) / width) * box.width;
+      const flip = px > box.width * 0.6;
+      tip.style.left = flip ? "auto" : `${px + 12}px`;
+      tip.style.right = flip ? `${box.width - px + 12}px` : "auto";
+    }
+    function hide() {
+      hover.setAttribute("hidden", "");
+      tip.hidden = true;
+    }
+    hit.addEventListener("mousemove", (e) => show(e.clientX));
+    hit.addEventListener("mouseleave", hide);
+    hit.addEventListener("touchstart", (e) => show(e.touches[0].clientX), { passive: true });
+    hit.addEventListener("touchmove", (e) => show(e.touches[0].clientX), { passive: true });
+    hit.addEventListener("touchend", hide);
+  }
+
+  // Drawn at the card's real pixel width, so it has to be redrawn when that changes.
+  window.addEventListener("resize", () => renderReportsTrend());
+
   // ---- Per-graph filter dropdowns — override the top filter for one card ----
 
   const GRAPH_FILTERS = [
@@ -669,6 +845,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     { key: "category", labelId: "categoryFilterLabel", menuId: "categoryFilterMenu", render: () => renderCategoryPie() },
     { key: "status", labelId: "statusFilterLabel", menuId: "statusFilterMenu", render: () => renderStatusChart() },
     { key: "investigator", labelId: "investigatorFilterLabel", menuId: "investigatorFilterMenu", render: () => renderInvestigatorChart() },
+    { key: "trend", labelId: "trendFilterLabel", menuId: "trendFilterMenu", render: () => renderReportsTrend() },
   ];
 
   function renderGraphFilterLabel(cfg) {
@@ -737,6 +914,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCategoryPie();
     renderStatusChart();
     renderInvestigatorChart();
+    renderReportsTrend();
     renderHeatmaps();
     renderAgingReports();
   }

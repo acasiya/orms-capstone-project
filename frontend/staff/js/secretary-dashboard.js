@@ -110,7 +110,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       categoryPie.appendChild(span);
     });
 
+    // Only folders that have a slice — one with no concerns has nothing in
+    // the pie to match its colour to.
     categoryLegend.innerHTML = folders
+      .filter((f) => (counts[f.id] || 0) > 0)
       .map((f) => `<li title="${f.name} (${counts[f.id] || 0})"><span class="pie-legend__dot" style="background:${folderColor(f.id)}"></span><span class="pie-legend__label">${f.name} (${counts[f.id] || 0})</span></li>`)
       .join("");
   }

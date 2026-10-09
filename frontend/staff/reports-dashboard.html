@@ -255,6 +255,23 @@
         <div class="dash-row-single">
           <div class="dash-card">
             <div class="dash-card__header">
+              <h2>Reports Filed Over Time</h2>
+              <div class="dash-dropdown dash-dropdown--small" id="trendFilterDropdown" data-graph-filter="trend">
+                <button type="button" class="dash-dropdown__btn dash-dropdown__btn--small" id="trendFilterBtn">
+                  <span id="trendFilterLabel"></span> <span class="dash-dropdown__chevron">&#9662;</span>
+                </button>
+                <ul class="dash-dropdown-menu" id="trendFilterMenu" hidden></ul>
+              </div>
+            </div>
+            <p class="dash-card__subtitle" id="reportsTrendSummary"></p>
+            <!-- Line chart — see renderReportsTrend in js/reports-dashboard.js -->
+            <div class="cd-trend" id="reportsTrendChart"></div>
+          </div>
+        </div>
+
+        <div class="dash-row-single">
+          <div class="dash-card">
+            <div class="dash-card__header">
               <h2>Report Timeline</h2>
               <div class="filters-dropdown">
                 <button type="button" class="filters-dropdown__trigger filters-dropdown__trigger--small" id="timelineFiltersToggleBtn" aria-expanded="false" aria-haspopup="true" aria-label="Show">
