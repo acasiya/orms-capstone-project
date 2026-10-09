@@ -1296,6 +1296,17 @@ button {
   font-weight: 700;
 }
 
+/* Add/Edit FAQ — wider than the default .modal-card (meant for short
+   confirm-style dialogs) so the Question/Answer fields have room to
+   breathe, plus a capped height with its own scrollbar as a safety net —
+   scoped here rather than widening .modal-card itself, which every other
+   (smaller) modal on this page still uses. */
+.faq-modal-card {
+  max-width: 560px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
 .modal-card .btn {
   width: auto;
   padding: 12px 30px;
