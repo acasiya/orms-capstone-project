@@ -4,6 +4,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 
+from orms_backend.encrypted_fields import EncryptedTextField
+from orms_backend.encrypted_storage import encrypted_storage
+
 
 class User(AbstractUser):
     """
@@ -18,10 +21,17 @@ class User(AbstractUser):
         ADMIN = "admin", "Administrator"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Not encrypted: login looks the account up by email, which an encrypted
+    # column can't do (see EncryptedTextField).
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.CITIZEN)
-    contact_number = models.CharField(max_length=20, blank=True)
-    address = models.CharField(max_length=255, blank=True)
+    # Personal data, encrypted at rest with the Modified Blowfish algorithm.
+    # first_name/last_name override AbstractUser's plain columns for the same
+    # reason. None of the four can be searched or sorted by the database.
+    first_name = EncryptedTextField("first name", max_length=150, blank=True)
+    last_name = EncryptedTextField("last name", max_length=150, blank=True)
+    contact_number = EncryptedTextField(max_length=20, blank=True)
+    address = EncryptedTextField(max_length=255, blank=True)
 
     # Free-text job title for Staff accounts only (e.g. "Secretary",
     # "Investigator", "Barangay Captain") — separate from `role`, which is
@@ -63,7 +73,8 @@ class VoterVerification(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="verification")
-    voter_id_image = models.ImageField(upload_to="verification/%Y/%m/")
+    # Stored encrypted (Modified Blowfish) — see orms_backend/encrypted_storage.py.
+    voter_id_image = models.ImageField(upload_to="verification/%Y/%m/", storage=encrypted_storage)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     rejection_reason = models.TextField(blank=True)
     reviewed_by = models.ForeignKey(
@@ -189,7 +200,9 @@ class AuditLog(models.Model):
     # because the account doesn't exist anymore. AuditLogSerializer prefers
     # these over a live lookup through `user`; entries logged before this
     # field existed fall back to that live lookup instead.
-    owner_name = models.CharField(max_length=150, blank=True)
+    # Encrypted like the name on the account itself — a plain copy here would
+    # undo that.
+    owner_name = EncryptedTextField(max_length=150, blank=True)
     owner_type = models.CharField(max_length=50, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

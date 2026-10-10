@@ -2,6 +2,9 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+
+from orms_backend.encrypted_fields import EncryptedTextField
+from orms_backend.encrypted_storage import encrypted_storage
 from django.utils import timezone
 
 
@@ -23,7 +26,9 @@ class Report(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports")
-    location = models.CharField(max_length=255)
+    # Encrypted at rest. The heatmap groups by it in the browser, after the API
+    # has decrypted it, so nothing needs the database to read it.
+    location = EncryptedTextField(max_length=255)
     # The citizen's device position when they filed, if they allowed the
     # browser's location prompt (see file-report.js). Null when they denied
     # it, it timed out, or it fell outside the barangay — the staff heatmap
@@ -38,9 +43,11 @@ class Report(models.Model):
     # Nullable — the exact time of an incident is often unknown (ongoing or
     # long-standing violations), so a citizen can leave it blank.
     incident_time = models.TimeField(null=True, blank=True)
-    nature_of_violation = models.TextField()
+    # The report's narrative and the staff remarks on it are encrypted at rest
+    # (Modified Blowfish — see orms_backend/encrypted_fields.py).
+    nature_of_violation = EncryptedTextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
-    remarks = models.TextField(blank=True)
+    remarks = EncryptedTextField(blank=True)
     # The Investigator working this report — Reports is a shared claimable
     # queue (see StaffReportClaimView/StaffReportForfeitView) rather than
     # pre-assigned, so this starts blank and any Investigator can claim an
@@ -75,7 +82,9 @@ class Report(models.Model):
 class ReportAttachment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="attachments")
-    file = models.FileField(upload_to="reports/%Y/%m/")
+    # Photos are stored encrypted (Modified Blowfish); videos are not — see
+    # orms_backend/encrypted_storage.py.
+    file = models.FileField(upload_to="reports/%Y/%m/", storage=encrypted_storage)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -110,10 +119,11 @@ class Concern(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="concerns")
-    location = models.CharField(max_length=255, blank=True)
-    description = models.TextField()
+    location = EncryptedTextField(max_length=255, blank=True)
+    # Encrypted at rest, same as Report's narrative and remarks.
+    description = EncryptedTextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
-    remarks = models.TextField(blank=True)
+    remarks = EncryptedTextField(blank=True)
     # When the Secretary marked this Reviewed (cleared if it's moved back to
     # Submitted). updated_at can't stand in for it — assigning a folder or
     # editing remarks later moves that — and the Captain's dashboard needs
@@ -135,7 +145,7 @@ class Concern(models.Model):
 class ConcernAttachment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     concern = models.ForeignKey(Concern, on_delete=models.CASCADE, related_name="attachments")
-    file = models.FileField(upload_to="concerns/%Y/%m/")
+    file = models.FileField(upload_to="concerns/%Y/%m/", storage=encrypted_storage)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -152,7 +162,8 @@ class Question(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="questions")
-    question = models.TextField()
+    # Encrypted at rest: free text a resident may put personal details in.
+    question = EncryptedTextField()
     answer = models.TextField(blank=True)
     answered_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="answered_questions"

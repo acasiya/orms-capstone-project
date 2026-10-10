@@ -25,6 +25,20 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv(
 # CSRF once DEBUG is off.
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 
+# --- Data protection (Modified Blowfish) ---------------------------------
+# The master key every encrypted personal-data value's own key is derived from
+# (see orms_backend/encrypted_fields.py). Kept out of the code and out of the
+# database on purpose: the database alone is unreadable without it. If it is
+# lost, the encrypted data cannot be recovered — back it up somewhere separate
+# from the database. Nothing is encrypted or decrypted without it; there is no
+# default, so a missing key fails loudly instead of writing unprotected data.
+DATA_ENCRYPTION_KEY = config("DATA_ENCRYPTION_KEY", default="")
+# PBKDF2-HMAC-SHA256 rounds used to derive each value's key. Stored alongside
+# every value, so changing this only affects values written afterwards. Higher
+# costs time on every first read of a value (about 0.5 ms per 1,000 rounds on
+# a typical machine) — set it from the study's performance testing.
+MODIFIED_BLOWFISH_ITERATIONS = config("MODIFIED_BLOWFISH_ITERATIONS", default=1000, cast=int)
+
 AUTH_USER_MODEL = "accounts.User"
 
 INSTALLED_APPS = [
